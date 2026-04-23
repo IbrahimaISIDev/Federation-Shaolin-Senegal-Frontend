@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { MediaPicker } from '@/components/shared/media-picker';
 
 const articleSchema = z.object({
     title: z.string().min(5, 'Titre requis (min 5 caractères)'),
@@ -210,8 +211,12 @@ export default function NewArticlePage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="coverImage">Image de couverture</Label>
-                                    <Input id="coverImage" type="url" placeholder="https://..." {...register('coverImage')} className={errors.coverImage ? 'border-destructive' : ''} />
+                                    <MediaPicker
+                                        label="Image de couverture"
+                                        value={watch('coverImage')}
+                                        onChange={(url) => setValue('coverImage', url)}
+                                        helperText="URL de l'image ou sélection depuis la bibliothèque"
+                                    />
                                     {errors.coverImage && <p className="text-sm text-destructive">{errors.coverImage.message}</p>}
                                 </div>
 

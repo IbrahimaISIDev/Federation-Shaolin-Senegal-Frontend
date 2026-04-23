@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { REGIONS, DISCIPLINES, GRADES } from '@/lib/constants';
+import { MediaPicker } from '@/components/shared/media-picker';
 
 const memberSchema = z.object({
     firstName: z.string().min(2, 'Prénom requis'),
@@ -35,6 +36,7 @@ const memberSchema = z.object({
     clubId: z.string().min(1, 'Club requis'),
     discipline: z.string().min(1, 'Discipline requise'),
     grade: z.string().min(1, 'Grade requis'),
+    photo: z.string().optional().or(z.literal('')),
     notes: z.string().optional(),
 });
 
@@ -52,6 +54,7 @@ const mockMember: MemberFormData = {
     phone: '771234567', birthDate: '1995-03-14', gender: 'M', nationality: 'Sénégalaise',
     address: 'Rue 14, Médina', city: 'Dakar', region: 'dakar',
     clubId: 'club-1', discipline: 'kung_fu', grade: 'Ceinture Verte', notes: '',
+    photo: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=400',
 };
 
 export default function EditMemberPage({ params }: { params: { id: string } }) {
@@ -68,6 +71,7 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
     const clubId = watch('clubId');
     const discipline = watch('discipline');
     const grade = watch('grade');
+    const photo = watch('photo');
 
     const onSubmit = async (data: MemberFormData) => {
         setIsSubmitting(true);
@@ -97,7 +101,13 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <Card>
                     <CardHeader><CardTitle>Informations personnelles</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-6">
+                        <MediaPicker
+                            label="Photo de profil"
+                            value={photo}
+                            onChange={(url) => setValue('photo', url)}
+                            helperText="Format carré recommandé"
+                        />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="firstName">Prénom *</Label>

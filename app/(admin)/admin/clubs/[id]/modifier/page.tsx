@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { REGIONS } from '@/lib/constants';
+import { MediaPicker } from '@/components/shared/media-picker';
 
 const clubSchema = z.object({
     name: z.string().min(3, 'Nom requis'),
@@ -33,6 +34,7 @@ const clubSchema = z.object({
     presidentName: z.string().min(3, 'Nom du président requis'),
     presidentPhone: z.string().optional(),
     description: z.string().optional(),
+    logo: z.string().optional().or(z.literal('')),
     isActive: z.boolean(),
 });
 
@@ -43,6 +45,7 @@ const mockClub: ClubFormData = {
     name: 'Temple Shaolin Dakar', code: 'TSK-001', region: 'dakar', city: 'Dakar',
     address: 'Avenue Cheikh Anta Diop, Point-E', phone: '771234567', email: 'tsdk@email.com',
     presidentName: 'Cheikh Diallo', presidentPhone: '771234567', isActive: true,
+    logo: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400',
     description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de la fédération.',
 };
 
@@ -130,9 +133,17 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
                                 <Input id="email" type="email" {...register('email')} className={errors.email ? 'border-destructive' : ''} />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea id="description" rows={3} {...register('description')} />
+                        <div className="space-y-4">
+                            <MediaPicker
+                                label="Logo du club"
+                                value={watch('logo')}
+                                onChange={(url) => setValue('logo', url)}
+                                helperText="Changer le logo du club"
+                            />
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Description</Label>
+                                <Textarea id="description" rows={3} {...register('description')} />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

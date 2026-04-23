@@ -20,14 +20,15 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { REGIONS, DISCIPLINES, GRADES } from '@/lib/constants';
+import { MediaPicker } from '@/components/shared/media-picker';
 
 const memberSchema = z.object({
-    firstName: z.string().min(2, 'Prénom requis (min 2 caractères)'),
-    lastName: z.string().min(2, 'Nom requis (min 2 caractères)'),
+    firstName: z.string().min(2, 'Prénom requis'),
+    lastName: z.string().min(2, 'Nom requis'),
     email: z.string().email('Email invalide'),
-    phone: z.string().regex(/^(\+221)?[0-9]{9}$/, 'Téléphone invalide (ex: 771234567)'),
+    phone: z.string().regex(/^(\+221)?[0-9]{9}$/, 'Téléphone invalide'),
     birthDate: z.string().min(1, 'Date de naissance requise'),
-    gender: z.enum(['M', 'F'], { errorMap: () => ({ message: 'Genre requis' }) }),
+    gender: z.enum(['M', 'F']),
     nationality: z.string().min(2, 'Nationalité requise'),
     address: z.string().min(5, 'Adresse requise'),
     city: z.string().min(2, 'Ville requise'),
@@ -35,18 +36,16 @@ const memberSchema = z.object({
     clubId: z.string().min(1, 'Club requis'),
     discipline: z.string().min(1, 'Discipline requise'),
     grade: z.string().min(1, 'Grade requis'),
+    photo: z.string().optional().or(z.literal('')),
     notes: z.string().optional(),
 });
 
 type MemberFormData = z.infer<typeof memberSchema>;
 
-// Mock clubs
 const MOCK_CLUBS = [
     { id: 'club-1', name: 'Temple Shaolin Dakar' },
     { id: 'club-2', name: 'Dragon de Feu Saint-Louis' },
     { id: 'club-3', name: 'Wushu Academy Thiès' },
-    { id: 'club-4', name: 'Shaolin Ziguinchor' },
-    { id: 'club-5', name: 'Kung Fu Diourbel' },
 ];
 
 export default function NewMemberPage() {
@@ -63,11 +62,11 @@ export default function NewMemberPage() {
         resolver: zodResolver(memberSchema),
         defaultValues: {
             nationality: 'Sénégalaise',
-            gender: '' as any,
             region: '',
             clubId: '',
             discipline: '',
             grade: '',
+            photo: '',
         },
     });
 
@@ -80,7 +79,6 @@ export default function NewMemberPage() {
     const onSubmit = async (data: MemberFormData) => {
         setIsSubmitting(true);
         try {
-            // TODO: Replace with real API call
             await new Promise((r) => setTimeout(r, 1500));
             console.log('New member:', data);
             router.push('/admin/membres');
@@ -93,12 +91,9 @@ export default function NewMemberPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" asChild>
-                    <Link href="/admin/membres">
-                        <ArrowLeft className="w-4 h-4" />
-                    </Link>
+                    <Link href="/admin/membres"><ArrowLeft className="w-4 h-4" /></Link>
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Nouveau membre</h1>
@@ -107,13 +102,19 @@ export default function NewMemberPage() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Personal Info */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Informations personnelles</CardTitle>
                         <CardDescription>Identité et coordonnées du membre.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-6">
+                        <MediaPicker
+                            label="Photo de profil"
+                            value={watch('photo')}
+                            onChange={(url) => setValue('photo', url)}
+                            helperText="Format carré recommandé"
+                        />
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="firstName">Prénom *</Label>
@@ -125,26 +126,17 @@ export default function NewMemberPage() {
                                 <Input id="lastName" {...register('lastName')} className={errors.lastName ? 'border-destructive' : ''} />
                                 {errors.lastName && <p className="text-sm text-destructive">{errors.lastName.message}</p>}
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email *</Label>
                                 <Input id="email" type="email" {...register('email')} className={errors.email ? 'border-destructive' : ''} />
-                                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Téléphone *</Label>
-                                <Input id="phone" type="tel" placeholder="771234567" {...register('phone')} className={errors.phone ? 'border-destructive' : ''} />
-                                {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+                                <Input id="phone" type="tel" {...register('phone')} className={errors.phone ? 'border-destructive' : ''} />
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="birthDate">Date de naissance *</Label>
                                 <Input id="birthDate" type="date" {...register('birthDate')} className={errors.birthDate ? 'border-destructive' : ''} />
-                                {errors.birthDate && <p className="text-sm text-destructive">{errors.birthDate.message}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label>Sexe *</Label>
@@ -157,33 +149,22 @@ export default function NewMemberPage() {
                                         <SelectItem value="F">Féminin</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors.gender && <p className="text-sm text-destructive">{errors.gender.message}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="nationality">Nationalité *</Label>
-                                <Input id="nationality" {...register('nationality')} className={errors.nationality ? 'border-destructive' : ''} />
-                                {errors.nationality && <p className="text-sm text-destructive">{errors.nationality.message}</p>}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Address */}
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Adresse</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Adresse</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="address">Adresse complète *</Label>
-                            <Input id="address" placeholder="Rue, quartier..." {...register('address')} className={errors.address ? 'border-destructive' : ''} />
-                            {errors.address && <p className="text-sm text-destructive">{errors.address.message}</p>}
+                            <Input id="address" {...register('address')} className={errors.address ? 'border-destructive' : ''} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="city">Ville *</Label>
                                 <Input id="city" {...register('city')} className={errors.city ? 'border-destructive' : ''} />
-                                {errors.city && <p className="text-sm text-destructive">{errors.city.message}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label>Région *</Label>
@@ -192,22 +173,16 @@ export default function NewMemberPage() {
                                         <SelectValue placeholder="Sélectionner" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {REGIONS.map((r) => (
-                                            <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                                        ))}
+                                        {REGIONS.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                                {errors.region && <p className="text-sm text-destructive">{errors.region.message}</p>}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Club & Discipline */}
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Club & Discipline</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Club & Discipline</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Club *</Label>
@@ -216,12 +191,9 @@ export default function NewMemberPage() {
                                     <SelectValue placeholder="Sélectionner un club" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {MOCK_CLUBS.map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
+                                    {MOCK_CLUBS.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
-                            {errors.clubId && <p className="text-sm text-destructive">{errors.clubId.message}</p>}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -231,12 +203,9 @@ export default function NewMemberPage() {
                                         <SelectValue placeholder="Sélectionner" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {DISCIPLINES.map((d) => (
-                                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                                        ))}
+                                        {DISCIPLINES.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                                {errors.discipline && <p className="text-sm text-destructive">{errors.discipline.message}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label>Grade *</Label>
@@ -245,22 +214,18 @@ export default function NewMemberPage() {
                                         <SelectValue placeholder="Sélectionner" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {GRADES.map((g) => (
-                                            <SelectItem key={g} value={g}>{g}</SelectItem>
-                                        ))}
+                                        {GRADES.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
-                                {errors.grade && <p className="text-sm text-destructive">{errors.grade.message}</p>}
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="notes">Notes internes (optionnel)</Label>
-                            <Textarea id="notes" placeholder="Informations complémentaires..." rows={3} {...register('notes')} />
+                            <Label htmlFor="notes">Notes internes</Label>
+                            <Textarea id="notes" rows={3} {...register('notes')} />
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Actions */}
                 <div className="flex justify-end gap-3">
                     <Button type="button" variant="outline" asChild>
                         <Link href="/admin/membres">Annuler</Link>

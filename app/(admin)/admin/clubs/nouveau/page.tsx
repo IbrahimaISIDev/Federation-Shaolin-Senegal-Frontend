@@ -21,6 +21,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { REGIONS } from '@/lib/constants';
+import { MediaPicker } from '@/components/shared/media-picker';
 
 const clubSchema = z.object({
     name: z.string().min(3, 'Nom requis (min 3 caractères)'),
@@ -33,6 +34,7 @@ const clubSchema = z.object({
     presidentName: z.string().min(3, 'Nom du président requis'),
     presidentPhone: z.string().optional(),
     description: z.string().optional(),
+    logo: z.string().optional().or(z.literal('')),
     isActive: z.boolean(),
 });
 
@@ -147,9 +149,17 @@ export default function NewClubPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Description (optionnel)</Label>
-                            <Textarea id="description" placeholder="Présentation du club, historique..." rows={3} {...register('description')} />
+                        <div className="space-y-4">
+                            <MediaPicker
+                                label="Logo du club"
+                                value={watch('logo')}
+                                onChange={(url) => setValue('logo', url)}
+                                helperText="Sélectionnez un logo pour le club"
+                            />
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Description (optionnel)</Label>
+                                <Textarea id="description" placeholder="Présentation du club, historique..." rows={3} {...register('description')} />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
