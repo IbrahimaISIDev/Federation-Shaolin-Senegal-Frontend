@@ -17,7 +17,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shao
 // --- Navigation ---
 export const PUBLIC_NAV_ITEMS: NavItem[] = [
   { label: 'Accueil', href: '/' },
-  { label: 'La Fédération', href: '/federation' },
+  { label: 'L\'Association', href: '/federation' },
   { label: 'Actualités', href: '/actualites' },
   { label: 'Compétitions', href: '/competitions' },
   { label: 'Galerie', href: '/galerie' },

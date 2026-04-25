@@ -46,7 +46,7 @@ export function Header() {
       <div className="hidden border-b border-primary/10 bg-primary/[0.03] lg:block">
         <div className="container mx-auto flex h-9 items-center justify-between px-4 text-xs text-muted-foreground">
           <span className="font-medium text-primary/70">
-            Fédération officielle des arts martiaux Shaolin au Sénégal
+            Association Disciples Shaolin Si Sénégal
           </span>
           <div className="flex items-center gap-5">
             <a
