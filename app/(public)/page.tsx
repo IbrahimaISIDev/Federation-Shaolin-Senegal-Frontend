@@ -2,6 +2,7 @@ import { HeroSection } from '@/components/home/hero-section';
 import { StatsSection } from '@/components/home/stats-section';
 import { DisciplinesSection } from '@/components/home/disciplines-section';
 import { BureauSection } from '@/components/home/bureau-section';
+import { GalleryPreviewSection } from '@/components/home/gallery-preview-section';
 import { FeaturedClubsSection } from '@/components/home/featured-clubs-section';
 import { LatestNewsSection } from '@/components/home/latest-news-section';
 import { CTASection } from '@/components/home/cta-section';
@@ -13,6 +14,7 @@ export default function HomePage() {
       <StatsSection />
       <DisciplinesSection />
       <BureauSection />
+      <GalleryPreviewSection />
       <FeaturedClubsSection />
       <LatestNewsSection />
       <CTASection />

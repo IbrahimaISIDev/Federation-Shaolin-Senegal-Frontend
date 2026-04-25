@@ -1,233 +1,221 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { X, ChevronLeft, ChevronRight, Play, Image as ImageIcon } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Images } from 'lucide-react';
+import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 
-// Mock gallery data
-const mockGallery = {
-  categories: ['Tous', 'Compétitions', 'Stages', 'Entraînements', 'Événements'],
-  items: [
-    { id: '1', type: 'image', category: 'Compétitions', title: 'Championnat National 2023', year: '2023' },
-    { id: '2', type: 'image', category: 'Stages', title: 'Stage Maître Chen', year: '2023' },
-    { id: '3', type: 'video', category: 'Entraînements', title: 'Démonstration Tai Chi', year: '2024' },
-    { id: '4', type: 'image', category: 'Compétitions', title: 'Tournoi Inter-Clubs', year: '2023' },
-    { id: '5', type: 'image', category: 'Événements', title: 'Journée Portes Ouvertes', year: '2024' },
-    { id: '6', type: 'image', category: 'Entraînements', title: 'Cours de Kung Fu', year: '2024' },
-    { id: '7', type: 'image', category: 'Compétitions', title: 'Finale Sanda', year: '2023' },
-    { id: '8', type: 'video', category: 'Stages', title: 'Stage Wushu International', year: '2023' },
-    { id: '9', type: 'image', category: 'Événements', title: 'Cérémonie de Remise des Grades', year: '2024' },
-    { id: '10', type: 'image', category: 'Entraînements', title: 'Séance Qi Gong', year: '2024' },
-    { id: '11', type: 'image', category: 'Compétitions', title: 'Podium Taolu', year: '2023' },
-    { id: '12', type: 'image', category: 'Stages', title: 'Formation Arbitres', year: '2024' },
-  ],
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+type Album = { id: string; label: string; count: number };
+
+type Photo = {
+  src: string;
+  alt: string;
+  album: string;
+  title: string;
 };
 
-// Placeholder colors for demo
-const placeholderColors = [
-  'from-primary/30 to-accent/30',
-  'from-accent/30 to-primary/30',
-  'from-primary/20 to-primary/40',
-  'from-accent/20 to-accent/40',
+const albums: Album[] = [
+  { id: 'tous', label: 'Tous', count: 0 },
+  { id: 'stages', label: 'Stages & Duanwei', count: 8 },
+  { id: 'delegation', label: 'Délégation Temple', count: 9 },
+  { id: 'ceremonies', label: 'Cérémonies', count: 5 },
 ];
 
+const photos: Photo[] = [
+  // Stages & Duanwei
+  { src: '/images/stages/remise-diplomes-groupe.jpeg', alt: 'Remise des diplômes — groupe', title: 'Remise de diplômes', album: 'stages' },
+  { src: '/images/stages/pratiquants-certificats.jpeg', alt: 'Pratiquants avec leurs certificats', title: 'Certificats Duanwei', album: 'stages' },
+  { src: '/images/stages/groupe-combat-duanwei.jpeg', alt: 'Groupe — combat et Duanwei', title: 'Combat & Duanwei', album: 'stages' },
+  { src: '/images/stages/cloture-salut-maitres.jpeg', alt: 'Clôture du stage — salut aux maîtres', title: 'Clôture de stage', album: 'stages' },
+  { src: '/images/stages/moine-pratiquants-exterieur.jpeg', alt: 'Moine et pratiquants à l\'extérieur', title: 'Stage extérieur', album: 'stages' },
+  { src: '/images/stages/moine-pratiquants-salle.jpeg', alt: 'Moine et pratiquants en salle', title: 'Stage en salle', album: 'stages' },
+  { src: '/images/stages/pratiquants-tenue-grise.jpeg', alt: 'Pratiquants en tenue grise', title: 'Pratiquants', album: 'stages' },
+  { src: '/images/stages/moine-pratiquants-stade.jpeg', alt: 'Moine et pratiquants au stade', title: 'Stage au stade', album: 'stages' },
+  // Délégation Temple Shaolin
+  { src: '/images/delegation/delegation-banniere-temple.jpeg', alt: 'Délégation ADSS devant le Temple Shaolin', title: 'Temple Shaolin', album: 'delegation' },
+  { src: '/images/delegation/aeroport-drapeaux-chine-senegal.jpeg', alt: 'Accueil à l\'aéroport — drapeaux Chine & Sénégal', title: 'Accueil officiel', album: 'delegation' },
+  { src: '/images/delegation/aeroport-moines-banniere.jpeg', alt: 'Moines à l\'aéroport — bannière', title: 'Moines à l\'aéroport', album: 'delegation' },
+  { src: '/images/delegation/aeroport-moines-noir-banniere.jpeg', alt: 'Moines à l\'aéroport — tenue noire', title: 'Moines — tenue noire', album: 'delegation' },
+  { src: '/images/delegation/aeroport-moines-gros-plan.jpeg', alt: 'Moines à l\'aéroport — gros plan', title: 'Moines — gros plan', album: 'delegation' },
+  { src: '/images/delegation/arrivee-aeroport-moines.jpeg', alt: 'Arrivée des moines à l\'aéroport', title: 'Arrivée des moines', album: 'delegation' },
+  { src: '/images/delegation/maitre-ngom-aeroport.jpeg', alt: 'Maître Ngom à l\'aéroport', title: 'Maître Ngom', album: 'delegation' },
+  { src: '/images/delegation/delegation-drapeaux.jpeg', alt: 'Délégation avec les drapeaux', title: 'Délégation officielle', album: 'delegation' },
+  { src: '/images/delegation/moines-interieur.jpeg', alt: 'Moines à l\'intérieur', title: 'Moines — intérieur', album: 'delegation' },
+  // Cérémonies & Officiel
+  { src: '/images/ceremonies/maitre-ngom-decoration-trio.jpeg', alt: 'Maître Ngom — décoration officielle (trio)', title: 'Décoration officielle', album: 'ceremonies' },
+  { src: '/images/ceremonies/foule-pratiquants.jpeg', alt: 'Foule de pratiquants', title: 'Rassemblement', album: 'ceremonies' },
+  { src: '/images/ceremonies/partenariat-tecno-cheque.jpeg', alt: 'Remise du chèque — partenariat Tecno', title: 'Partenariat Tecno', album: 'ceremonies' },
+  { src: '/images/ceremonies/remise-trophee.jpeg', alt: 'Remise d\'un trophée', title: 'Remise de trophée', album: 'ceremonies' },
+  { src: '/images/ceremonies/maitre-ngom-decoration-duo.jpeg', alt: 'Maître Ngom — décoration officielle (duo)', title: 'Cérémonie officielle', album: 'ceremonies' },
+];
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function GalleryPage() {
-  const [activeCategory, setActiveCategory] = useState('Tous');
-  const [selectedItem, setSelectedItem] = useState<typeof mockGallery.items[0] | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeAlbum, setActiveAlbum] = useState('tous');
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const filteredItems = activeCategory === 'Tous'
-    ? mockGallery.items
-    : mockGallery.items.filter((item) => item.category === activeCategory);
+  const filtered = activeAlbum === 'tous' ? photos : photos.filter((p) => p.album === activeAlbum);
 
-  const openLightbox = (item: typeof mockGallery.items[0]) => {
-    setSelectedItem(item);
-    setCurrentIndex(filteredItems.findIndex((i) => i.id === item.id));
-  };
+  const openLightbox = (i: number) => setLightboxIndex(i);
+  const closeLightbox = () => setLightboxIndex(null);
+  const prev = () => setLightboxIndex((i) => (i === null ? 0 : (i - 1 + filtered.length) % filtered.length));
+  const next = () => setLightboxIndex((i) => (i === null ? 0 : (i + 1) % filtered.length));
 
-  const closeLightbox = () => {
-    setSelectedItem(null);
-  };
-
-  const navigateLightbox = (direction: 'prev' | 'next') => {
-    const newIndex = direction === 'prev'
-      ? (currentIndex - 1 + filteredItems.length) % filteredItems.length
-      : (currentIndex + 1) % filteredItems.length;
-    setCurrentIndex(newIndex);
-    setSelectedItem(filteredItems[newIndex]);
-  };
+  const albumsWithCount = albums.map((a) =>
+    a.id === 'tous' ? { ...a, count: photos.length } : a
+  );
 
   return (
     <main className="min-h-screen bg-background">
+
       {/* Hero */}
-      <section className="bg-primary py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-            Galerie
-          </h1>
-          <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
-            Revivez les moments forts de nos événements, compétitions et entraînements.
-          </p>
-        </div>
-      </section>
-
-      {/* Filter */}
-      <section className="py-8 border-b sticky top-0 bg-background/95 backdrop-blur z-10">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {mockGallery.categories.map((category) => (
-              <Button
-                key={category}
-                variant={activeCategory === category ? 'default' : 'outline'}
-                onClick={() => setActiveCategory(category)}
-                className={activeCategory === category ? 'bg-primary' : ''}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Gallery Grid */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <motion.div
-            layout
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+      <section className="relative overflow-hidden bg-primary py-16 lg:py-20">
+        <Image
+          src="/images/ceremonies/foule-pratiquants.jpeg"
+          alt="Pratiquants ADSS"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        <div className="absolute inset-0 bg-primary/85" />
+        <motion.div
+          variants={STAGGER_CONTAINER}
+          initial="hidden"
+          animate="visible"
+          className="container relative mx-auto px-4 text-center"
+        >
+          <motion.span variants={FADE_IN_UP}
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent"
           >
-            <AnimatePresence mode="popLayout">
-              {filteredItems.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.3 }}
-                  className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg"
-                  onClick={() => openLightbox(item)}
-                >
-                  {/* Placeholder */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${placeholderColors[index % placeholderColors.length]} flex items-center justify-center`}
-                  >
-                    {item.type === 'video' ? (
-                      <Play className="w-12 h-12 text-foreground/30" />
-                    ) : (
-                      <ImageIcon className="w-12 h-12 text-foreground/30" />
-                    )}
-                  </div>
-
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <Badge variant="secondary" className="mb-2">
-                        {item.category}
-                      </Badge>
-                      <h3 className="text-white font-medium text-sm line-clamp-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-white/70 text-xs mt-1">{item.year}</p>
-                    </div>
-                  </div>
-
-                  {/* Video indicator */}
-                  {item.type === 'video' && (
-                    <div className="absolute top-3 right-3 w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                      <Play className="w-4 h-4 text-white fill-white" />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            <Images className="h-3.5 w-3.5" />
+            {photos.length} photos
+          </motion.span>
+          <motion.h1 variants={FADE_IN_UP} className="font-serif text-4xl font-bold text-white md:text-5xl">
+            Galerie
+          </motion.h1>
+          <motion.div variants={FADE_IN_UP} className="my-4 flex justify-center">
+            <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
           </motion.div>
+          <motion.p variants={FADE_IN_UP} className="mx-auto max-w-xl text-base text-white/65">
+            Stages avec les moines Shaolin, délégations au Temple, compétitions et cérémonies officielles.
+          </motion.p>
+        </motion.div>
+      </section>
 
-          {filteredItems.length === 0 && (
-            <div className="text-center py-12">
-              <ImageIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Aucun élément dans cette catégorie.
-              </p>
-            </div>
-          )}
+      {/* Album filter */}
+      <div className="sticky top-0 z-10 border-b border-border/60 bg-background/95 backdrop-blur">
+        <div className="container mx-auto flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none">
+          {albumsWithCount.map((album) => (
+            <button
+              key={album.id}
+              onClick={() => setActiveAlbum(album.id)}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                activeAlbum === album.id
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'border border-border text-muted-foreground hover:border-primary/30 hover:text-foreground'
+              }`}
+            >
+              {album.label}
+              <span className={`rounded-full px-1.5 py-0.5 text-xs ${activeAlbum === album.id ? 'bg-white/20' : 'bg-muted'}`}>
+                {album.count}
+              </span>
+            </button>
+          ))}
         </div>
+      </div>
+
+      {/* Grid */}
+      <section className="container mx-auto px-4 py-10">
+        <motion.div
+          layout
+          className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4"
+        >
+          <AnimatePresence mode="popLayout">
+            {filtered.map((photo, i) => (
+              <motion.div
+                key={photo.src}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.25 }}
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl"
+                onClick={() => openLightbox(i)}
+              >
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <span className="absolute bottom-3 left-3 translate-y-1 text-sm font-semibold text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                  {photo.title}
+                </span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       </section>
 
       {/* Lightbox */}
       <AnimatePresence>
-        {selectedItem && (
+        {lightboxIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
             onClick={closeLightbox}
           >
-            {/* Close button */}
             <button
-              className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-10"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
               onClick={closeLightbox}
             >
-              <X className="w-6 h-6" />
-            </button>
-
-            {/* Navigation */}
-            <button
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigateLightbox('prev');
-              }}
-            >
-              <ChevronLeft className="w-6 h-6" />
+              <X className="h-5 w-5" />
             </button>
             <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigateLightbox('next');
-              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+              onClick={(e) => { e.stopPropagation(); prev(); }}
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+              onClick={(e) => { e.stopPropagation(); next(); }}
+            >
+              <ChevronRight className="h-6 w-6" />
             </button>
 
-            {/* Content */}
             <motion.div
-              key={selectedItem.id}
-              initial={{ opacity: 0, scale: 0.9 }}
+              key={lightboxIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="max-w-4xl max-h-[80vh] w-full mx-4"
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="relative mx-16 flex max-h-[85vh] max-w-5xl flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Placeholder for image/video */}
-              <div className="aspect-video bg-gradient-to-br from-primary/30 to-accent/30 rounded-lg flex items-center justify-center">
-                {selectedItem.type === 'video' ? (
-                  <div className="text-center">
-                    <Play className="w-16 h-16 text-white/50 mx-auto mb-4" />
-                    <p className="text-white/70">Vidéo: {selectedItem.title}</p>
-                  </div>
-                ) : (
-                  <ImageIcon className="w-16 h-16 text-white/50" />
-                )}
+              <div className="relative w-full" style={{ maxHeight: '75vh' }}>
+                <Image
+                  src={filtered[lightboxIndex].src}
+                  alt={filtered[lightboxIndex].alt}
+                  width={1200}
+                  height={800}
+                  className="max-h-[75vh] w-auto rounded-xl object-contain shadow-2xl"
+                  priority
+                />
               </div>
-
-              {/* Info */}
               <div className="mt-4 text-center">
-                <h3 className="text-white text-xl font-medium">{selectedItem.title}</h3>
-                <p className="text-white/60 mt-1">
-                  {selectedItem.category} • {selectedItem.year}
-                </p>
+                <p className="font-semibold text-white">{filtered[lightboxIndex].title}</p>
+                <p className="mt-1 text-sm text-white/50">{lightboxIndex + 1} / {filtered.length}</p>
               </div>
             </motion.div>
-
-            {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
-              {currentIndex + 1} / {filteredItems.length}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
