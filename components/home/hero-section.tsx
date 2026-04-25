@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, MapPin, Users, Trophy } from 'lucide-react';
@@ -174,75 +175,42 @@ export function HeroSection() {
               </div>
             ))}
 
-            {/* Main card */}
-            <div className="absolute inset-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-sm">
+            {/* Main card — real photo */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="absolute inset-8 overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+            >
+              {/* Photo */}
+              <Image
+                src="/images/ceremonies/maitre-ngom-decoration-duo.jpeg"
+                alt="Maître Ousmane Ngom — cérémonie officielle"
+                fill
+                className="object-cover object-top"
+                priority
+              />
+              {/* Subtle dark vignette bottom */}
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-primary/20" />
               {/* Top accent bar */}
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent" />
-
-              {/* Central content */}
-              <div className="flex h-full flex-col items-center justify-center p-6">
-                {/* Shaolin characters - large decorative */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.6, duration: 0.8 }}
-                  className="mb-4 text-center"
-                >
-                  <div className="font-serif text-8xl font-bold leading-none text-white/15 lg:text-9xl">
-                    少林
-                  </div>
-                </motion.div>
-
-                {/* Gold emblem circle */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.9, duration: 0.6, type: 'spring' }}
-                  className="relative mb-4 flex h-24 w-24 items-center justify-center"
-                >
-                  <div className="absolute inset-0 rounded-full border-2 border-accent/40" />
-                  <div className="absolute inset-2 rounded-full border border-accent/20" />
-                  <svg viewBox="0 0 48 48" className="h-12 w-12 text-accent/80">
-                    {/* Pagoda icon */}
-                    <path d="M24 4L10 13h28L24 4z" fill="currentColor" />
-                    <path d="M12 13v4h24v-4" fill="none" stroke="currentColor" strokeWidth="1" />
-                    <path d="M24 13L8 21h32L24 13z" fill="currentColor" opacity="0.8" />
-                    <path d="M14 21v4h20v-4" fill="none" stroke="currentColor" strokeWidth="1" />
-                    <path d="M24 21L12 29h24L24 21z" fill="currentColor" opacity="0.6" />
-                    <path d="M16 29v15h16V29" fill="none" stroke="currentColor" strokeWidth="1" />
-                    <rect x="20" y="36" width="8" height="8" fill="currentColor" opacity="0.5" />
-                  </svg>
-                </motion.div>
-
-                {/* Tagline */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1 }}
-                  className="text-center"
-                >
-                  <div className="text-sm font-semibold uppercase tracking-[0.25em] text-accent">
-                    Shaolin
-                  </div>
-                  <div className="mt-1 text-xs uppercase tracking-widest text-white/40">
-                    Fédération Sénégal
-                  </div>
-                </motion.div>
+              {/* 少林 watermark */}
+              <div className="pointer-events-none absolute right-3 top-3 select-none font-serif text-5xl font-bold text-white/10">
+                少林
               </div>
-
               {/* Bottom info strip */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.3 }}
-                className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-white/5 p-4"
+                transition={{ delay: 1.1 }}
+                className="absolute inset-x-0 bottom-0 p-4"
               >
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/50">Fondée depuis</span>
-                  <span className="font-semibold text-accent">+ de 20 ans</span>
+                  <span className="font-medium text-white/70">Maître Ousmane Ngom — ADSS</span>
+                  <span className="font-semibold text-accent">Sénégal · 少林寺</span>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
