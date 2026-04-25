@@ -1,29 +1,54 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, MapPin, Users, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 
+const floatingChars = [
+  { char: '武', x: '10%', y: '15%', size: '5rem', delay: 0 },
+  { char: '術', x: '85%', y: '10%', size: '4rem', delay: 0.4 },
+  { char: '功', x: '75%', y: '70%', size: '6rem', delay: 0.8 },
+  { char: '夫', x: '5%', y: '75%', size: '4.5rem', delay: 0.6 },
+  { char: '禪', x: '50%', y: '85%', size: '3.5rem', delay: 1.0 },
+  { char: '龍', x: '92%', y: '45%', size: '4rem', delay: 0.3 },
+];
+
 export function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] overflow-hidden bg-primary">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
+    <section className="relative min-h-[92vh] overflow-hidden bg-primary">
+      {/* Animated floating Chinese characters */}
+      <div className="pointer-events-none absolute inset-0 select-none overflow-hidden">
+        {floatingChars.map((item, i) => (
+          <motion.span
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 0.06, y: 0 }}
+            transition={{ duration: 1.2, delay: item.delay, ease: 'easeOut' }}
+            style={{ left: item.x, top: item.y, fontSize: item.size }}
+            className="absolute font-serif font-bold text-white"
+          >
+            {item.char}
+          </motion.span>
+        ))}
       </div>
 
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/90" />
+      {/* Geometric pattern */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.8'%3E%3Crect x='10' y='10' width='60' height='60'/%3E%3Crect x='20' y='20' width='40' height='40'/%3E%3Cline x1='40' y1='0' x2='40' y2='80'/%3E%3Cline x1='0' y1='40' x2='80' y2='40'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '80px 80px',
+        }}
+      />
 
-      <div className="container relative mx-auto flex min-h-[90vh] flex-col items-center justify-center px-4 py-20 lg:flex-row lg:gap-12 lg:py-0">
+      {/* Radial glow top-right */}
+      <div className="pointer-events-none absolute -right-32 -top-32 h-[600px] w-[600px] rounded-full bg-accent/10 blur-[100px]" />
+      {/* Radial glow bottom-left */}
+      <div className="pointer-events-none absolute -bottom-32 -left-32 h-[400px] w-[400px] rounded-full bg-accent/8 blur-[80px]" />
+
+      <div className="container relative mx-auto flex min-h-[92vh] flex-col items-center justify-center px-4 py-20 lg:flex-row lg:gap-16 lg:py-0">
         {/* Text Content */}
         <motion.div
           variants={STAGGER_CONTAINER}
@@ -31,38 +56,48 @@ export function HeroSection() {
           animate="visible"
           className="flex-1 text-center lg:text-left"
         >
-          <motion.div variants={FADE_IN_UP} className="mb-4">
-            <span className="inline-block rounded-full bg-accent/20 px-4 py-1.5 text-sm font-medium text-accent">
-              Arts martiaux traditionnels chinois
+          {/* Badge */}
+          <motion.div variants={FADE_IN_UP} className="mb-5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+              Reconnue par le Ministère de l&apos;Intérieur · NINEA · 少林寺
             </span>
           </motion.div>
 
+          {/* Headline */}
           <motion.h1
             variants={FADE_IN_UP}
-            className="mb-6 font-serif text-4xl font-bold leading-tight text-primary-foreground md:text-5xl lg:text-6xl"
+            className="mb-6 font-serif text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl xl:text-7xl"
           >
-            <span className="text-balance">
-              Bienvenue à la{' '}
-              <span className="text-accent">Fédération Shaolin</span> du Sénégal
+            <span className="block text-balance">Disciples</span>
+            <span className="block text-balance">
+              <span className="text-accent">Shaolin Si</span>
             </span>
+            <span className="block text-balance">Sénégal</span>
           </motion.h1>
+
+          {/* Gold divider */}
+          <motion.div variants={FADE_IN_UP} className="mb-6 flex justify-center lg:justify-start">
+            <div className="h-px w-16 bg-gradient-to-r from-accent to-accent/30" />
+          </motion.div>
 
           <motion.p
             variants={FADE_IN_UP}
-            className="mx-auto mb-8 max-w-xl text-lg leading-relaxed text-primary-foreground/80 lg:mx-0"
+            className="mx-auto mb-8 max-w-lg text-base leading-relaxed text-white/70 lg:mx-0 lg:text-lg"
           >
-            Découvrez l&apos;art millénaire du Kung Fu Shaolin. Rejoignez notre 
-            communauté de pratiquants passionnés à travers tout le Sénégal.
+            Association nationale dédiée à la promotion du Shaolin authentique,
+            directement transmis par le Temple Shaolin de Chine au Sénégal depuis 1981.
           </motion.p>
 
+          {/* CTA Buttons */}
           <motion.div
             variants={FADE_IN_UP}
-            className="flex flex-col items-center gap-4 sm:flex-row lg:justify-start"
+            className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start"
           >
             <Button
               asChild
               size="lg"
-              className="w-full bg-accent text-accent-foreground hover:bg-accent/90 sm:w-auto"
+              className="w-full bg-accent font-semibold text-accent-foreground shadow-gold hover:bg-accent/90 sm:w-auto"
             >
               <Link href="/affiliation">
                 S&apos;affilier maintenant
@@ -73,9 +108,10 @@ export function HeroSection() {
               asChild
               size="lg"
               variant="outline"
-              className="w-full border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 sm:w-auto"
+              className="w-full border-white/20 bg-white/5 text-white backdrop-blur-sm hover:border-accent/50 hover:bg-white/10 sm:w-auto"
             >
               <Link href="/carte">
+                <MapPin className="mr-2 h-4 w-4" />
                 Trouver un club
               </Link>
             </Button>
@@ -84,112 +120,129 @@ export function HeroSection() {
           {/* Quick Stats */}
           <motion.div
             variants={FADE_IN_UP}
-            className="mt-12 flex items-center justify-center gap-8 border-t border-primary-foreground/20 pt-8 lg:justify-start"
+            className="mt-12 flex items-center justify-center gap-8 border-t border-white/10 pt-8 lg:justify-start"
           >
             {[
-              { value: '2,500+', label: 'Membres actifs' },
-              { value: '45+', label: 'Clubs affiliés' },
-              { value: '14', label: 'Régions' },
+              { icon: Users, value: '1 000+', label: 'Adhérents' },
+              { icon: Trophy, value: '5', label: 'Médailles internationales' },
+              { icon: MapPin, value: '1981', label: 'Pratique au Sénégal' },
             ].map((stat) => (
-              <div key={stat.label} className="text-center lg:text-left">
-                <div className="text-2xl font-bold text-accent md:text-3xl">
-                  {stat.value}
+              <div key={stat.label} className="flex flex-col items-center gap-1 lg:items-start">
+                <div className="flex items-baseline gap-1">
+                  <stat.icon className="h-3.5 w-3.5 text-accent/70" />
+                  <span className="text-xl font-bold text-accent md:text-2xl">
+                    {stat.value}
+                  </span>
                 </div>
-                <div className="text-sm text-primary-foreground/60">
-                  {stat.label}
-                </div>
+                <span className="text-xs text-white/50">{stat.label}</span>
               </div>
             ))}
           </motion.div>
         </motion.div>
 
-        {/* Image/Visual */}
+        {/* Visual Panel */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="relative mt-12 flex-1 lg:mt-0"
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+          className="relative mt-14 flex-shrink-0 lg:mt-0"
         >
-          <div className="relative mx-auto aspect-square max-w-md lg:max-w-lg">
-            {/* Decorative circles */}
-            <div className="absolute -left-4 -top-4 h-72 w-72 rounded-full bg-accent/20 blur-3xl" />
-            <div className="absolute -bottom-4 -right-4 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-            
-            {/* Main Image Container */}
-            <div className="relative z-10 overflow-hidden rounded-2xl border-4 border-accent/30 bg-primary-foreground/5 shadow-2xl">
-              <div className="aspect-square bg-gradient-to-br from-accent/20 to-primary/50 p-8">
-                {/* Shaolin Symbol */}
-                <svg
-                  viewBox="0 0 200 200"
-                  className="h-full w-full text-primary-foreground/20"
-                >
-                  {/* Yin Yang inspired martial arts symbol */}
-                  <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" strokeWidth="3" />
-                  <circle cx="100" cy="100" r="70" fill="none" stroke="currentColor" strokeWidth="2" />
-                  <circle cx="100" cy="100" r="50" fill="none" stroke="currentColor" strokeWidth="1" />
-                  
-                  {/* Dragon path simplified */}
-                  <path
-                    d="M100 20 L100 40 M100 160 L100 180 M20 100 L40 100 M160 100 L180 100"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M40 40 L55 55 M145 145 L160 160 M160 40 L145 55 M40 160 L55 145"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  
-                  {/* Central lotus/temple */}
-                  <path
-                    d="M100 60 L80 100 L100 85 L120 100 Z"
-                    fill="currentColor"
-                    opacity="0.5"
-                  />
-                  <path
-                    d="M70 100 L100 140 L130 100 L100 120 Z"
-                    fill="currentColor"
-                    opacity="0.3"
-                  />
-                </svg>
-
-                {/* Overlay text */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="font-serif text-6xl font-bold text-accent opacity-80">
-                      少林
-                    </div>
-                    <div className="mt-2 text-sm uppercase tracking-widest text-primary-foreground/60">
-                      Shaolin
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Floating badge */}
+          <div className="relative mx-auto h-[420px] w-[340px] lg:h-[520px] lg:w-[420px]">
+            {/* Outer decorative ring */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="absolute -bottom-4 -left-4 z-20 rounded-xl bg-card p-4 shadow-lg"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
-                  <Play className="h-5 w-5 text-accent" fill="currentColor" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-foreground">
-                    Découvrir le Shaolin
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Vidéo de présentation
-                  </div>
-                </div>
+              animate={{ rotate: 360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+              className="absolute inset-0 rounded-full border border-accent/15"
+            />
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+              className="absolute inset-4 rounded-full border border-white/8"
+            />
+
+            {/* Corner ornaments */}
+            {[
+              '-top-2 -left-2 rotate-0',
+              '-top-2 -right-2 rotate-90',
+              '-bottom-2 -right-2 rotate-180',
+              '-bottom-2 -left-2 -rotate-90',
+            ].map((pos, i) => (
+              <div key={i} className={`absolute ${pos} h-6 w-6`}>
+                <svg viewBox="0 0 24 24" className="h-full w-full text-accent/50">
+                  <path d="M0 24 L0 0 L24 0" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
               </div>
-            </motion.div>
+            ))}
+
+            {/* Main card */}
+            <div className="absolute inset-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-sm">
+              {/* Top accent bar */}
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent" />
+
+              {/* Central content */}
+              <div className="flex h-full flex-col items-center justify-center p-6">
+                {/* Shaolin characters - large decorative */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6, duration: 0.8 }}
+                  className="mb-4 text-center"
+                >
+                  <div className="font-serif text-8xl font-bold leading-none text-white/15 lg:text-9xl">
+                    少林
+                  </div>
+                </motion.div>
+
+                {/* Gold emblem circle */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.9, duration: 0.6, type: 'spring' }}
+                  className="relative mb-4 flex h-24 w-24 items-center justify-center"
+                >
+                  <div className="absolute inset-0 rounded-full border-2 border-accent/40" />
+                  <div className="absolute inset-2 rounded-full border border-accent/20" />
+                  <svg viewBox="0 0 48 48" className="h-12 w-12 text-accent/80">
+                    {/* Pagoda icon */}
+                    <path d="M24 4L10 13h28L24 4z" fill="currentColor" />
+                    <path d="M12 13v4h24v-4" fill="none" stroke="currentColor" strokeWidth="1" />
+                    <path d="M24 13L8 21h32L24 13z" fill="currentColor" opacity="0.8" />
+                    <path d="M14 21v4h20v-4" fill="none" stroke="currentColor" strokeWidth="1" />
+                    <path d="M24 21L12 29h24L24 21z" fill="currentColor" opacity="0.6" />
+                    <path d="M16 29v15h16V29" fill="none" stroke="currentColor" strokeWidth="1" />
+                    <rect x="20" y="36" width="8" height="8" fill="currentColor" opacity="0.5" />
+                  </svg>
+                </motion.div>
+
+                {/* Tagline */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.1 }}
+                  className="text-center"
+                >
+                  <div className="text-sm font-semibold uppercase tracking-[0.25em] text-accent">
+                    Shaolin
+                  </div>
+                  <div className="mt-1 text-xs uppercase tracking-widest text-white/40">
+                    Fédération Sénégal
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Bottom info strip */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.3 }}
+                className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-white/5 p-4"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-white/50">Fondée depuis</span>
+                  <span className="font-semibold text-accent">+ de 20 ans</span>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -198,15 +251,15 @@ export function HeroSection() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
+        transition={{ delay: 1.5 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
         <motion.div
           animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-          className="flex h-10 w-6 items-start justify-center rounded-full border-2 border-primary-foreground/30 p-1"
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          className="flex h-9 w-5 items-start justify-center rounded-full border border-white/20 p-1"
         >
-          <div className="h-2 w-1 rounded-full bg-accent" />
+          <div className="h-2 w-0.5 rounded-full bg-accent/70" />
         </motion.div>
       </motion.div>
     </section>

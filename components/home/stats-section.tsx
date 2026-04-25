@@ -7,68 +7,75 @@ import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 const stats = [
   {
     icon: Users,
-    value: '2,500+',
-    label: 'Membres actifs',
-    description: 'Pratiquants à travers le pays',
+    value: '1 000+',
+    label: 'Adhérents',
+    description: 'Membres à travers le pays',
+    chineseChar: '人',
   },
   {
     icon: Building2,
-    value: '45+',
-    label: 'Clubs affiliés',
-    description: 'Dans toutes les régions',
+    value: '3 000+',
+    label: 'Participants aux stages',
+    description: 'Dans toutes les régions et en Gambie',
+    chineseChar: '功',
   },
   {
     icon: Trophy,
-    value: '120+',
-    label: 'Compétitions',
-    description: 'Organisées chaque année',
+    value: '5',
+    label: 'Médailles internationales',
+    description: 'Monde 2021 & Afrique 2023',
+    chineseChar: '賽',
   },
   {
     icon: Award,
-    value: '50+',
-    label: 'Médailles internationales',
-    description: 'Remportées par nos athlètes',
+    value: '3e Duan',
+    label: 'Grade Shaolin',
+    description: 'Obtenu au Temple Shaolin en Zambie',
+    chineseChar: '金',
   },
 ];
 
 export function StatsSection() {
   return (
-    <section className="relative -mt-16 z-10 px-4">
+    <section className="relative -mt-14 z-10 px-4">
       <motion.div
         variants={STAGGER_CONTAINER}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
+        viewport={{ once: true, margin: '-80px' }}
         className="container mx-auto"
       >
-        <div className="rounded-2xl bg-card p-8 shadow-xl lg:p-12">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-navy">
+          {/* Top accent line */}
+          <div className="h-1 w-full bg-gradient-to-r from-primary via-accent to-primary/50" />
+
+          <div className="grid divide-y divide-border/50 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-4 p-6 lg:p-10 gap-0">
             {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}
                 variants={FADE_IN_UP}
-                className="group relative text-center"
+                className="group relative flex flex-col items-center gap-3 p-6 text-center first:pt-0 last:pb-0 md:first:pt-6 md:last:pb-6"
               >
-                {/* Divider for desktop */}
-                {index !== 0 && (
-                  <div className="absolute left-0 top-1/2 hidden h-16 w-px -translate-y-1/2 bg-border lg:block" />
-                )}
-                
-                <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
-                  <stat.icon className="h-7 w-7" />
+                {/* Chinese watermark */}
+                <div className="pointer-events-none absolute right-3 top-3 font-serif text-5xl font-bold text-foreground/[0.03] select-none">
+                  {stat.chineseChar}
                 </div>
-                
-                <div className="mb-1 text-3xl font-bold text-foreground lg:text-4xl">
+
+                {/* Icon */}
+                <div className="inline-flex h-13 w-13 items-center justify-center rounded-xl bg-accent/8 text-accent ring-1 ring-accent/15 transition-all duration-300 group-hover:bg-accent group-hover:text-accent-foreground group-hover:ring-accent">
+                  <stat.icon className="h-6 w-6" />
+                </div>
+
+                {/* Value */}
+                <div className="text-3xl font-bold text-foreground lg:text-4xl">
                   {stat.value}
                 </div>
-                
-                <div className="mb-1 font-semibold text-foreground">
-                  {stat.label}
-                </div>
-                
-                <div className="text-sm text-muted-foreground">
-                  {stat.description}
-                </div>
+
+                {/* Label */}
+                <div className="font-semibold text-foreground/80">{stat.label}</div>
+
+                {/* Description */}
+                <div className="text-sm text-muted-foreground">{stat.description}</div>
               </motion.div>
             ))}
           </div>

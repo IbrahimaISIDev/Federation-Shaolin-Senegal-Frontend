@@ -5,6 +5,7 @@ interface LogoProps {
   className?: string;
   showText?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'light';
 }
 
 const sizeClasses = {
@@ -14,28 +15,31 @@ const sizeClasses = {
 };
 
 const textSizeClasses = {
-  sm: 'text-base',
-  md: 'text-lg',
+  sm: 'text-sm',
+  md: 'text-base',
   lg: 'text-xl',
 };
 
-export function Logo({ className, showText = true, size = 'md' }: LogoProps) {
+export function Logo({ className, showText = true, size = 'md', variant = 'default' }: LogoProps) {
   return (
     <Link
       href="/"
-      className={cn('flex items-center gap-2 transition-opacity hover:opacity-80', className)}
+      className={cn('flex items-center gap-2.5 transition-opacity hover:opacity-85', className)}
     >
       {/* Shaolin Temple Icon */}
       <div
         className={cn(
-          'relative flex items-center justify-center rounded-lg bg-primary',
+          'relative flex items-center justify-center rounded-xl border border-accent/30 bg-primary',
           sizeClasses[size]
         )}
       >
+        {/* Gold top accent line */}
+        <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl bg-gradient-to-r from-transparent via-accent to-transparent" />
+
         <svg
           viewBox="0 0 24 24"
           fill="none"
-          className="h-2/3 w-2/3 text-primary-foreground"
+          className="h-[58%] w-[58%] text-accent"
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
@@ -51,14 +55,26 @@ export function Logo({ className, showText = true, size = 'md' }: LogoProps) {
           <path d="M10 18h4v4h-4z" />
         </svg>
       </div>
-      
+
       {showText && (
         <div className="flex flex-col leading-tight">
-          <span className={cn('font-bold text-primary', textSizeClasses[size])}>
-            Fédération Shaolin
+          <span
+            className={cn(
+              'font-bold leading-none',
+              textSizeClasses[size],
+              variant === 'light' ? 'text-white' : 'text-primary'
+            )}
+          >
+            Shaolin Si Sénégal
           </span>
-          <span className={cn('text-xs font-medium text-muted-foreground', size === 'lg' && 'text-sm')}>
-            Sénégal
+          <span
+            className={cn(
+              'text-[0.65rem] font-medium tracking-wide',
+              size === 'lg' && 'text-xs',
+              variant === 'light' ? 'text-accent/80' : 'text-accent'
+            )}
+          >
+            ADSS · 少林寺
           </span>
         </div>
       )}

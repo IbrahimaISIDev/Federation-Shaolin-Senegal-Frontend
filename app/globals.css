@@ -5,30 +5,30 @@
 
 /* Fédération Shaolin Sénégal - Design System */
 :root {
-  /* Navy Blue Primary - #1E3A5F */
-  --primary: oklch(0.32 0.05 250);
+  /* Deep Navy Primary - #1A3557 */
+  --primary: oklch(0.268 0.068 245);
   --primary-foreground: oklch(0.98 0 0);
-  
-  /* Orange Accent - #FF6B35 */
-  --accent: oklch(0.68 0.18 35);
-  --accent-foreground: oklch(0.98 0 0);
-  
+
+  /* Imperial Gold Accent - #C9A84C */
+  --accent: oklch(0.742 0.138 86);
+  --accent-foreground: oklch(0.15 0.02 245);
+
   /* Background & Surfaces */
   --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0 0);
+  --foreground: oklch(0.13 0.015 245);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
+  --card-foreground: oklch(0.13 0.015 245);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  
-  /* Secondary - Lighter Navy */
-  --secondary: oklch(0.95 0.01 250);
-  --secondary-foreground: oklch(0.32 0.05 250);
-  
+  --popover-foreground: oklch(0.13 0.015 245);
+
+  /* Secondary - Soft Navy tint */
+  --secondary: oklch(0.95 0.012 245);
+  --secondary-foreground: oklch(0.268 0.068 245);
+
   /* Muted */
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  
+  --muted: oklch(0.965 0.004 245);
+  --muted-foreground: oklch(0.48 0.025 245);
+
   /* States */
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
@@ -36,37 +36,43 @@
   --success-foreground: oklch(0.98 0 0);
   --warning: oklch(0.75 0.15 85);
   --warning-foreground: oklch(0.15 0 0);
-  
+
   /* Borders & Inputs */
-  --border: oklch(0.90 0 0);
-  --input: oklch(0.90 0 0);
-  --ring: oklch(0.68 0.18 35);
-  
-  /* Charts - Federation palette */
-  --chart-1: oklch(0.32 0.05 250);
-  --chart-2: oklch(0.68 0.18 35);
+  --border: oklch(0.91 0.006 245);
+  --input: oklch(0.91 0.006 245);
+  --ring: oklch(0.742 0.138 86);
+
+  /* Charts */
+  --chart-1: oklch(0.742 0.138 86);
+  --chart-2: oklch(0.268 0.068 245);
   --chart-3: oklch(0.55 0.15 145);
-  --chart-4: oklch(0.75 0.15 85);
-  --chart-5: oklch(0.45 0.08 250);
-  
+  --chart-4: oklch(0.65 0.12 86);
+  --chart-5: oklch(0.45 0.08 245);
+
   --radius: 0.5rem;
-  
-  /* Sidebar */
-  --sidebar: oklch(0.32 0.05 250);
+
+  /* Sidebar - dark navy */
+  --sidebar: oklch(0.22 0.06 245);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.68 0.18 35);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.40 0.06 250);
+  --sidebar-primary: oklch(0.742 0.138 86);
+  --sidebar-primary-foreground: oklch(0.15 0.02 245);
+  --sidebar-accent: oklch(0.32 0.055 245);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.40 0.06 250);
-  --sidebar-ring: oklch(0.68 0.18 35);
+  --sidebar-border: oklch(0.34 0.05 245);
+  --sidebar-ring: oklch(0.742 0.138 86);
+
+  /* Brand gradients & extras */
+  --gradient-hero: linear-gradient(135deg, oklch(0.21 0.07 245) 0%, oklch(0.32 0.06 245) 100%);
+  --gradient-gold: linear-gradient(135deg, oklch(0.742 0.138 86) 0%, oklch(0.82 0.12 92) 100%);
+  --shadow-gold: 0 4px 24px oklch(0.742 0.138 86 / 0.25);
+  --shadow-navy: 0 8px 32px oklch(0.268 0.068 245 / 0.18);
 }
 
 @theme inline {
-  --font-sans: 'Inter', 'Geist', 'Geist Fallback', sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
-  
+  --font-sans: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --font-mono: var(--font-geist-mono), 'Geist Mono', ui-monospace, monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -110,10 +116,60 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: oklch(0.742 0.138 86 / 0.25);
+    color: oklch(0.13 0.015 245);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: oklch(0.97 0 0);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.268 0.068 245 / 0.4);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.268 0.068 245 / 0.7);
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+  .shadow-navy {
+    box-shadow: var(--shadow-navy);
+  }
+  .border-gold {
+    border-color: oklch(0.742 0.138 86);
   }
 }

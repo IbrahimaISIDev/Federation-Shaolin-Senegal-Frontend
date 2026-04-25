@@ -43,7 +43,7 @@ const latestNews = [
 const categoryColors: Record<string, string> = {
   COMPETITION: 'bg-accent text-accent-foreground',
   EVENEMENT: 'bg-primary text-primary-foreground',
-  ACTUALITE: 'bg-secondary text-secondary-foreground',
+  ACTUALITE: 'bg-secondary text-secondary-foreground border border-border',
   FORMATION: 'bg-success text-success-foreground',
 };
 
@@ -64,7 +64,7 @@ function formatDate(dateString: string): string {
 
 export function LatestNewsSection() {
   return (
-    <section className="bg-muted/50 py-20 lg:py-28">
+    <section className="bg-muted/40 py-20 lg:py-28">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div
@@ -77,8 +77,9 @@ export function LatestNewsSection() {
           <div>
             <motion.span
               variants={FADE_IN_UP}
-              className="mb-4 inline-block rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent"
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/8 px-4 py-1.5 text-sm font-medium text-accent"
             >
+              <span className="font-serif text-base">新</span>
               Actualités
             </motion.span>
             <motion.h2

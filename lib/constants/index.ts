@@ -5,8 +5,10 @@
 import type { NavItem, Region } from '@/lib/types';
 
 // --- Site Info ---
-export const SITE_NAME = 'Fédération Shaolin Sénégal';
-export const SITE_DESCRIPTION = 'Fédération officielle des arts martiaux Shaolin au Sénégal. Découvrez nos clubs, compétitions et rejoignez notre communauté.';
+export const SITE_NAME = 'Association Disciples Shaolin Si Sénégal';
+export const SITE_SHORT_NAME = 'ADSS';
+export const SITE_DESCRIPTION =
+  "L'Association Disciples Shaolin Si Sénégal (ADSS) — association nationale officielle reconnue par le Ministère de l'Intérieur, dédiée à la promotion et au développement des arts martiaux Shaolin au Sénégal.";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaolin-senegal.sn';
 
 // --- API ---
@@ -15,6 +17,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shao
 // --- Navigation ---
 export const PUBLIC_NAV_ITEMS: NavItem[] = [
   { label: 'Accueil', href: '/' },
+  { label: 'La Fédération', href: '/federation' },
   { label: 'Actualités', href: '/actualites' },
   { label: 'Compétitions', href: '/competitions' },
   { label: 'Galerie', href: '/galerie' },
@@ -122,11 +125,72 @@ export const SOCIAL_LINKS = {
 
 // --- Contact Info ---
 export const CONTACT_INFO = {
-  address: 'Stade Léopold Sédar Senghor, Dakar, Sénégal',
+  address: 'Siège ADSS, Dakar, Sénégal',
   phone: '+221 77 123 45 67',
   email: 'contact@shaolin-senegal.sn',
   hours: 'Lundi - Vendredi: 9h00 - 18h00',
 } as const;
+
+// --- Histoire / Timeline ADSS ---
+export interface HistoryEvent {
+  year: string;
+  title: string;
+  description: string;
+  highlight?: boolean;
+  medals?: string;
+}
+
+export const ADSS_HISTORY: HistoryEvent[] = [
+  {
+    year: '1981',
+    title: 'Naissance du Wushu au Sénégal',
+    description:
+      'Introduction du Wushu traditionnel au Sénégal — les premières graines des arts martiaux chinois sont plantées sur le sol sénégalais.',
+  },
+  {
+    year: '2014 – 2015',
+    title: 'Mission au Temple Shaolin',
+    description:
+      "La fédération envoie 8 personnes au Temple Shaolin de Chine. Parmi eux : Shifu Abdoulaye Diarra, Shifu Abdoulaye Badji et Shifu El Hadji Yaya Sène. Cette expérience forge une expertise authentique et directement transmise par le temple.",
+    highlight: true,
+  },
+  {
+    year: '2020',
+    title: 'Un nouveau tournant',
+    description:
+      "Maître Ousmane Ngom quitte ses fonctions de Directeur Technique National pour se consacrer entièrement à l'enseignement et à la promotion du Shaolin au Sénégal.",
+  },
+  {
+    year: '2021',
+    title: 'Championnat du Monde Virtuel de Shaolin',
+    description:
+      'Abdoulaye Diarra et El Hadji Yaya Sène représentent le Sénégal au Championnat du Monde Virtuel organisé par le Temple Shaolin.',
+    medals: '3 médailles d\'or · 1 médaille de bronze',
+    highlight: true,
+  },
+  {
+    year: '2023',
+    title: 'Championnats d\'Afrique en Zambie',
+    description:
+      "La délégation sénégalaise participe aux Championnats d'Afrique de Shaolin en Zambie. À l'issue des passages de grades organisés par le Temple, tous les maîtres de la délégation obtiennent le grade de 3e Duan Shaolin.",
+    medals: '2 médailles d\'or · Grade 3e Duan Shaolin',
+    highlight: true,
+  },
+  {
+    year: '2023 – 2024',
+    title: 'Stages nationaux & régionaux',
+    description:
+      'Organisation de stages nationaux dans toutes les régions du Sénégal — Dakar, Thiès, Mbour, Tivaouane, Koungheul — et en Gambie. Plus de 3 000 participants ont bénéficié de ces formations.',
+    medals: '3 000+ participants',
+  },
+  {
+    year: 'Mars 2024',
+    title: "Création officielle de l'ADSS",
+    description:
+      "Fondation de l'« Association Disciples Shaolin Si Sénégal » (ADSS). Association nationale avec plus de 1 000 adhérents, dotée d'un compte bancaire et d'un NINEA, officiellement reconnue par le Ministère de l'Intérieur du Sénégal. L'ADSS dispose d'un siège entièrement équipé, financé à hauteur de 10 millions FCFA par la société Mangane Holding.",
+    highlight: true,
+  },
+];
 
 // --- Form Validation ---
 export const VALIDATION = {
@@ -136,6 +200,79 @@ export const VALIDATION = {
   PHONE_REGEX: /^(\+221)?[0-9]{9}$/,
   LICENSE_NUMBER_REGEX: /^FSS-[A-Z]{2}-\d{6}$/,
 } as const;
+
+// --- Bureau de la Fédération ---
+export interface BureauMember {
+  id: string;
+  name: string;
+  role: string;
+  commission?: string;
+  tier: 'presidency' | 'executive' | 'commission';
+}
+
+export const BUREAU_MEMBERS: BureauMember[] = [
+  // Présidence & Direction
+  {
+    id: 'president',
+    name: 'Ousmane Ngom',
+    role: 'Président',
+    tier: 'presidency',
+  },
+  {
+    id: 'vice-president',
+    name: 'Abdoulaye Badji',
+    role: 'Vice-président',
+    tier: 'presidency',
+  },
+  {
+    id: 'tresorier',
+    name: 'Mamadou Mambi Sow',
+    role: 'Trésorier général',
+    tier: 'executive',
+  },
+  {
+    id: 'secretaire',
+    name: 'Valere Senghor',
+    role: 'Secrétaire général',
+    tier: 'executive',
+  },
+  {
+    id: 'dtn',
+    name: 'Abdoulaye Diarra',
+    role: 'Directeur Technique National',
+    tier: 'executive',
+  },
+  // Commission Organisation
+  {
+    id: 'org-president',
+    name: 'Fallou Tine',
+    role: 'Président',
+    commission: 'Commission Organisation',
+    tier: 'commission',
+  },
+  {
+    id: 'org-vice-president',
+    name: 'Coumba Danfakha',
+    role: 'Vice-président',
+    commission: 'Commission Organisation',
+    tier: 'commission',
+  },
+  // Commission Communication
+  {
+    id: 'comm-president',
+    name: 'Djiby Mangane',
+    role: 'Président',
+    commission: 'Commission Communication · Sponsoring · Marketing',
+    tier: 'commission',
+  },
+  {
+    id: 'comm-vice-president',
+    name: 'Ismaila Basse',
+    role: 'Vice-président',
+    commission: 'Commission Communication · Sponsoring · Marketing',
+    tier: 'commission',
+  },
+];
 
 // --- Animation Variants (Framer Motion) ---
 export const FADE_IN_UP = {
