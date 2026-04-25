@@ -3,7 +3,16 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Search, X, MapPin, Users, Building2, Phone, Mail, ChevronRight, RotateCcw } from 'lucide-react';
-import { SENEGAL_REGIONS, SENEGAL_GEOJSON, SENEGAL_CENTER, type RegionData } from '@/lib/data/senegal-regions';
+import { SENEGAL_REGIONS, SENEGAL_CENTER, type RegionData } from '@/lib/data/senegal-regions';
+
+// Mapping GADM NAME_1 → our internal region id
+const GADM_NAME_TO_ID: Record<string, string> = {
+  'Dakar': 'dakar', 'Diourbel': 'diourbel', 'Fatick': 'fatick',
+  'Kaffrine': 'kaffrine', 'Kaolack': 'kaolack', 'Kédougou': 'kedougou',
+  'Kolda': 'kolda', 'Louga': 'louga', 'Matam': 'matam',
+  'Saint-Louis': 'saint-louis', 'Sédhiou': 'sedhiou', 'Tambacounda': 'tambacounda',
+  'Thiès': 'thies', 'Ziguinchor': 'ziguinchor',
+};
 import { MOCK_CLUBS, searchClubs, getClubsByRegion, type Club } from '@/lib/data/mock-clubs';
 import type { Map as LeafletMap } from 'leaflet';
 
@@ -287,6 +296,7 @@ function MapInner({
   hoveredRegion,
   selectedRegion,
   visibleClubs,
+  geoJson,
   onRegionHover,
   onRegionClick,
   onClubClick,
@@ -295,6 +305,7 @@ function MapInner({
   hoveredRegion: string | null;
   selectedRegion: RegionData | null;
   visibleClubs: Club[];
+  geoJson: GeoJSON.FeatureCollection | null;
   onRegionHover: (id: string | null) => void;
   onRegionClick: (id: string) => void;
   onClubClick: (c: Club) => void;
@@ -327,8 +338,11 @@ function MapInner({
     });
   }, []);
 
+  const resolveId = (feature: GeoJSON.Feature | undefined) =>
+    GADM_NAME_TO_ID[feature?.properties?.NAME_1 as string] ?? '';
+
   const styleFeature = useCallback((feature: GeoJSON.Feature | undefined) => {
-    const id = feature?.properties?.id as string;
+    const id = resolveId(feature);
     const isSelected = selectedRegion?.id === id;
     const isHovered = hoveredRegion === id;
     return {
@@ -341,7 +355,7 @@ function MapInner({
   }, [selectedRegion, hoveredRegion]);
 
   const onEachFeature = useCallback((feature: GeoJSON.Feature, layer: import('leaflet').Layer) => {
-    const id = feature.properties?.id as string;
+    const id = resolveId(feature);
     const region = SENEGAL_REGIONS.find((r) => r.id === id);
     if (!region) return;
 
@@ -363,12 +377,14 @@ function MapInner({
         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
-      <GeoJSONLayer
-        key={`${hoveredRegion ?? ''}-${selectedRegion?.id ?? ''}`}
-        data={SENEGAL_GEOJSON as GeoJSON.FeatureCollection}
-        style={(f) => styleFeature(f)}
-        onEachFeature={onEachFeature}
-      />
+      {geoJson && (
+        <GeoJSONLayer
+          key={`${hoveredRegion ?? ''}-${selectedRegion?.id ?? ''}`}
+          data={geoJson}
+          style={(f) => styleFeature(f)}
+          onEachFeature={onEachFeature}
+        />
+      )}
       {clubIcon && visibleClubs.map((club) => (
         <Marker
           key={club.id}
@@ -399,9 +415,15 @@ export function SenegalMap({ className }: SenegalMapProps) {
   const [selectedClub, setSelectedClub]     = useState<Club | null>(null);
   const [filterType, setFilterType]         = useState<'clubs' | 'membres' | 'tous'>('tous');
   const [isMounted, setIsMounted]           = useState(false);
+  const [geoJson, setGeoJson]               = useState<GeoJSON.FeatureCollection | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
-  useEffect(() => { setIsMounted(true); }, []);
+  useEffect(() => {
+    setIsMounted(true);
+    fetch('/geojson/senegal-regions.json')
+      .then((r) => r.json())
+      .then((data) => setGeoJson(data as GeoJSON.FeatureCollection));
+  }, []);
 
   const totals = useMemo(() => ({
     clubs:   MOCK_CLUBS.length,
@@ -500,6 +522,7 @@ export function SenegalMap({ className }: SenegalMapProps) {
                 hoveredRegion={hoveredRegion}
                 selectedRegion={selectedRegion}
                 visibleClubs={visibleClubs}
+                geoJson={geoJson}
                 onRegionHover={setHoveredRegion}
                 onRegionClick={handleRegionClick}
                 onClubClick={setSelectedClub}
