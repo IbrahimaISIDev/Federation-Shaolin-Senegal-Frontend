@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Star, Shield, Users, Settings, Medal, CalendarDays, CheckCircle2, Building } from 'lucide-react';
 import { BUREAU_MEMBERS, ADSS_HISTORY, FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
@@ -19,10 +20,24 @@ function PresidencyCard({ member }: { member: BureauMember }) {
       <div className="group relative overflow-hidden rounded-2xl border border-accent/25 bg-primary p-8 text-center shadow-navy transition-all hover:shadow-gold">
         <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent" />
         <div className="pointer-events-none absolute -top-10 left-1/2 h-36 w-36 -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
-        <div className="relative mx-auto mb-5 flex h-24 w-24 items-center justify-center">
-          <div className="absolute inset-0 rounded-full border-2 border-accent/50 bg-accent/10" />
-          <div className="absolute inset-2 rounded-full border border-accent/20" />
-          <span className="relative z-10 font-serif text-3xl font-bold text-accent">{getInitials(member.name)}</span>
+        <div className="relative mx-auto mb-5 h-40 w-32 overflow-hidden">
+          {member.id === 'president' ? (
+            <Image
+              src="/images/president/maitre-ngom.png"
+              alt="Maître Ousmane Ngom, Président ADSS"
+              fill
+              className="object-contain object-bottom drop-shadow-lg"
+              priority
+            />
+          ) : (
+            <>
+              <div className="absolute inset-0 rounded-full border-2 border-accent/50 bg-accent/10" />
+              <div className="absolute inset-2 rounded-full border border-accent/20" />
+              <div className="flex h-full w-full items-center justify-center">
+                <span className="relative z-10 font-serif text-3xl font-bold text-accent">{getInitials(member.name)}</span>
+              </div>
+            </>
+          )}
         </div>
         {member.id === 'president' && (
           <div className="mb-3 flex justify-center gap-1">
@@ -170,6 +185,16 @@ export default function FederationPage() {
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-primary py-20 lg:py-28">
+        {/* Real photo background */}
+        <Image
+          src="/images/delegation/delegation-banniere-temple.jpeg"
+          alt="Délégation ADSS devant le Temple Shaolin"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        {/* Dark overlay to keep text readable */}
+        <div className="absolute inset-0 bg-primary/85" />
         <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.8'%3E%3Crect x='10' y='10' width='60' height='60'/%3E%3Crect x='20' y='20' width='40' height='40'/%3E%3C/g%3E%3C/svg%3E")`,
