@@ -1,10 +1,8 @@
 import { Metadata } from 'next';
-import dynamic from 'next/dynamic';
-import { Spinner } from '@/components/ui/spinner';
 
 export const metadata: Metadata = {
   title: 'Carte des Clubs',
-  description: 'Découvrez tous les clubs de la Fédération Shaolin Sénégal répartis dans les 14 régions du pays.',
+  description: 'Découvrez tous les clubs de l\'Association Disciples Shaolin Si Sénégal répartis dans les 14 régions du pays.',
 };
 
 import SenegalMap from '@/components/map/senegal-map';
