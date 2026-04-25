@@ -21,24 +21,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Fédération Shaolin Sénégal',
-    template: '%s | Fédération Shaolin Sénégal',
+    default: 'ADSS — Disciples Shaolin Si Sénégal',
+    template: '%s | ADSS Sénégal',
   },
-  description: 'Fédération officielle des arts martiaux Shaolin au Sénégal. Découvrez nos clubs, compétitions et rejoignez notre communauté de pratiquants.',
-  keywords: ['shaolin', 'kung fu', 'wushu', 'arts martiaux', 'sénégal', 'tai chi', 'fédération'],
-  authors: [{ name: 'Fédération Shaolin Sénégal' }],
-  creator: 'Fédération Shaolin Sénégal',
+  description:
+    "L'Association Disciples Shaolin Si Sénégal (ADSS) — association nationale reconnue par le Ministère de l'Intérieur, dédiée à la promotion du Shaolin au Sénégal.",
+  keywords: ['shaolin', 'kung fu', 'wushu', 'arts martiaux', 'sénégal', 'tai chi', 'ADSS', 'disciples shaolin', 'shaolin si'],
+  authors: [{ name: 'Association Disciples Shaolin Si Sénégal' }],
+  creator: 'ADSS — Disciples Shaolin Si Sénégal',
   openGraph: {
     type: 'website',
     locale: 'fr_SN',
-    siteName: 'Fédération Shaolin Sénégal',
-    title: 'Fédération Shaolin Sénégal',
-    description: 'Fédération officielle des arts martiaux Shaolin au Sénégal.',
+    siteName: 'ADSS — Disciples Shaolin Si Sénégal',
+    title: 'ADSS — Disciples Shaolin Si Sénégal',
+    description: "Association Disciples Shaolin Si Sénégal — arts martiaux Shaolin officiels au Sénégal.",
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Fédération Shaolin Sénégal',
-    description: 'Fédération officielle des arts martiaux Shaolin au Sénégal.',
+    title: 'ADSS — Disciples Shaolin Si Sénégal',
+    description: "Association Disciples Shaolin Si Sénégal — arts martiaux Shaolin officiels au Sénégal.",
   },
   robots: {
     index: true,

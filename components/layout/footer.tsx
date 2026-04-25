@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { Logo } from '@/components/shared/logo';
-import { SOCIAL_LINKS, CONTACT_INFO, PUBLIC_NAV_ITEMS } from '@/lib/constants';
+import { NewsletterForm } from '@/components/shared/newsletter-form';
+import { SOCIAL_LINKS, CONTACT_INFO } from '@/lib/constants';
 
 const footerLinks = {
   federation: [
@@ -35,44 +36,74 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-primary text-primary-foreground">
+    <footer className="relative overflow-hidden bg-primary text-primary-foreground">
+      {/* Subtle top accent line */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
+
+      {/* Background pattern */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.025]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.6'%3E%3Crect x='5' y='5' width='50' height='50'/%3E%3Crect x='15' y='15' width='30' height='30'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '60px 60px',
+        }}
+      />
+
+      {/* Newsletter Band */}
+      <div className="relative border-b border-white/10">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+            <div>
+              <h3 className="mb-1 font-serif text-lg font-semibold text-white">
+                Restez informé des actualités
+              </h3>
+              <p className="text-sm text-white/60">
+                Compétitions, événements, nouvelles de la fédération — directement dans votre boîte mail.
+              </p>
+            </div>
+            <NewsletterForm />
+          </div>
+        </div>
+      </div>
+
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-12 lg:py-16">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
+      <div className="relative container mx-auto px-4 py-12 lg:py-16">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <div className="mb-4">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="h-8 w-8 text-accent-foreground"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M12 2L3 7h18L12 2z" fill="currentColor" />
-                    <path d="M5 7v3h14V7" />
-                    <path d="M12 7L4 11h16L12 7z" fill="currentColor" />
-                    <path d="M6 11v3h12v-3" />
-                    <path d="M12 11L5 15h14L12 11z" fill="currentColor" />
-                    <path d="M7 15v7h10v-7" />
-                    <path d="M10 18h4v4h-4z" />
-                  </svg>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold">Fédération Shaolin</span>
-                  <span className="text-sm text-primary-foreground/70">Sénégal</span>
-                </div>
-              </Link>
+            {/* Footer logo */}
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-accent/30 bg-accent/10">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-7 w-7 text-accent"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M12 2L3 7h18L12 2z" fill="currentColor" />
+                  <path d="M5 7v3h14V7" />
+                  <path d="M12 7L4 11h16L12 7z" fill="currentColor" />
+                  <path d="M6 11v3h12v-3" />
+                  <path d="M12 11L5 15h14L12 11z" fill="currentColor" />
+                  <path d="M7 15v7h10v-7" />
+                  <path d="M10 18h4v4h-4z" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-bold text-white">Disciples Shaolin Si Sénégal</div>
+                <div className="text-xs text-accent/80">ADSS · 少林寺</div>
+              </div>
             </div>
-            <p className="mb-6 max-w-sm text-sm leading-relaxed text-primary-foreground/80">
-              La Fédération Shaolin Sénégal promeut et développe les arts martiaux chinois 
-              à travers le pays. Rejoignez notre communauté de passionnés.
+
+            <p className="mb-6 max-w-sm text-sm leading-relaxed text-white/60">
+              L&apos;Association Disciples Shaolin Si Sénégal (ADSS) promeut et développe
+              le Shaolin authentique transmis par le Temple Shaolin de Chine,
+              reconnue par le Ministère de l&apos;Intérieur.
             </p>
-            
+
             {/* Social Links */}
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               {Object.entries(SOCIAL_LINKS).map(([key, url]) => {
                 if (key === 'whatsapp') return null;
                 const Icon = socialIcons[key as keyof typeof socialIcons];
@@ -83,10 +114,10 @@ export function Footer() {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground/10 transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/60 transition-all hover:border-accent/40 hover:bg-accent/10 hover:text-accent"
                     aria-label={`Suivez-nous sur ${key}`}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4" />
                   </a>
                 );
               })}
@@ -95,7 +126,7 @@ export function Footer() {
 
           {/* Links Columns */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">
+            <h3 className="mb-5 text-xs font-semibold uppercase tracking-[0.15em] text-accent/80">
               La Fédération
             </h3>
             <ul className="space-y-3">
@@ -103,8 +134,9 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-primary-foreground/70 transition-colors hover:text-accent"
+                    className="group flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-accent"
                   >
+                    <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
                     {link.label}
                   </Link>
                 </li>
@@ -113,7 +145,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">
+            <h3 className="mb-5 text-xs font-semibold uppercase tracking-[0.15em] text-accent/80">
               Membres
             </h3>
             <ul className="space-y-3">
@@ -121,8 +153,9 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-primary-foreground/70 transition-colors hover:text-accent"
+                    className="group flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-accent"
                   >
+                    <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
                     {link.label}
                   </Link>
                 </li>
@@ -131,29 +164,29 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">
+            <h3 className="mb-5 text-xs font-semibold uppercase tracking-[0.15em] text-accent/80">
               Contact
             </h3>
             <ul className="space-y-3">
-              <li className="flex items-start gap-2 text-sm text-primary-foreground/70">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+              <li className="flex items-start gap-2.5 text-sm text-white/55">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent/50" />
                 <span>{CONTACT_INFO.address}</span>
               </li>
               <li>
                 <a
                   href={`tel:${CONTACT_INFO.phone}`}
-                  className="flex items-center gap-2 text-sm text-primary-foreground/70 transition-colors hover:text-accent"
+                  className="flex items-center gap-2.5 text-sm text-white/55 transition-colors hover:text-accent"
                 >
-                  <Phone className="h-4 w-4" />
+                  <Phone className="h-4 w-4 shrink-0 text-accent/50" />
                   {CONTACT_INFO.phone}
                 </a>
               </li>
               <li>
                 <a
                   href={`mailto:${CONTACT_INFO.email}`}
-                  className="flex items-center gap-2 text-sm text-primary-foreground/70 transition-colors hover:text-accent"
+                  className="flex items-center gap-2.5 text-sm text-white/55 transition-colors hover:text-accent"
                 >
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-4 w-4 shrink-0 text-accent/50" />
                   {CONTACT_INFO.email}
                 </a>
               </li>
@@ -163,14 +196,17 @@ export function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-primary-foreground/10">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-6 text-sm text-primary-foreground/60 md:flex-row">
-          <p>&copy; {currentYear} Fédération Shaolin Sénégal. Tous droits réservés.</p>
-          <div className="flex gap-6">
-            <Link href="/mentions-legales" className="hover:text-accent">
+      <div className="relative border-t border-white/8">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-white/40 md:flex-row">
+          <p>&copy; {currentYear} Association Disciples Shaolin Si Sénégal (ADSS). Tous droits réservés.</p>
+          <div className="flex items-center gap-1 font-serif text-base text-accent/30">
+            少林拳
+          </div>
+          <div className="flex gap-5">
+            <Link href="/mentions-legales" className="transition-colors hover:text-accent/70">
               Mentions légales
             </Link>
-            <Link href="/confidentialite" className="hover:text-accent">
+            <Link href="/confidentialite" className="transition-colors hover:text-accent/70">
               Confidentialité
             </Link>
           </div>
