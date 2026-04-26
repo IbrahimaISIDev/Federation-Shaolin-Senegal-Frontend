@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Logo } from '@/components/shared/logo';
 
 export default function AuthLayout({
@@ -24,26 +25,18 @@ export default function AuthLayout({
         <div className="relative flex h-full flex-col justify-between p-12">
           <div>
             <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="h-8 w-8 text-accent-foreground"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M12 2L3 7h18L12 2z" fill="currentColor" />
-                  <path d="M5 7v3h14V7" />
-                  <path d="M12 7L4 11h16L12 7z" fill="currentColor" />
-                  <path d="M6 11v3h12v-3" />
-                  <path d="M12 11L5 15h14L12 11z" fill="currentColor" />
-                  <path d="M7 15v7h10v-7" />
-                  <path d="M10 18h4v4h-4z" />
-                </svg>
+              <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-accent/30">
+                <Image
+                  src="/images/logo-adss.jpeg"
+                  alt="Logo ADSS"
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-primary-foreground">Fédération Shaolin</span>
-                <span className="text-sm text-primary-foreground/70">Sénégal</span>
+                <span className="text-lg font-bold text-primary-foreground">Disciples Shaolin Si Sénégal</span>
+                <span className="text-sm text-accent/80">ADSS · 少林寺</span>
               </div>
             </Link>
           </div>
@@ -58,7 +51,7 @@ export default function AuthLayout({
           </div>
 
           <div className="text-sm text-primary-foreground/50">
-            &copy; {new Date().getFullYear()} Fédération Shaolin Sénégal
+            &copy; {new Date().getFullYear()} Association Disciples Shaolin Si Sénégal
           </div>
         </div>
       </div>
