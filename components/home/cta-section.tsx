@@ -52,7 +52,7 @@ export function CTASection() {
               className="mb-4 font-serif text-3xl font-bold text-white md:text-4xl lg:text-5xl"
             >
               <span className="text-balance">
-                Prêt à commencer votre voyage dans les arts martiaux&nbsp;?
+                Prêt à commencer votre voyage avec shaolin si Sénégal
               </span>
             </motion.h2>
 
