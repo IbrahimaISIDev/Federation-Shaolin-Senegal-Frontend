@@ -50,6 +50,7 @@ const photos: Photo[] = [
   { src: '/images/ceremonies/partenariat-tecno-cheque.jpeg', alt: 'Remise du chèque — partenariat Tecno', title: 'Partenariat Tecno', album: 'ceremonies' },
   { src: '/images/ceremonies/remise-trophee.jpeg', alt: 'Remise d\'un trophée', title: 'Remise de trophée', album: 'ceremonies' },
   { src: '/images/ceremonies/maitre-ngom-decoration-duo.jpeg', alt: 'Maître Ngom — décoration officielle (duo)', title: 'Cérémonie officielle', album: 'ceremonies' },
+  { src: '/images/ceremonies/maitre-ngom-moine-shaolin.jpeg', alt: 'Maître Ngom aux côtés d\'un moine Shaolin', title: 'Maître Ngom & Moine Shaolin', album: 'ceremonies' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
