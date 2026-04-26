@@ -184,14 +184,14 @@ export function HeroSection() {
             >
               {/* Photo */}
               <Image
-                src="/images/ceremonies/maitre-ngom-decoration-duo.jpeg"
-                alt="Maître Ousmane Ngom — cérémonie officielle"
+                src="/images/president/maitre-ngom.png"
+                alt="Maître Ousmane Ngom, Président ADSS"
                 fill
-                className="object-cover object-top"
+                className="object-contain object-bottom"
                 priority
               />
-              {/* Subtle dark vignette bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-primary/20" />
+              {/* Gradient pour fondre la silhouette en bas */}
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent" />
               {/* Top accent bar */}
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent" />
               {/* 少林 watermark */}
