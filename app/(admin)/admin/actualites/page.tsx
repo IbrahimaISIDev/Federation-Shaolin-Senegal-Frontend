@@ -45,6 +45,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { ExportButton } from '@/components/shared/export-button';
 
 type ArticleCategory = 'ACTUALITE' | 'EVENEMENT' | 'COMPETITION' | 'FORMATION';
 
@@ -67,6 +68,17 @@ const categoryConfig: Record<ArticleCategory, { label: string; color: string }> 
 function formatDate(dateString: string): string {
     if (!dateString) return '—';
     return new Date(dateString).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function getArticlesForExport() {
+    return mockArticles.map((a) => ({
+        title: a.title,
+        slug: a.slug,
+        category: a.category,
+        status: a.isPublished ? 'Publié' : 'Brouillon',
+        author: a.author,
+        publishedAt: a.publishedAt || '',
+    }));
 }
 
 export default function AdminActualitesPage() {
@@ -93,12 +105,15 @@ export default function AdminActualitesPage() {
                     <h1 className="text-2xl font-bold text-foreground">Actualités</h1>
                     <p className="text-muted-foreground">Gérez les articles et annonces de la fédération.</p>
                 </div>
-                <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
-                    <Link href="/admin/actualites/nouvelle">
-                        <FilePlus className="w-4 h-4" />
-                        <span className="hidden sm:inline">Nouvel article</span>
-                    </Link>
-                </Button>
+                <div className="flex gap-2">
+                    <ExportButton entity="actualites" getData={getArticlesForExport} />
+                    <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
+                        <Link href="/admin/actualites/nouvelle">
+                            <FilePlus className="w-4 h-4" />
+                            <span className="hidden sm:inline">Nouvel article</span>
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}

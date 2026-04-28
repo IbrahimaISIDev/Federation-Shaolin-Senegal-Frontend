@@ -43,6 +43,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { ExportButton } from '@/components/shared/export-button';
 
 const mockClubs = [
     { id: '1', code: 'TSK-001', name: 'Temple Shaolin Dakar', region: 'Dakar', city: 'Dakar', president: 'Cheikh Diallo', memberCount: 145, phone: '771234567', email: 'tsdk@email.com', isActive: true, createdAt: '2019-03-15' },
@@ -55,6 +56,21 @@ const mockClubs = [
 
 function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function getClubsForExport() {
+    return mockClubs.map((c) => ({
+        code: c.code,
+        name: c.name,
+        region: c.region,
+        city: c.city,
+        phone: c.phone,
+        email: c.email,
+        presidentName: c.president,
+        membersCount: c.memberCount,
+        status: c.isActive ? 'Actif' : 'Inactif',
+        createdAt: c.createdAt,
+    }));
 }
 
 export default function AdminClubsPage() {
@@ -85,12 +101,15 @@ export default function AdminClubsPage() {
                     <h1 className="text-2xl font-bold text-foreground">Clubs</h1>
                     <p className="text-muted-foreground">Gérez les clubs affiliés à la fédération.</p>
                 </div>
-                <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
-                    <Link href="/admin/clubs/nouveau">
-                        <PlusCircle className="w-4 h-4" />
-                        <span className="hidden sm:inline">Nouveau club</span>
-                    </Link>
-                </Button>
+                <div className="flex gap-2">
+                    <ExportButton entity="clubs" getData={getClubsForExport} />
+                    <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
+                        <Link href="/admin/clubs/nouveau">
+                            <PlusCircle className="w-4 h-4" />
+                            <span className="hidden sm:inline">Nouveau club</span>
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}

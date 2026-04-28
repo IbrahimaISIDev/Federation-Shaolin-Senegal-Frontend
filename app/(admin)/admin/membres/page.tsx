@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ExportButton } from '@/components/shared/export-button';
 
 // Mock members data
 const mockMembers = [
@@ -68,6 +69,23 @@ function formatDate(dateString: string): string {
     month: 'short',
     year: 'numeric',
   });
+}
+
+// Reshape for Excel
+function getMembersForExport() {
+  return mockMembers.map((m) => ({
+    firstName: m.firstName,
+    lastName: m.lastName,
+    email: m.email,
+    phone: m.phone,
+    clubName: m.club,
+    region: m.region,
+    discipline: m.discipline,
+    grade: '',
+    status: m.status,
+    licenseNumber: m.licenseNumber,
+    registeredAt: m.registrationDate,
+  }));
 }
 
 export default function AdminMembersPage() {
@@ -110,10 +128,7 @@ export default function AdminMembersPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Exporter</span>
-          </Button>
+          <ExportButton entity="membres" getData={getMembersForExport} />
           <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
             <Link href="/admin/membres/nouveau">
               <UserPlus className="w-4 h-4" />

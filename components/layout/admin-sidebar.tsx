@@ -12,6 +12,7 @@ import {
     Trophy,
     Image,
     Settings,
+    BarChart3,
     X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,7 @@ const adminNavItems = [
     { href: '/admin/actualites', label: 'Actualités', icon: Newspaper },
     { href: '/admin/competitions', label: 'Compétitions', icon: Trophy },
     { href: '/admin/galerie', label: 'Galerie', icon: Image },
+    { href: '/admin/rapports', label: 'Rapports', icon: BarChart3 },
     { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
 ];
 
