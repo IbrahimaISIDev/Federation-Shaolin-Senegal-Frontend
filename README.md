@@ -16,16 +16,15 @@
 3. [Stack technique](#-stack-technique)
 4. [Architecture du projet](#-architecture-du-projet)
 5. [Routes et pages](#-routes-et-pages)
-6. [Composants](#-composants)
-7. [Bibliothèques et utilitaires](#-bibliothèques-et-utilitaires)
-8. [Installation et démarrage](#-installation-et-démarrage)
-9. [Variables d'environnement](#-variables-denvironnement)
-10. [Scripts disponibles](#-scripts-disponibles)
-11. [Déploiement](#-déploiement)
-12. [Conventions de développement](#-conventions-de-développement)
-13. [Feuille de route](#-feuille-de-route)
-14. [Contribuer](#-contribuer)
-15. [Licence](#-licence)
+6. [Composants clés](#-composants-clés)
+7. [Installation et démarrage](#-installation-et-démarrage)
+8. [Variables d'environnement](#-variables-denvironnement)
+9. [Scripts disponibles](#-scripts-disponibles)
+10. [Déploiement](#-déploiement)
+11. [Conventions de développement](#-conventions-de-développement)
+12. [Feuille de route](#-feuille-de-route)
+13. [Contribuer](#-contribuer)
+14. [Licence](#-licence)
 
 ---
 
@@ -46,8 +45,8 @@ Ce projet est le **frontend** de la plateforme. Il consomme une API REST externe
 
 ### 🌍 Espace Public
 - **Page d'accueil** : Hero section, présentation de la fédération, statistiques clés, clubs vedettes, actualités récentes.
-- **Actualités** : Liste des articles avec filtres par catégorie et pagination.
-- **Compétitions** : Calendrier des compétitions avec filtres et détail de chaque événement.
+- **Actualités** : Liste des articles avec filtres par catégorie et pagination. Détail de chaque article.
+- **Compétitions** : Calendrier des compétitions avec filtres et formulaire d'inscription.
 - **Galerie** : Galerie photo/vidéo organisée par album.
 - **Carte interactive** : Visualisation des clubs sur une carte Leaflet/OpenStreetMap avec les 14 régions du Sénégal.
 - **Clubs** : Annuaire des clubs affiliés avec recherche et filtres.
@@ -64,14 +63,63 @@ Ce projet est le **frontend** de la plateforme. Il consomme une API REST externe
 - Page de **connexion** (email/mot de passe).
 - Gestion de session via JWT (tokens stockés en mémoire/httpOnly cookie côté API).
 
-### 🏢 Back-office Administrateur
-- **Layout modulaire** : Sidebar responsive (desktop + mobile menu hamburger) et header avec notifications.
-- **Tableau de bord** : KPIs en temps réel (membres, clubs, licences), graphique "Membres par région" (Recharts), tableau des inscriptions récentes, et section "Actions urgentes".
-- **Gestion des Membres** : (à venir) — CRUD complet.
-- **Gestion des Clubs** : (à venir) — CRUD complet.
-- **Gestion des Licences** : (à venir).
-- **Gestion des Actualités** : (à venir) — Éditeur riche.
-- **Gestion des Compétitions** : (à venir).
+### 🏢 Back-office Administrateur ✅ Complet
+
+#### Tableau de bord (`/admin`)
+- KPIs en temps réel (membres, clubs, licences actives, nouvelles inscriptions).
+- Graphique **Membres par région** (Recharts — BarChart).
+- **Actions urgentes dynamiques** : calculées depuis les vraies données (membres en attente, licences expirées, articles en brouillon). Chaque action est cliquable et redirige vers la page concernée. Badge de comptage et état vert si tout est à jour.
+- Tableau des **inscriptions récentes** avec statut.
+
+#### Gestion des Membres (`/admin/membres`)
+- Liste avec recherche, filtres (statut, région), tri.
+- Tableau paginé avec actions par ligne (voir, modifier, supprimer).
+- Création (`/admin/membres/nouveau`) : formulaire complet avec **photo de profil** via MediaPicker.
+- Édition (`/admin/membres/[id]/modifier`) : pré-remplissage des données, MediaPicker.
+- **Export Excel** (`shaolin_membres.xlsx`) en un clic.
+
+#### Gestion des Clubs (`/admin/clubs`)
+- Liste avec recherche, filtre statut/région, statistiques (total, actifs, membres, régions).
+- Création (`/admin/clubs/nouveau`) : formulaire avec **logo du club** via MediaPicker.
+- Édition (`/admin/clubs/[id]/modifier`) : mise à jour complète avec logo.
+- **Export Excel** (`shaolin_clubs.xlsx`).
+
+#### Gestion des Actualités (`/admin/actualites`)
+- Liste avec filtres (statut publié/brouillon, catégorie), vues totales.
+- Création (`/admin/actualites/nouvelle`) : éditeur avec **image de couverture** via MediaPicker, catégorie, statut.
+- Édition (`/admin/actualites/[id]/modifier`) : mise à jour complète.
+- **Export Excel** (`shaolin_actualites.xlsx`).
+
+#### Gestion des Compétitions (`/admin/competitions`)
+- Liste avec statuts (à venir, inscriptions ouvertes, terminée).
+- Recherche full-text, statistiques par statut.
+- Actions par ligne (voir, modifier, supprimer).
+- **Export Excel** (`shaolin_competitions.xlsx`).
+
+#### Bibliothèque Médias (`/admin/galerie`)
+- Grille de tous les médias uploadés (images, vidéos).
+- Filtres par type, recherche par nom.
+- Upload de nouveaux médias (dialog).
+- Suppression.
+
+#### Rapports & Statistiques (`/admin/rapports`)
+- KPIs globaux (membres, clubs, inscriptions mensuelles, taux de renouvellement).
+- Graphique linéaire des inscriptions par mois.
+- Histogramme des membres par région.
+- Répartition par discipline (barres de progression).
+- Filtre par année.
+- **Multi-export Excel** (dropdown : Membres, Clubs, Compétitions, Actualités, Licences).
+
+#### Paramètres (`/admin/parametres`)
+- Informations générales de la fédération (nom, contact, site web).
+- Gestion des notifications (interrupteurs).
+- Sécurité (changement de mot de passe, 2FA).
+- Export CSV des données.
+
+#### Composants partagés Admin
+- **`MediaPicker`** : Sélecteur d'image réutilisable (dialog avec bibliothèque + upload) intégré dans tous les formulaires.
+- **`ExportButton`** : Bouton d'export Excel one-click par entité.
+- **`MultiExportButton`** : Dropdown pour exporter plusieurs entités depuis la page Rapports.
 
 ---
 
@@ -91,6 +139,7 @@ Ce projet est le **frontend** de la plateforme. Il consomme une API REST externe
 | Carte | Leaflet + React Leaflet | 1.9 / 5.0 |
 | Animations | Framer Motion | 12.x |
 | Icônes | Lucide React | 0.564 |
+| Export Excel | SheetJS (xlsx) | 0.18.5 |
 | State global | Zustand | 5.x |
 | Thème | next-themes | 0.4 |
 | Analytics | @vercel/analytics | 1.6 |
@@ -103,148 +152,180 @@ Ce projet est le **frontend** de la plateforme. Il consomme une API REST externe
 ```
 Shaolin_Frontend/
 ├── app/                          # Next.js App Router
-│   ├── (public)/                 # Routes publiques (sans authentification)
+│   ├── (public)/                 # Routes publiques
 │   │   ├── page.tsx              # Page d'accueil
-│   │   ├── actualites/           # Blog / Actualités
-│   │   ├── affiliation/          # Formulaire d'affiliation multi-étapes
-│   │   ├── carte/                # Carte interactive des clubs
-│   │   ├── clubs/                # Annuaire des clubs
-│   │   ├── competitions/         # Calendrier des compétitions
+│   │   ├── actualites/           # Blog / Actualités + [slug]
+│   │   ├── affiliation/          # Formulaire multi-étapes
+│   │   ├── carte/                # Carte interactive
+│   │   ├── clubs/                # Annuaire + [id]
+│   │   ├── competitions/         # Calendrier + [id] + inscription
 │   │   ├── contact/              # Formulaire de contact
 │   │   └── galerie/              # Galerie média
-│   ├── (auth)/                   # Route groupe pour l'authentification
+│   ├── (auth)/
 │   │   └── connexion/            # Page de connexion
-│   ├── (membre)/                 # Zone privée membre (authentification requise)
+│   ├── (membre)/
 │   │   └── membre/
-│   │       ├── profil/           # Profil membre
-│   │       ├── licence/          # Gestion de la licence
-│   │       └── competitions/     # Compétitions du membre
-│   ├── (admin)/                  # Zone privée admin (rôle ADMIN requis)
+│   │       ├── profil/
+│   │       ├── licence/
+│   │       └── competitions/
+│   ├── (admin)/
 │   │   ├── layout.tsx            # Layout admin: sidebar + header
 │   │   └── admin/
-│   │       └── page.tsx          # Tableau de bord admin
-│   ├── globals.css               # Styles globaux & design tokens Tailwind
-│   └── layout.tsx                # Root layout (providers, fonts, analytics)
+│   │       ├── page.tsx          # Tableau de bord (dynamique)
+│   │       ├── membres/          # CRUD membres
+│   │       │   ├── page.tsx
+│   │       │   ├── nouveau/
+│   │       │   └── [id]/         # Voir + Modifier
+│   │       ├── clubs/            # CRUD clubs
+│   │       │   ├── page.tsx
+│   │       │   ├── nouveau/
+│   │       │   └── [id]/
+│   │       ├── actualites/       # CRUD actualités
+│   │       │   ├── page.tsx
+│   │       │   ├── nouvelle/
+│   │       │   └── [id]/
+│   │       ├── competitions/     # Gestion compétitions
+│   │       ├── galerie/          # Bibliothèque médias
+│   │       ├── rapports/         # Statistiques + multi-export
+│   │       └── parametres/       # Configuration
+│   ├── globals.css
+│   └── layout.tsx
 │
 ├── components/
 │   ├── ui/                       # ~57 composants shadcn/ui
-│   ├── layout/                   # Composants de mise en page
-│   │   ├── admin-sidebar.tsx     # Sidebar admin (desktop + mobile)
-│   │   ├── admin-header.tsx      # Header admin (notifications, profil)
-│   │   ├── navbar.tsx            # Navigation publique
-│   │   └── footer.tsx            # Pied de page
-│   ├── home/                     # Sections de la page d'accueil
-│   ├── affiliation/              # Composants du formulaire d'affiliation
-│   │   ├── affiliation-form.tsx  # Formulaire multi-étapes principal
-│   │   └── steps/                # 5 étapes du formulaire
+│   ├── layout/
+│   │   ├── admin-sidebar.tsx     # Sidebar avec tous les liens
+│   │   ├── admin-header.tsx
+│   │   ├── navbar.tsx
+│   │   └── footer.tsx
+│   ├── home/                     # Sections page d'accueil
+│   ├── affiliation/              # Formulaire multi-étapes (5 étapes)
 │   ├── map/
-│   │   └── senegal-map.tsx       # Carte Leaflet interactive
+│   │   └── senegal-map.tsx
 │   └── shared/
-│       └── logo.tsx              # Composant Logo réutilisable
+│       ├── logo.tsx
+│       ├── media-picker.tsx      # ✅ Sélecteur médias réutilisable
+│       └── export-button.tsx     # ✅ Boutons export Excel
 │
 ├── lib/
-│   ├── api/                      # Services API (axios + React Query)
-│   ├── constants/                # Constantes globales (régions, disciplines, etc.)
-│   ├── data/                     # Données statiques (GeoJSON régions Sénégal)
-│   ├── providers/                # Providers React (QueryClient, Theme)
-│   ├── store/                    # Stores Zustand (état global)
-│   ├── types/                    # Types TypeScript globaux
-│   ├── validations/              # Schémas de validation Zod
-│   └── utils.ts                  # Utilitaires (cn, etc.)
+│   ├── api/                      # Services API
+│   ├── constants/                # Régions, disciplines, grades…
+│   ├── data/                     # GeoJSON Sénégal
+│   ├── providers/
+│   ├── store/                    # Zustand stores
+│   ├── types/
+│   ├── validations/              # Schémas Zod
+│   ├── utils/
+│   │   └── export-excel.ts       # ✅ Utilitaire SheetJS
+│   └── utils.ts
 │
-├── public/                       # Assets statiques
-├── styles/                       # Fichiers CSS additionnels
-├── next.config.mjs               # Configuration Next.js
-├── tsconfig.json                 # Configuration TypeScript
-└── package.json                  # Dépendances
+├── public/
+├── next.config.mjs
+├── tsconfig.json
+└── package.json
 ```
 
 ---
 
 ## 🗺 Routes et pages
 
-| Route | Groupe | Description | Auth requise |
-|---|---|---|---|
-| `/` | Public | Page d'accueil | Non |
-| `/actualites` | Public | Liste des actualités | Non |
-| `/actualites/[slug]` | Public | Détail d'un article | Non |
-| `/competitions` | Public | Calendrier des compétitions | Non |
-| `/galerie` | Public | Galerie photos/vidéos | Non |
-| `/carte` | Public | Carte interactive des clubs | Non |
-| `/clubs` | Public | Annuaire des clubs affiliés | Non |
-| `/contact` | Public | Formulaire de contact | Non |
-| `/affiliation` | Public | Formulaire d'inscription | Non |
-| `/connexion` | Auth | Page de connexion | Non |
-| `/membre` | Membre | Tableau de bord membre | Oui (MEMBRE) |
-| `/membre/profil` | Membre | Profil et paramètres | Oui (MEMBRE) |
-| `/membre/licence` | Membre | Licence sportive | Oui (MEMBRE) |
-| `/membre/competitions` | Membre | Inscriptions compétitions | Oui (MEMBRE) |
-| `/admin` | Admin | Tableau de bord admin | Oui (ADMIN) |
-| `/admin/membres` | Admin | Gestion des membres | Oui (ADMIN) |
-| `/admin/clubs` | Admin | Gestion des clubs | Oui (ADMIN) |
-| `/admin/licences` | Admin | Gestion des licences | Oui (ADMIN) |
-| `/admin/actualites` | Admin | Gestion du blog | Oui (ADMIN) |
-| `/admin/competitions` | Admin | Gestion des compétitions | Oui (ADMIN) |
+### Espace Public
 
----
+| Route | Description |
+|---|---|
+| `/` | Page d'accueil |
+| `/actualites` | Liste des actualités |
+| `/actualites/[slug]` | Détail d'un article |
+| `/competitions` | Calendrier des compétitions |
+| `/competitions/[id]` | Détail d'une compétition |
+| `/competitions/[id]/inscription` | Formulaire d'inscription |
+| `/galerie` | Galerie photos/vidéos |
+| `/carte` | Carte interactive des clubs |
+| `/clubs` | Annuaire des clubs |
+| `/clubs/[id]` | Détail d'un club |
+| `/contact` | Formulaire de contact |
+| `/affiliation` | Formulaire d'inscription |
 
-## 🧩 Composants
+### Espace Membre
 
-### Formulaire d'affiliation (`/affiliation`)
-
-Le formulaire d'affiliation est une `multi-step form` composée de **5 étapes** :
-
-| Étape | Composant | Champs |
-|---|---|---|
-| 1 | `PersonalInfoStep` | Prénom, Nom, Email, Téléphone, Date de naissance, Sexe, Nationalité |
-| 2 | `AddressStep` | Adresse, Ville, Région, Code postal |
-| 3 | `ClubSelectionStep` | Club, Discipline, Niveau, Expérience |
-| 4 | `MedicalInfoStep` | Contact d'urgence, Groupe sanguin, Conditions médicales, Certificat médical |
-| 5 | `DocumentsStep` | Consentement photo, CGU, Règlement intérieur |
-
-- Validation step-by-step avec **Zod** et **React Hook Form** (`useFormContext`).
-- Gestion de l'état centralisée dans `AffiliationForm` via `FormProvider`.
-- Animations de transition entre les étapes via **Framer Motion**.
-
-### Carte interactive (`/carte`)
-
-- Composant `SenegalMap` utilisant **Leaflet** et **React Leaflet**.
-- Affiche les 14 régions du Sénégal avec les marqueurs de chaque club.
-- Popup de détail au survol/clic sur un marqueur.
-- Panneau latéral avec les statistiques de la région sélectionnée.
-- Grille récapitulative de toutes les régions triée par nombre de membres.
+| Route | Description |
+|---|---|
+| `/connexion` | Page de connexion |
+| `/membre` | Tableau de bord membre |
+| `/membre/profil` | Profil et paramètres |
+| `/membre/licence` | Licence sportive |
+| `/membre/competitions` | Inscriptions compétitions |
 
 ### Back-office Admin
 
-- **`AdminSidebar`** : Navigation verticale avec groupes de liens (Tableau de bord, Membres, Clubs, Licences, Contenu, Paramètres). Gère le mode collapsed/expanded et le menu hamburger mobile.
-- **`AdminHeader`** : Barre supérieure avec bouton menu mobile, titre de page, badge notifications, et menu déroulant utilisateur.
-- **Dashboard** : Grille de 4 KPIs, graphique en barres (Recharts), section "Actions urgentes", tableau des inscriptions récentes.
+| Route | Description |
+|---|---|
+| `/admin` | Tableau de bord (dynamique) |
+| `/admin/membres` | Liste membres + export Excel |
+| `/admin/membres/nouveau` | Créer un membre |
+| `/admin/membres/[id]` | Voir un membre |
+| `/admin/membres/[id]/modifier` | Modifier un membre |
+| `/admin/clubs` | Liste clubs + export Excel |
+| `/admin/clubs/nouveau` | Créer un club |
+| `/admin/clubs/[id]/modifier` | Modifier un club |
+| `/admin/actualites` | Liste articles + export Excel |
+| `/admin/actualites/nouvelle` | Créer un article |
+| `/admin/actualites/[id]/modifier` | Modifier un article |
+| `/admin/competitions` | Liste compétitions + export Excel |
+| `/admin/galerie` | Bibliothèque de médias |
+| `/admin/rapports` | Statistiques + multi-export Excel |
+| `/admin/parametres` | Configuration générale |
 
 ---
 
-## 📚 Bibliothèques et utilitaires
+## 🧩 Composants clés
 
-### `lib/constants`
+### `MediaPicker` (`components/shared/media-picker.tsx`)
 
-Contient les constantes globales du projet :
-- `SENEGAL_REGIONS` / `REGIONS` — Les 14 régions avec coordonnées GPS.
-- `DISCIPLINES` — Disciplines d'arts martiaux (`{ id, name }`).
-- `LEVELS` — Niveaux de pratique (Débutant → Expert).
-- `GRADES` — Grades/ceintures.
-- `PAYMENT_METHODS` — Méthodes de paiement (Wave, Orange Money, etc.).
-- `LICENSE_FEES` — Tarifs de licence (nouvelle / renouvellement).
-- `PUBLIC_NAV_ITEMS`, `ADMIN_NAV_ITEMS` — Éléments de navigation.
-- `VALIDATION` — Règles de validation communes (regex, longueurs).
-- `FADE_IN_UP`, `STAGGER_CONTAINER`, `SCALE_IN` — Variantes d'animation Framer Motion.
+Sélecteur d'image réutilisable dans tous les formulaires admin. Ouvre une boîte de dialogue permettant de parcourir la bibliothèque existante ou d'uploader un nouveau fichier.
 
-### `lib/validations`
+```tsx
+<MediaPicker
+  label="Photo de profil"
+  value={watch('photo')}
+  onChange={(url) => setValue('photo', url)}
+  helperText="Format carré recommandé"
+/>
+```
 
-Schémas Zod par domaine fonctionnel :
-- `affiliation.ts` — Validation des 5 étapes du formulaire d'affiliation.
+### `ExportButton` / `MultiExportButton` (`components/shared/export-button.tsx`)
 
-### `lib/data/senegal-regions.ts`
+Composants d'export Excel basés sur SheetJS. Les en-têtes de colonnes sont localisés en français.
 
-Données GeoJSON simplifiées des 14 régions du Sénégal pour la carte Leaflet, incluant les polygones de frontières approximatifs.
+```tsx
+// Export simple (une entité)
+<ExportButton entity="membres" getData={getMembersData} />
+
+// Export multiple (dropdown)
+<MultiExportButton exports={[
+  { label: 'Membres', entity: 'membres', getData: () => data },
+  { label: 'Clubs', entity: 'clubs', getData: () => clubs },
+]} />
+```
+
+### `computePendingActions()` (`app/(admin)/admin/page.tsx`)
+
+Calcule les actions urgentes dynamiquement :
+1. Membres en attente de validation (`status === 'pending'`)
+2. Licences expirées ou sur le point d'expirer
+3. Articles en brouillon non publiés
+
+### Formulaire d'affiliation (`/affiliation`)
+
+Formulaire multi-étapes (5 étapes) :
+
+| Étape | Champs |
+|---|---|
+| 1 — Identité | Prénom, Nom, Email, Téléphone, Date de naissance, Sexe, Nationalité |
+| 2 — Adresse | Adresse, Ville, Région, Code postal |
+| 3 — Club | Club, Discipline, Niveau, Expérience |
+| 4 — Médical | Contact urgence, Groupe sanguin, Certificat médical |
+| 5 — Documents | Consentements CGU, Règlement intérieur |
 
 ---
 
@@ -253,22 +334,20 @@ Données GeoJSON simplifiées des 14 régions du Sénégal pour la carte Leaflet
 ### Prérequis
 
 - **Node.js** ≥ 18.x
-- **pnpm** ≥ 8.x (recommandé) — `npm install -g pnpm`
-- Accès à l'**API backend** (voir Variables d'environnement)
+- **pnpm** ≥ 8.x — `npm install -g pnpm`
 
 ### Installation
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/<votre-organisation>/shaolin-senegal-frontend.git
-cd shaolin-senegal-frontend
+git clone https://github.com/IbrahimaISIDev/Federation-Shaolin-Senegal-Frontend.git
+cd Federation-Shaolin-Senegal-Frontend
 
 # 2. Installer les dépendances
 pnpm install
 
 # 3. Configurer les variables d'environnement
 cp .env.example .env.local
-# Éditer .env.local avec vos valeurs
 
 # 4. Lancer le serveur de développement
 pnpm dev
@@ -276,27 +355,25 @@ pnpm dev
 
 L'application sera disponible sur [http://localhost:3000](http://localhost:3000).
 
+> ⚠️ **Note** : si le chemin du projet contient des caractères accentués (ex: `Téléchargements`), Turbopack peut occasionnellement causer des erreurs de build. Cloner dans un chemin sans accents si nécessaire.
+
 ---
 
 ## 🔑 Variables d'environnement
-
-Créez un fichier `.env.local` à la racine du projet (non commité par défaut) :
 
 ```env
 # URL de l'API backend
 NEXT_PUBLIC_API_URL=https://api.shaolin-senegal.sn
 
-# URL publique du site (utilisée pour les métadonnées SEO)
+# URL publique du site (SEO)
 NEXT_PUBLIC_SITE_URL=https://shaolin-senegal.sn
 
-# Clé secrète NextAuth (si utilisé) — 32+ caractères aléatoires
+# NextAuth
 NEXTAUTH_SECRET=votre_clé_secrète_très_longue_et_aléatoire
-
-# URL de NextAuth
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-> ⚠️ Ne committez **jamais** votre fichier `.env.local`. Il est déjà inclus dans `.gitignore`.
+> Ne committez **jamais** votre `.env.local`.
 
 ---
 
@@ -304,10 +381,10 @@ NEXTAUTH_URL=http://localhost:3000
 
 | Commande | Description |
 |---|---|
-| `pnpm dev` | Lance le serveur de développement (Turbopack) |
-| `pnpm build` | Crée une build de production optimisée |
-| `pnpm start` | Démarre le serveur de production |
-| `pnpm lint` | Analyse le code avec ESLint |
+| `pnpm dev` | Serveur de développement (Turbopack) |
+| `pnpm build` | Build de production |
+| `pnpm start` | Serveur de production |
+| `pnpm lint` | Analyse ESLint |
 
 ---
 
@@ -315,79 +392,60 @@ NEXTAUTH_URL=http://localhost:3000
 
 ### Vercel (recommandé)
 
-Ce projet est optimisé pour un déploiement sur **Vercel**.
-
 1. Importez le dépôt GitHub dans votre dashboard Vercel.
-2. Configurez les variables d'environnement dans les paramètres du projet.
-3. Vercel détectera automatiquement Next.js et configurera le pipeline de build.
+2. Configurez les variables d'environnement.
+3. Vercel détecte automatiquement Next.js et configure le pipeline.
 
 ```bash
-# Alternative : via CLI Vercel
-npm i -g vercel
-vercel --prod
+# Via CLI
+npm i -g vercel && vercel --prod
 ```
 
-### Autres plateformes
-
-Pour un déploiement sur d'autres plateformes (Render, Railway, VPS) :
+### Autres plateformes (Render, Railway)
 
 ```bash
-pnpm build
-pnpm start
+pnpm build && pnpm start
 ```
-
-Assurez-vous que le port `3000` est exposé et que les variables d'environnement sont correctement configurées.
 
 ---
 
 ## 📐 Conventions de développement
 
-### Structure des fichiers
-
-- Les composants utilisent le format **PascalCase** pour les noms de fichiers : `MyComponent.tsx`
-- Les hooks utilisent le format **camelCase** avec le préfixe `use` : `useAuth.ts`
-- Les services API utilisent le format **camelCase** : `membersService.ts`
-
-### Composants
-
-- Toujours déclarer `'use client'` en haut des composants avec des hooks côté client (`useState`, `useEffect`, etc.)
-- Les **Server Components** (sans `'use client'`) sont préférés pour les pages statiques/SSR.
-- Utiliser `dynamic()` de Next.js uniquement dans les **Server Components** pour du code-splitting.
-
-### Formulaires
-
-- Utiliser **React Hook Form** + **Zod** pour tous les formulaires.
-- Les schémas Zod sont définis dans `lib/validations/`.
-- Pour les formulaires multi-étapes, utiliser `FormProvider` et `useFormContext`.
-
-### API et données
-
-- Les appels API passent par les services dans `lib/api/`.
-- Utiliser **TanStack Query** (`useQuery`, `useMutation`) pour la gestion du cache et des états de chargement.
-- Les données mockées (développement) sont clairement marquées avec un commentaire `// Mock data`.
-
-### Styling
-
-- Utiliser les classes **Tailwind CSS** directement dans le JSX.
-- Utiliser la fonction `cn()` (de `lib/utils.ts`) pour combiner des classes conditionnelles.
-- Le design système (couleurs, typographie, espacements) est défini dans `globals.css` via les variables CSS.
+- **Composants** : PascalCase (`MyComponent.tsx`), `'use client'` obligatoire pour les hooks clients.
+- **Formulaires** : React Hook Form + Zod. Schémas dans `lib/validations/`.
+- **API** : Services dans `lib/api/`, TanStack Query pour le cache.
+- **Styling** : Classes Tailwind + `cn()` pour les classes conditionnelles.
+- **Données mockées** : Marquées `// Mock data` — à remplacer par des appels API réels.
+- **Export Excel** : Passer la fonction `getData` fournie pour chaque entité dans `ExportButton`.
 
 ---
 
 ## 🗓 Feuille de route
 
-### Version actuelle (v0.1)
-- [x] Pages publiques complètes
-- [x] Formulaire d'affiliation multi-étapes
-- [x] Carte interactive des clubs
-- [x] Layout authentification
-- [x] Espace membre (profil, licence)
-- [x] Back-office admin (layout + dashboard)
+### Version actuelle (v0.2) — Back-office complet ✅
 
-### Prochaines étapes (v0.2)
+- [x] Pages publiques complètes (accueil, actualités, clubs, galerie, carte, compétitions, contact, affiliation)
+- [x] Espace membre (profil, licence, compétitions)
+- [x] Layout admin (sidebar responsive, header)
+- [x] Tableau de bord admin dynamique (KPIs, graphiques, actions urgentes)
+- [x] CRUD Membres (liste, créer, modifier, voir) avec MediaPicker
+- [x] CRUD Clubs (liste, créer, modifier, voir) avec MediaPicker
+- [x] CRUD Actualités (liste, créer, modifier) avec MediaPicker
+- [x] Gestion Compétitions (liste, actions)
+- [x] Bibliothèque Médias (`/admin/galerie`)
+- [x] Composant `MediaPicker` intégré dans tous les formulaires
+- [x] Export Excel pour toutes les entités (membres, clubs, actualités, compétitions, licences)
+- [x] Page Rapports & Statistiques avec multi-export
+- [x] Page Paramètres
+- [x] Actions urgentes dynamiques sur le tableau de bord
+
+### Prochaines étapes (v0.3)
+
 - [ ] Connexion à l'API backend (remplacement des données mockées)
-- [ ] Pages CRUD Admin (Membres, Clubs, Actualités)
-- [ ] Système de paiement en ligne (Wave, Orange Money)
+- [ ] Upload réel des fichiers (Cloudinary ou AWS S3) dans le `MediaPicker`
+- [ ] CRUD Licences complet
+- [ ] Middleware d'authentification (NextAuth) pour protéger les routes admin
+- [ ] Système de paiement (Wave, Orange Money)
 - [ ] Génération PDF des licences
 - [ ] Notifications en temps réel (WebSocket)
 - [ ] Internationalisation (FR + WOL)
@@ -396,12 +454,10 @@ Assurez-vous que le port `3000` est exposé et que les variables d'environnement
 
 ## 🤝 Contribuer
 
-Les contributions sont les bienvenues ! Voici comment procéder :
-
 1. **Fork** le dépôt
-2. Créez votre branche de fonctionnalité : `git checkout -b feature/ma-super-feature`
-3. **Committez** vos changements : `git commit -m "feat: ajout de ma super feature"`
-4. **Poussez** vers la branche : `git push origin feature/ma-super-feature`
+2. Créez votre branche : `git checkout -b feature/ma-feature`
+3. **Committez** : `git commit -m "feat: description"`
+4. **Poussez** : `git push origin feature/ma-feature`
 5. Ouvrez une **Pull Request**
 
 ### Convention de commits (Conventional Commits)
@@ -410,10 +466,10 @@ Les contributions sont les bienvenues ! Voici comment procéder :
 |---|---|
 | `feat:` | Nouvelle fonctionnalité |
 | `fix:` | Correction de bug |
-| `docs:` | Documentation uniquement |
-| `style:` | Formatage, pas de changement de code |
-| `refactor:` | Refactorisation du code |
-| `chore:` | Maintenance (dépendances, config) |
+| `docs:` | Documentation |
+| `style:` | Formatage |
+| `refactor:` | Refactorisation |
+| `chore:` | Maintenance |
 
 ---
 
