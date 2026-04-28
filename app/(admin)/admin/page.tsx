@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import {
   Card,
   CardContent,
@@ -20,7 +22,8 @@ import {
   UserPlus,
   FileText,
   Calendar,
-  Layers,
+  AlertCircle,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -138,27 +141,88 @@ const recentMembers = [
   },
 ];
 
-// Mock pending actions
-const pendingActions = [
-  {
-    id: '1',
-    type: 'affiliation',
-    title: "12 demandes d'affiliation en attente",
-    priority: 'high',
-  },
-  {
-    id: '2',
-    type: 'club',
-    title: '3 nouvelles demandes de création de club',
-    priority: 'medium',
-  },
-  {
-    id: '3',
-    type: 'licence',
-    title: '45 licences à renouveler ce mois',
-    priority: 'low',
-  },
+// ─── Data sources for dynamic actions ─────────────────────────────────────────
+const allMembers = [
+  { id: '1', status: 'pending', date: '2024-02-15' },
+  { id: '2', status: 'active', date: '2024-02-14' },
+  { id: '3', status: 'pending', date: '2024-02-13' },
+  { id: '4', status: 'pending', date: '2024-02-12' },
+  { id: '5', status: 'active', date: '2024-02-11' },
+  { id: '6', status: 'expired', date: '2023-06-10' },
+  { id: '7', status: 'pending', date: '2024-02-12' },
 ];
+
+const allArticles = [
+  { id: '1', isPublished: true },
+  { id: '2', isPublished: true },
+  { id: '3', isPublished: false },
+  { id: '4', isPublished: false },
+  { id: '5', isPublished: false },
+];
+
+const allLicenses = [
+  { id: 'L001', status: 'expiring' },
+  { id: 'L002', status: 'expiring' },
+  { id: 'L003', status: 'expired' },
+  { id: 'L004', status: 'expired' },
+];
+
+interface PendingAction {
+  id: string;
+  title: string;
+  priority: 'high' | 'medium' | 'low';
+  href: string;
+  count: number;
+  icon: React.ElementType;
+}
+
+function computePendingActions(): PendingAction[] {
+  const actions: PendingAction[] = [];
+
+  const pendingMembers = allMembers.filter((m) => m.status === 'pending');
+  if (pendingMembers.length > 0) {
+    actions.push({
+      id: 'pending-members',
+      title: `${pendingMembers.length} demande${pendingMembers.length > 1 ? 's' : ''} d'affiliation en attente de validation`,
+      priority: 'high',
+      href: '/admin/membres',
+      count: pendingMembers.length,
+      icon: Users,
+    });
+  }
+
+  const urgentLicenses = allLicenses.filter((l) => l.status === 'expiring' || l.status === 'expired');
+  if (urgentLicenses.length > 0) {
+    const expired = urgentLicenses.filter((l) => l.status === 'expired').length;
+    const expiring = urgentLicenses.filter((l) => l.status === 'expiring').length;
+    const priority: 'high' | 'medium' = expired > 0 ? 'high' : 'medium';
+    const label = expired > 0
+      ? `${expired} licence${expired > 1 ? 's' : ''} expirée${expired > 1 ? 's' : ''}, ${expiring} bientôt à renouveler`
+      : `${expiring} licence${expiring > 1 ? 's' : ''} expire${expiring > 1 ? 'nt' : ''} bientôt`;
+    actions.push({
+      id: 'licenses',
+      title: label,
+      priority,
+      href: '/admin/membres',
+      count: urgentLicenses.length,
+      icon: CreditCard,
+    });
+  }
+
+  const drafts = allArticles.filter((a) => !a.isPublished);
+  if (drafts.length > 0) {
+    actions.push({
+      id: 'drafts',
+      title: `${drafts.length} article${drafts.length > 1 ? 's' : ''} en brouillon à publier`,
+      priority: 'low',
+      href: '/admin/actualites',
+      count: drafts.length,
+      icon: FileText,
+    });
+  }
+
+  return actions;
+}
 
 const statusColors: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -180,6 +244,8 @@ function formatDate(dateString: string): string {
 }
 
 export default function AdminDashboard() {
+  const pendingActions = computePendingActions();
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -290,25 +356,37 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           <Card className="border-none shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Actions urgentes</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Actions urgentes</CardTitle>
+                {pendingActions.length > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {pendingActions.length}
+                  </span>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {pendingActions.map((action) => (
-                <div
-                  key={action.id}
-                  className={cn(
-                    'p-3 rounded-xl border flex items-start gap-3 transition-colors hover:bg-muted/50 cursor-pointer',
-                    priorityColors[action.priority]
-                  )}
-                >
-                  <div className="mt-0.5">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <p className="text-sm font-medium leading-snug">
-                    {action.title}
-                  </p>
+              {pendingActions.length === 0 ? (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <p className="text-sm font-medium">Aucune action urgente — tout est à jour ✅</p>
                 </div>
-              ))}
+              ) : (
+                pendingActions.map((action: PendingAction) => (
+                  <Link
+                    key={action.id}
+                    href={action.href}
+                    className={cn(
+                      'p-3 rounded-xl border flex items-center gap-3 transition-colors hover:brightness-95 cursor-pointer',
+                      priorityColors[action.priority]
+                    )}
+                  >
+                    <action.icon className="w-4 h-4 shrink-0" />
+                    <p className="text-sm font-medium leading-snug flex-1">{action.title}</p>
+                    <ChevronRight className="w-4 h-4 shrink-0 opacity-60" />
+                  </Link>
+                ))
+              )}
             </CardContent>
           </Card>
 
