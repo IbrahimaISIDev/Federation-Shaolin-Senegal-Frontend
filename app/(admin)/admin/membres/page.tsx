@@ -1,19 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { useDebounce } from 'use-debounce';
 import {
-  Search,
-  Filter,
-  Download,
-  UserPlus,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
+  Search, Filter, UserPlus, MoreHorizontal, Eye, Pencil, Trash2,
+  ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle, XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,111 +14,131 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { ExportButton } from '@/components/shared/export-button';
+import { membersApi, statsApi, type Member } from '@/lib/api';
+import { toast } from 'sonner';
 
-// Mock members data
-const mockMembers = [
-  { id: '1', licenseNumber: 'FSS-2024-001', firstName: 'Amadou', lastName: 'Ba', email: 'amadou.ba@email.com', phone: '771234567', club: 'Temple Shaolin Dakar', region: 'Dakar', status: 'active', discipline: 'Kung Fu', registrationDate: '2024-01-15' },
-  { id: '2', licenseNumber: 'FSS-2024-002', firstName: 'Fatou', lastName: 'Diop', email: 'fatou.diop@email.com', phone: '772345678', club: 'Dragon de Feu Saint-Louis', region: 'Saint-Louis', status: 'active', discipline: 'Tai Chi', registrationDate: '2024-01-20' },
-  { id: '3', licenseNumber: 'FSS-2024-003', firstName: 'Moussa', lastName: 'Ndiaye', email: 'moussa.ndiaye@email.com', phone: '773456789', club: 'Wushu Academy Thiès', region: 'Thiès', status: 'pending', discipline: 'Wushu', registrationDate: '2024-02-01' },
-  { id: '4', licenseNumber: 'FSS-2024-004', firstName: 'Aissatou', lastName: 'Sall', email: 'aissatou.sall@email.com', phone: '774567890', club: 'Temple Shaolin Dakar', region: 'Dakar', status: 'active', discipline: 'Kung Fu', registrationDate: '2024-02-05' },
-  { id: '5', licenseNumber: 'FSS-2024-005', firstName: 'Omar', lastName: 'Sy', email: 'omar.sy@email.com', phone: '775678901', club: 'Shaolin Ziguinchor', region: 'Ziguinchor', status: 'expired', discipline: 'Sanda', registrationDate: '2023-06-10' },
-  { id: '6', licenseNumber: 'FSS-2024-006', firstName: 'Mariama', lastName: 'Fall', email: 'mariama.fall@email.com', phone: '776789012', club: 'Kung Fu Diourbel', region: 'Diourbel', status: 'active', discipline: 'Qi Gong', registrationDate: '2024-02-10' },
-  { id: '7', licenseNumber: 'FSS-2024-007', firstName: 'Ibrahima', lastName: 'Gueye', email: 'ibrahima.gueye@email.com', phone: '777890123', club: 'Temple Shaolin Dakar', region: 'Dakar', status: 'pending', discipline: 'Kung Fu', registrationDate: '2024-02-12' },
-  { id: '8', licenseNumber: 'FSS-2024-008', firstName: 'Khady', lastName: 'Mbaye', email: 'khady.mbaye@email.com', phone: '778901234', club: 'Dragon de Feu Saint-Louis', region: 'Saint-Louis', status: 'active', discipline: 'Tai Chi', registrationDate: '2024-02-14' },
-];
+const PAGE_SIZE = 20;
 
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  active: { label: 'Actif', variant: 'default' },
-  pending: { label: 'En attente', variant: 'secondary' },
-  expired: { label: 'Expiré', variant: 'destructive' },
+const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
+  active: { label: 'Actif', variant: 'default', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  pending: { label: 'En attente', variant: 'secondary', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  expired: { label: 'Expiré', variant: 'destructive', className: 'bg-rose-100 text-rose-700 border-rose-200' },
+  suspended: { label: 'Suspendu', variant: 'outline', className: 'bg-slate-100 text-slate-600 border-slate-200' },
 };
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    day: 'numeric', month: 'short', year: 'numeric',
   });
 }
 
-// Reshape for Excel
-function getMembersForExport() {
-  return mockMembers.map((m) => ({
-    firstName: m.firstName,
-    lastName: m.lastName,
-    email: m.email,
-    phone: m.phone,
-    clubName: m.club,
-    region: m.region,
-    discipline: m.discipline,
-    grade: '',
-    status: m.status,
-    licenseNumber: m.licenseNumber,
-    registeredAt: m.registrationDate,
-  }));
+function getMemberStatus(member: Member): string {
+  const license = member.licenses?.[0];
+  if (!member.user?.isActive) return 'pending';
+  if (!license) return 'pending';
+  return license.status?.toLowerCase() ?? 'pending';
 }
 
 export default function AdminMembersPage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const queryClient = useQueryClient();
+  const [searchInput, setSearchInput] = useState('');
+  const [search] = useDebounce(searchInput, 400);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  const filteredMembers = mockMembers.filter((member) => {
-    const matchesSearch =
-      member.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.licenseNumber.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  // ── Data fetching ────────────────────────────────────────────────────────────
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['admin', 'members', { search, status: statusFilter, page }],
+    queryFn: () =>
+      membersApi.adminList({
+        search: search || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        page,
+        limit: PAGE_SIZE,
+      }),
+    staleTime: 60 * 1000,
   });
 
-  const toggleSelectAll = () => {
-    if (selectedMembers.length === filteredMembers.length) {
-      setSelectedMembers([]);
-    } else {
-      setSelectedMembers(filteredMembers.map((m) => m.id));
-    }
-  };
+  const { data: statsData } = useQuery({
+    queryKey: ['admin', 'stats'],
+    queryFn: () => statsApi.dashboard(),
+    staleTime: 2 * 60 * 1000,
+  });
 
-  const toggleSelectMember = (id: string) => {
-    setSelectedMembers((prev) =>
+  const members: Member[] = data?.data ?? [];
+  const total: number = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const stats = statsData?.data;
+
+  // ── Mutations ────────────────────────────────────────────────────────────────
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'members'] });
+
+  const validateMutation = useMutation({
+    mutationFn: (id: number) => membersApi.validate(id),
+    onSuccess: () => { toast.success('Membre validé'); invalidate(); },
+    onError: () => toast.error('Erreur lors de la validation'),
+  });
+
+  const suspendMutation = useMutation({
+    mutationFn: (id: number) => membersApi.suspend(id),
+    onSuccess: () => { toast.success('Membre suspendu'); invalidate(); },
+    onError: () => toast.error('Erreur lors de la suspension'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => membersApi.adminDelete(id),
+    onSuccess: () => { toast.success('Membre supprimé'); invalidate(); },
+    onError: () => toast.error('Erreur lors de la suppression'),
+  });
+
+  // ── Selection ────────────────────────────────────────────────────────────────
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) =>
+      prev.length === members.length ? [] : members.map((m) => m.id)
+    );
+  }, [members]);
+
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
-  };
+  }, []);
+
+  // ── Export ───────────────────────────────────────────────────────────────────
+  const getMembersForExport = () =>
+    members.map((m) => ({
+      firstName: m.prenom,
+      lastName: m.nom,
+      email: m.user?.email ?? '',
+      phone: m.user?.phone ?? '',
+      clubName: m.club?.nom ?? '',
+      region: m.club?.region?.nom ?? '',
+      discipline: m.discipline ?? '',
+      grade: m.grade ?? '',
+      status: getMemberStatus(m),
+      licenseNumber: m.licenses?.[0]?.annee?.toString() ?? '',
+      registeredAt: m.createdAt,
+    }));
 
   return (
     <div className="space-y-6">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Membres</h1>
-          <p className="text-muted-foreground">
-            Gérez les membres de la fédération.
-          </p>
+          <p className="text-muted-foreground">Gérez les membres de la fédération.</p>
         </div>
         <div className="flex gap-2">
           <ExportButton entity="membres" getData={getMembersForExport} />
@@ -138,32 +151,33 @@ export default function AdminMembersPage() {
         </div>
       </div>
 
+      {/* Error */}
+      {isError && (
+        <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          Impossible de charger les membres. Vérifiez que l&apos;API est démarrée.
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Total</p>
-            <p className="text-2xl font-bold text-foreground">1,247</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Actifs</p>
-            <p className="text-2xl font-bold text-success">1,089</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">En attente</p>
-            <p className="text-2xl font-bold text-warning">45</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Expirés</p>
-            <p className="text-2xl font-bold text-destructive">113</p>
-          </CardContent>
-        </Card>
+        {[
+          { label: 'Total', value: stats?.totalMembers, color: 'text-foreground' },
+          { label: 'Actifs', value: stats?.activeLicenses, color: 'text-emerald-600' },
+          { label: 'En attente', value: stats?.pendingMembers, color: 'text-amber-600' },
+          { label: 'Expirés', value: stats?.expiredLicenses, color: 'text-rose-600' },
+        ].map(({ label, value, color }) => (
+          <Card key={label}>
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">{label}</p>
+              <p className={`text-2xl font-bold ${color}`}>
+                {value !== undefined ? value.toLocaleString('fr-FR') : (
+                  <span className="inline-block w-12 h-7 bg-muted animate-pulse rounded" />
+                )}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Filters */}
@@ -173,26 +187,29 @@ export default function AdminMembersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom, email, licence..."
+                id="member-search"
+                placeholder="Rechercher par nom, email..."
                 className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => { setSearchInput(e.target.value); setPage(1); }}
               />
             </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="active">Actifs</SelectItem>
-                  <SelectItem value="pending">En attente</SelectItem>
-                  <SelectItem value="expired">Expirés</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => { setStatusFilter(v); setPage(1); }}
+            >
+              <SelectTrigger className="w-[160px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="ACTIVE">Actifs</SelectItem>
+                <SelectItem value="PENDING">En attente</SelectItem>
+                <SelectItem value="EXPIRED">Expirés</SelectItem>
+                <SelectItem value="SUSPENDED">Suspendus</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -206,90 +223,121 @@ export default function AdminMembersPage() {
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={
-                        selectedMembers.length === filteredMembers.length &&
-                        filteredMembers.length > 0
-                      }
+                      checked={selectedIds.length === members.length && members.length > 0}
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
-                  <TableHead>Licence</TableHead>
                   <TableHead>Membre</TableHead>
                   <TableHead className="hidden md:table-cell">Club</TableHead>
                   <TableHead className="hidden lg:table-cell">Discipline</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead className="hidden sm:table-cell">Date</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="hidden sm:table-cell">Depuis</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMembers.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedMembers.includes(member.id)}
-                        onCheckedChange={() => toggleSelectMember(member.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {member.licenseNumber}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {member.firstName} {member.lastName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {member.email}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {member.club}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {member.discipline}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusConfig[member.status].variant}>
-                        {statusConfig[member.status].label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell text-muted-foreground">
-                      {formatDate(member.registrationDate)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/membres/${member.id}`}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              Voir
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/membres/${member.id}/modifier`}>
-                              <Pencil className="w-4 h-4 mr-2" />
-                              Modifier
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {isLoading ? (
+                  [...Array(6)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(7)].map((__, j) => (
+                        <TableCell key={j}>
+                          <div className="h-5 rounded bg-muted animate-pulse" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : members.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                      Aucun membre trouvé.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  members.map((member) => {
+                    const status = getMemberStatus(member);
+                    const cfg = statusConfig[status] ?? statusConfig.pending;
+                    return (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.includes(member.id)}
+                            onCheckedChange={() => toggleSelect(member.id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {member.prenom} {member.nom}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{member.user?.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                          {member.club?.nom ?? '—'}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground">
+                          {member.discipline ?? '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={`font-medium border shadow-none ${cfg.className}`}>
+                            {cfg.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
+                          {formatDate(member.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/membres/${member.id}`}>
+                                  <Eye className="w-4 h-4 mr-2" /> Voir
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/membres/${member.id}/modifier`}>
+                                  <Pencil className="w-4 h-4 mr-2" /> Modifier
+                                </Link>
+                              </DropdownMenuItem>
+                              {!member.user?.isActive && (
+                                <DropdownMenuItem
+                                  onClick={() => validateMutation.mutate(member.id)}
+                                  className="text-emerald-600"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" /> Valider
+                                </DropdownMenuItem>
+                              )}
+                              {member.user?.isActive && (
+                                <DropdownMenuItem
+                                  onClick={() => suspendMutation.mutate(member.id)}
+                                  className="text-amber-600"
+                                >
+                                  <XCircle className="w-4 h-4 mr-2" /> Suspendre
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => {
+                                  if (confirm('Supprimer ce membre ?')) deleteMutation.mutate(member.id);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
@@ -297,17 +345,27 @@ export default function AdminMembersPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-4 py-4 border-t">
             <p className="text-sm text-muted-foreground">
-              {selectedMembers.length > 0
-                ? `${selectedMembers.length} sélectionné(s)`
-                : `${filteredMembers.length} résultat(s)`}
+              {selectedIds.length > 0
+                ? `${selectedIds.length} sélectionné(s)`
+                : `${total.toLocaleString('fr-FR')} résultat(s)`}
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || isLoading}
+              >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <span className="text-sm text-muted-foreground">Page 1 / 10</span>
-              <Button variant="outline" size="sm">
-                <ChevronRight className="w-4 h-4" />
+              <span className="text-sm text-muted-foreground">
+                Page {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || isLoading}
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
               </Button>
             </div>
           </div>
