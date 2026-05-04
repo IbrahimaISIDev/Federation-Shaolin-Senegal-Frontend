@@ -15,11 +15,21 @@ export interface Member {
     photoUrl: string | null;
     createdAt: string;
     updatedAt: string;
+    status?: string | null;
+    licenseNumber?: string | null;
+    telephone?: string | null;
+    adresse?: string | null;
+    ville?: string | null;
+    region?: string | null;
+    bio?: string | null;
+    disciplines?: string | null;
     user?: {
         email: string;
         phone: string | null;
         role: string;
         isActive: boolean;
+        firstName?: string;
+        lastName?: string;
     };
     club?: {
         id: number;
@@ -51,6 +61,11 @@ export interface UpdateMemberPayload {
     clubId?: number;
     dateNaissance?: string;
     sexe?: 'M' | 'F';
+    telephone?: string;
+    adresse?: string;
+    ville?: string;
+    region?: string;
+    bio?: string;
 }
 
 export const membersApi = {
@@ -75,6 +90,11 @@ export const membersApi = {
      * GET /api/members/me/payments
      */
     myPayments: () => api.get<{ data: any[] }>('/members/me/payments'),
+
+    /**
+     * GET /api/members/me/inscriptions
+     */
+    myInscriptions: () => api.get<{ data: any[] }>('/members/me/inscriptions'),
 
     // ── Admin ────────────────────────────────────────────────────────────────────
     /**

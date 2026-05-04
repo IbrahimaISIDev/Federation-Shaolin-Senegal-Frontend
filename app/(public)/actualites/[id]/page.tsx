@@ -2,107 +2,72 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, ArrowLeft, User, Share2 } from 'lucide-react';
 
-// Mock news data (same as in parent page)
-const mockNews = [
-    {
-        id: '1',
-        title: 'Championnat National 2024 : Les inscriptions sont ouvertes',
-        content: `
-      Le Championnat National de Wushu 2024 se tiendra les 15 et 16 mars au Stade Iba Mar Diop de Dakar. 
-      Cet événement majeur rassemblera les meilleurs pratiquants du pays dans les disciplines Taolu (formes) et Sanda (combat).
-      
-      Les inscriptions sont officiellement ouvertes pour tous les clubs affiliés. Les athlètes souhaitant participer doivent se rapprocher de leurs dirigeants de club respectifs pour soumettre leur candidature avant le 1er mars.
-      
-      Cette année, plusieurs catégories sont à l'honneur, notamment les catégories Junior, Senior et Vétéran. Une section spéciale pour le Tai Chi traditionnel sera également incluse dans le programme.
-    `,
-        excerpt: 'Le Championnat National de Wushu se tiendra les 15 et 16 mars à Dakar. Les inscriptions sont ouvertes pour toutes les catégories.',
-        category: 'competition',
-        author: 'Admin FSS',
-        date: '2024-02-15',
-        image: null,
-        featured: true,
-    },
-    {
-        id: '2',
-        title: 'Stage international avec Maître Zhang Wei',
-        content: `
-      La Fédération Shaolin Sénégal est honorée d'accueillir Maître Zhang Wei pour un stage exceptionnel de Tai Chi Chuan et Qi Gong traditionnel. 
-      Le stage se déroulera du 20 au 25 février au centre national d'entraînement.
-      
-      Maître Zhang Wei, expert de renommée mondiale, partagera ses connaissances sur les principes fondamentaux du mouvement interne et de la respiration. 
-      Ce stage est ouvert à tous les niveaux, des débutants aux pratiquants avancés.
-    `,
-        excerpt: 'La Fédération accueille Maître Zhang Wei pour un stage exceptionnel de Tai Chi traditionnel du 20 au 25 février.',
-        category: 'evenement',
-        author: 'Admin FSS',
-        date: '2024-02-10',
-        image: null,
-        featured: true,
-    },
-    {
-        id: '3',
-        title: 'Nouveau club affilié à Ziguinchor',
-        content: `
-      L'expansion de notre fédération se poursuit avec l'affiliation officielle d'un nouveau club à Ziguinchor : "Le Dragon du Sud". 
-      Dirigé par Maître Omar Sy, ce club propose des cours de Kung Fu Shaolin pour enfants et adultes.
-      
-      Cette nouvelle affiliation renforce notre présence dans la région de la Casamance et offre plus d'opportunités aux jeunes talents locaux de rejoindre le circuit national officiel.
-    `,
-        excerpt: 'Nous souhaitons la bienvenue au club "Dragon du Sud" qui rejoint la fédération ce mois-ci.',
-        category: 'club',
-        author: 'Admin FSS',
-        date: '2024-02-05',
-        image: null,
-        featured: false,
-    },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
-const categoryLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-    competition: { label: 'Compétition', variant: 'default' },
-    evenement: { label: 'Événement', variant: 'secondary' },
-    club: { label: 'Club', variant: 'outline' },
-    formation: { label: 'Formation', variant: 'secondary' },
-    federation: { label: 'Fédération', variant: 'default' },
-};
+interface Actualite {
+    id: number;
+    titre: string;
+    slug: string;
+    contenu: string;
+    imageUrl: string | null;
+    publishedAt: string | null;
+    createdAt: string;
+}
 
-function formatDate(dateString: string): string {
+async function getArticle(slug: string): Promise<Actualite | null> {
+    try {
+        const res = await fetch(`${API_URL}/actualites/${slug}`, { next: { revalidate: 60 } });
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json.data ?? null;
+    } catch {
+        return null;
+    }
+}
+
+async function getRecentArticles(excludeSlug: string): Promise<Actualite[]> {
+    try {
+        const res = await fetch(`${API_URL}/actualites?page=1&limit=4`, { next: { revalidate: 60 } });
+        if (!res.ok) return [];
+        const json = await res.json();
+        return (json.data ?? []).filter((a: Actualite) => a.slug !== excludeSlug).slice(0, 3);
+    } catch {
+        return [];
+    }
+}
+
+function formatDate(dateString: string | null): string {
+    if (!dateString) return '—';
     return new Date(dateString).toLocaleDateString('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        year: 'numeric', month: 'long', day: 'numeric',
     });
 }
 
 interface PageProps {
-    params: Promise<{
-        id: string;
-    }>;
+    params: Promise<{ id: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { id } = await params;
-    const news = mockNews.find((n) => n.id === id);
+    const article = await getArticle(id);
     return {
-        title: news ? news.title : 'Actualité',
-        description: news ? news.excerpt : 'Détail de l\'actualité',
+        title: article ? article.titre : 'Actualité',
+        description: article ? article.contenu.replace(/<[^>]*>/g, '').slice(0, 160) : '',
     };
 }
 
 export default async function NewsDetailPage({ params }: PageProps) {
     const { id } = await params;
-    const news = mockNews.find((n) => n.id === id);
+    const [article, recent] = await Promise.all([getArticle(id), getRecentArticles(id)]);
 
-    if (!news) {
-        notFound();
-    }
+    if (!article) notFound();
 
     return (
         <main className="min-h-screen bg-background pb-20">
-            {/* Header / Hero */}
+            {/* Hero */}
             <div className="bg-muted/30 border-b">
                 <div className="container mx-auto px-4 py-12">
                     <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2 text-muted-foreground">
@@ -114,16 +79,13 @@ export default async function NewsDetailPage({ params }: PageProps) {
 
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-3">
-                            <Badge variant={categoryLabels[news.category]?.variant || 'default'}>
-                                {categoryLabels[news.category]?.label || news.category}
-                            </Badge>
                             <span className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                {formatDate(news.date)}
+                                {formatDate(article.publishedAt)}
                             </span>
                         </div>
                         <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
-                            {news.title}
+                            {article.titre}
                         </h1>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -131,8 +93,8 @@ export default async function NewsDetailPage({ params }: PageProps) {
                                     <User className="w-5 h-5 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium">{news.author}</p>
-                                    <p className="text-xs text-muted-foreground">Fédération Shaolin Sénégal</p>
+                                    <p className="text-sm font-medium">Secrétariat ADSS</p>
+                                    <p className="text-xs text-muted-foreground">Association Disciples Shaolin Si Sénégal</p>
                                 </div>
                             </div>
                             <Button variant="outline" size="sm" className="gap-2">
@@ -148,21 +110,29 @@ export default async function NewsDetailPage({ params }: PageProps) {
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     <div className="lg:col-span-2">
-                        <div className="aspect-video bg-muted rounded-2xl mb-8 flex items-center justify-center relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
-                            <span className="text-9xl opacity-10">龍</span>
+                        {/* Cover image */}
+                        <div className="aspect-video bg-muted rounded-2xl mb-8 overflow-hidden relative">
+                            {article.imageUrl ? (
+                                <img src={article.imageUrl} alt={article.titre} className="w-full h-full object-cover" />
+                            ) : (
+                                <>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
+                                    <span className="absolute inset-0 flex items-center justify-center text-9xl opacity-10">龍</span>
+                                </>
+                            )}
                         </div>
 
+                        {/* Article body — rendered as plain paragraphs (no dangerouslySetInnerHTML) */}
                         <div className="prose prose-lg dark:prose-invert max-w-none">
-                            {news.content ? (
-                                news.content.split('\n').map((paragraph, i) => (
+                            {article.contenu
+                                .replace(/<[^>]*>/g, '')
+                                .split('\n')
+                                .filter(Boolean)
+                                .map((paragraph, i) => (
                                     <p key={i} className="mb-4 text-foreground/80 leading-relaxed">
                                         {paragraph}
                                     </p>
-                                ))
-                            ) : (
-                                <p>{news.excerpt}</p>
-                            )}
+                                ))}
                         </div>
                     </div>
 
@@ -170,9 +140,9 @@ export default async function NewsDetailPage({ params }: PageProps) {
                     <aside className="space-y-8">
                         <Card className="border-none shadow-sm bg-muted/30">
                             <CardContent className="p-6">
-                                <h3 className="font-bold mb-4">À propos de cet événement</h3>
+                                <h3 className="font-bold mb-4">Plus d&apos;informations</h3>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    Pour plus d'informations ou pour toute question relative à cet article, veuillez nous contacter directement.
+                                    Pour toute question relative à cet article, contactez-nous directement.
                                 </p>
                                 <Button className="w-full bg-accent hover:bg-accent/90" asChild>
                                     <Link href="/contact">Nous contacter</Link>
@@ -180,17 +150,19 @@ export default async function NewsDetailPage({ params }: PageProps) {
                             </CardContent>
                         </Card>
 
-                        <div className="space-y-4">
-                            <h3 className="font-bold">Actualités récentes</h3>
-                            {mockNews.filter(n => n.id !== news.id).slice(0, 3).map(n => (
-                                <Link key={n.id} href={`/actualites/${n.id}`} className="block group">
-                                    <p className="text-sm font-medium group-hover:text-accent transition-colors line-clamp-2">
-                                        {n.title}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">{formatDate(n.date)}</p>
-                                </Link>
-                            ))}
-                        </div>
+                        {recent.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="font-bold">Actualités récentes</h3>
+                                {recent.map((n) => (
+                                    <Link key={n.id} href={`/actualites/${n.slug}`} className="block group">
+                                        <p className="text-sm font-medium group-hover:text-accent transition-colors line-clamp-2">
+                                            {n.titre}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">{formatDate(n.publishedAt)}</p>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                     </aside>
                 </div>
             </div>

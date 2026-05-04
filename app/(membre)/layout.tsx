@@ -9,6 +9,7 @@ import {
   CreditCard,
   User,
   Trophy,
+  Wallet,
   LogOut,
   Menu,
   X,
@@ -40,6 +41,11 @@ const memberNavItems = [
     label: 'Compétitions',
     href: '/membre/competitions',
     icon: Trophy,
+  },
+  {
+    label: 'Paiements',
+    href: '/membre/paiements',
+    icon: Wallet,
   },
 ];
 

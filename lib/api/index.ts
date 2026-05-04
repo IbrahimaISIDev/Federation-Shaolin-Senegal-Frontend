@@ -25,4 +25,9 @@ export type { UploadResult } from './upload';
 export { statsApi } from './stats';
 export type { DashboardStats } from './stats';
 
+export { contactApi } from './contact';
+export type { ContactPayload } from './contact';
+
+export { clubApi } from './club';
+
 export { default as apiClient, api } from './client';

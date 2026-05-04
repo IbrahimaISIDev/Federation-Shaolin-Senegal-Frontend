@@ -1,136 +1,199 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, MapPin, ArrowLeft, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar, MapPin, ArrowLeft, CheckCircle2, ShieldCheck, Loader2, Trophy } from 'lucide-react';
+import { competitionsApi } from '@/lib/api';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { toast } from 'sonner';
 
-// Mock competitions data
-const mockCompetitions = [
-    {
-        id: '1',
-        title: 'Championnat National de Wushu 2024',
-        type: 'national',
-        date: '2024-03-15',
-        location: 'Stade Iba Mar Diop, Dakar',
-        categories: ['Taolu', 'Sanda', 'Tai Chi'],
-        registrationDeadline: '2024-03-01',
-        status: 'inscriptions_ouvertes',
-    },
-];
-
-interface PageProps {
-    params: Promise<{
-        id: string;
-    }>;
+function formatDate(d: string) {
+    return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const { id } = await params;
-    const comp = mockCompetitions.find((c) => c.id === id);
-    return {
-        title: comp ? `Inscription - ${comp.title}` : 'Inscription Compétition',
-        description: comp ? `Inscrivez-vous au ${comp.title}.` : 'Inscription à la compétition',
+export default function CompetitionInscriptionPage() {
+    const { id } = useParams<{ id: string }>();
+    const router = useRouter();
+    const { isAuthenticated } = useAuthStore();
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [notes, setNotes] = useState('');
+    const [done, setDone] = useState(false);
+
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['competition', id],
+        queryFn: () => competitionsApi.get(Number(id)),
+        staleTime: 60 * 1000,
+    });
+
+    const comp = data?.data;
+    const categories: string[] = Array.isArray(comp?.categories) ? comp.categories : [];
+
+    const inscriptionMutation = useMutation({
+        mutationFn: () => competitionsApi.inscrire(Number(id), selectedCategory || undefined),
+        onSuccess: () => setDone(true),
+        onError: (err: any) => {
+            const msg = err?.response?.data?.message ?? 'Erreur lors de l\'inscription';
+            toast.error(msg);
+        },
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isAuthenticated) {
+            router.push('/connexion');
+            return;
+        }
+        inscriptionMutation.mutate();
     };
-}
 
-export default async function CompetitionInscriptionPage({ params }: PageProps) {
-    const { id } = await params;
-    const comp = mockCompetitions.find((c) => c.id === id);
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
-    if (!comp) {
-        notFound();
+    if (isError || !comp) {
+        return (
+            <main className="min-h-screen flex items-center justify-center bg-background">
+                <div className="text-center space-y-4 px-4">
+                    <h2 className="text-2xl font-bold">Compétition introuvable</h2>
+                    <Button asChild variant="outline"><Link href="/competitions">Retour</Link></Button>
+                </div>
+            </main>
+        );
+    }
+
+    if (done) {
+        return (
+            <main className="min-h-screen bg-muted/30 flex items-center justify-center">
+                <div className="text-center space-y-6 p-8 max-w-md">
+                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                        <Trophy className="w-10 h-10 text-emerald-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold">Inscription confirmée !</h2>
+                    <p className="text-muted-foreground">
+                        Vous êtes inscrit(e) à <strong>{comp.titre}</strong>.
+                        Vous recevrez une confirmation prochainement.
+                    </p>
+                    <div className="flex justify-center gap-3">
+                        <Button asChild className="bg-accent hover:bg-accent/90">
+                            <Link href="/membre/competitions">Mes compétitions</Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href="/competitions">Retour</Link>
+                        </Button>
+                    </div>
+                </div>
+            </main>
+        );
     }
 
     return (
         <main className="min-h-screen bg-muted/30 pb-20">
             <div className="container mx-auto px-4 py-8">
                 <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2 text-muted-foreground">
-                    <Link href="/competitions">
+                    <Link href={`/competitions/${id}`}>
                         <ArrowLeft className="w-4 h-4 mr-2" />
-                        Retour aux compétitions
+                        Retour à la compétition
                     </Link>
                 </Button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Header Info */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Header */}
                         <div className="bg-background rounded-2xl p-6 shadow-sm border">
                             <div className="flex items-center gap-2 mb-4">
-                                <Badge variant="default" className="bg-accent text-accent-foreground">
-                                    Inscriptions Ouvertes
-                                </Badge>
-                                <Badge variant="outline">{comp.type.toUpperCase()}</Badge>
+                                <Badge className="bg-accent text-accent-foreground">Inscriptions ouvertes</Badge>
                             </div>
-                            <h1 className="text-3xl font-bold mb-4">{comp.title}</h1>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                            <h1 className="text-2xl md:text-3xl font-bold mb-4">{comp.titre}</h1>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="w-4 h-4 text-primary" />
-                                    {new Date(comp.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    {formatDate(comp.dateDebut)}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-primary" />
-                                    {comp.location}
-                                </div>
+                                {comp.lieu && (
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="w-4 h-4 text-primary" />
+                                        {comp.lieu}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Registration Form */}
-                        <Card className="border shadow-sm">
+                        {/* Form */}
+                        <Card>
                             <CardHeader>
                                 <CardTitle>Formulaire d&apos;inscription</CardTitle>
-                                <CardDescription>
-                                    Veuillez remplir les informations suivantes pour valider votre participation.
-                                    Votre licence doit être valide.
-                                </CardDescription>
+                                <CardDescription>Votre licence doit être active pour valider l&apos;inscription.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="licence">Numéro de Licence</Label>
-                                        <Input id="licence" placeholder="FSS-2024-XXXX" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="club">Club Affilié</Label>
-                                        <Input id="club" placeholder="Votre club" />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Catégories de participation</Label>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {comp.categories.map((cat) => (
-                                            <div key={cat} className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-muted/50 transition-colors">
-                                                <input type="checkbox" id={cat} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                                                <Label htmlFor={cat} className="text-sm font-medium cursor-pointer">{cat}</Label>
+                            <CardContent>
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    {categories.length > 0 && (
+                                        <div className="space-y-2">
+                                            <Label>Catégorie de participation</Label>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {categories.map((cat) => (
+                                                    <button
+                                                        key={cat}
+                                                        type="button"
+                                                        onClick={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
+                                                        className={`rounded-lg border p-3 text-sm font-medium text-left transition-colors ${
+                                                            selectedCategory === cat
+                                                                ? 'border-primary bg-primary/10 text-primary'
+                                                                : 'border-border hover:bg-muted/50'
+                                                        }`}
+                                                    >
+                                                        {cat}
+                                                    </button>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                        </div>
+                                    )}
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="notes">Notes complémentaires (optionnel)</Label>
-                                    <textarea
-                                        id="notes"
-                                        className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        placeholder="Informations médicales, spécificités, etc."
-                                    />
-                                </div>
-
-                                <div className="pt-4 border-t">
-                                    <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-xl mb-6">
-                                        <ShieldCheck className="w-5 h-5 text-primary mt-0.5" />
-                                        <p className="text-xs text-muted-foreground">
-                                            En soumettant ce formulaire, vous confirmez l&apos;exactitude des informations fournies et acceptez le règlement intérieur de la compétition.
-                                        </p>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="notes">Notes complémentaires (optionnel)</Label>
+                                        <Textarea
+                                            id="notes"
+                                            placeholder="Informations médicales, spécificités, etc."
+                                            rows={4}
+                                            value={notes}
+                                            onChange={(e) => setNotes(e.target.value)}
+                                        />
                                     </div>
-                                    <Button className="w-full bg-accent hover:bg-accent/90 h-11">
-                                        Confirmer mon inscription
-                                    </Button>
-                                </div>
+
+                                    <div className="pt-4 border-t">
+                                        <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-xl mb-6">
+                                            <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                                            <p className="text-xs text-muted-foreground">
+                                                En soumettant ce formulaire, vous confirmez l&apos;exactitude des informations
+                                                et acceptez le règlement intérieur de la compétition.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            className="w-full bg-accent hover:bg-accent/90 h-11 gap-2"
+                                            disabled={inscriptionMutation.isPending}
+                                        >
+                                            {inscriptionMutation.isPending ? (
+                                                <><Loader2 className="w-4 h-4 animate-spin" /> Inscription en cours...</>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    {isAuthenticated ? 'Confirmer mon inscription' : 'Se connecter pour s\'inscrire'}
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </form>
                             </CardContent>
                         </Card>
                     </div>
@@ -139,20 +202,18 @@ export default async function CompetitionInscriptionPage({ params }: PageProps) 
                     <div className="space-y-6">
                         <Card className="bg-primary text-primary-foreground border-none">
                             <CardContent className="p-6">
-                                <h3 className="font-bold text-lg mb-4">Informations Importantes</h3>
+                                <h3 className="font-bold text-lg mb-4">Informations importantes</h3>
                                 <ul className="space-y-3 text-sm">
-                                    <li className="flex gap-2">
-                                        <CheckCircle2 className="w-4 h-4 shrink-0 text-white" />
-                                        <span>Licence FSS 2024 obligatoire</span>
-                                    </li>
-                                    <li className="flex gap-2">
-                                        <CheckCircle2 className="w-4 h-4 shrink-0 text-white" />
-                                        <span>Certificat médical de moins de 3 mois</span>
-                                    </li>
-                                    <li className="flex gap-2">
-                                        <CheckCircle2 className="w-4 h-4 shrink-0 text-white" />
-                                        <span>Equipement réglementaire exigé</span>
-                                    </li>
+                                    {[
+                                        'Licence ADSS valide obligatoire',
+                                        'Certificat médical de moins de 3 mois',
+                                        'Équipement réglementaire exigé',
+                                    ].map((item) => (
+                                        <li key={item} className="flex gap-2">
+                                            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                                            <span>{item}</span>
+                                        </li>
+                                    ))}
                                 </ul>
                             </CardContent>
                         </Card>
@@ -161,13 +222,8 @@ export default async function CompetitionInscriptionPage({ params }: PageProps) 
                             <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
                                 <Calendar className="w-6 h-6 text-muted-foreground" />
                             </div>
-                            <p className="text-sm font-medium mb-1">Date limite</p>
-                            <p className="text-xl font-bold text-rose-600">
-                                {new Date(comp.registrationDeadline).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Aucune inscription ne sera acceptée après cette date.
-                            </p>
+                            <p className="text-sm font-medium mb-1">Date de la compétition</p>
+                            <p className="text-xl font-bold">{formatDate(comp.dateDebut)}</p>
                         </div>
                     </div>
                 </div>

@@ -1,18 +1,14 @@
 // ─── lib/api/auth.ts ───────────────────────────────────────────────────────────
 import { api } from './client';
 
+// Correspond exactement à ce que retourne loginService / refreshService backend
 export interface AuthUser {
-    userId: number;
+    id: number;
     email: string;
     role: 'MEMBER' | 'CLUB_MANAGER' | 'ADMIN';
-    isActive: boolean;
-    member?: {
-        id: number;
-        prenom: string;
-        nom: string;
-        photoUrl: string | null;
-        clubId: number;
-    };
+    memberId?: number;
+    prenom?: string;
+    nom?: string;
 }
 
 export interface LoginPayload {
@@ -60,7 +56,20 @@ export const authApi = {
 
     /**
      * GET /api/auth/me  — requires Bearer token
-     * Returns { data: AuthUser }
+     * Returns { data: JwtPayload } (userId, role, memberId)
      */
-    me: () => api.get<{ data: AuthUser }>('/auth/me'),
+    me: () => api.get<{ data: { userId: number; role: string; memberId?: number } }>('/auth/me'),
+
+    /**
+     * POST /api/auth/change-password  — requires Bearer token
+     * Révoque tous les refresh tokens après succès
+     */
+    changePassword: (payload: { currentPassword: string; newPassword: string }) =>
+        api.post<{ message: string }>('/auth/change-password', payload),
+
+    forgotPassword: (payload: { email: string }) =>
+        api.post<{ message: string }>('/auth/forgot-password', payload),
+
+    resetPassword: (payload: { token: string; password: string }) =>
+        api.post<{ message: string }>('/auth/reset-password', payload),
 };

@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   User,
   Mail,
   Phone,
   MapPin,
-  Calendar,
   Camera,
   Save,
   Loader2,
@@ -34,6 +36,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { REGIONS } from '@/lib/constants';
+import { membersApi, uploadApi } from '@/lib/api';
+import { authApi } from '@/lib/api/auth';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { toast } from 'sonner';
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
@@ -58,21 +64,11 @@ const passwordSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
-// Mock user data
-const mockUser = {
-  firstName: 'Mamadou',
-  lastName: 'Diallo',
-  email: 'mamadou.diallo@email.com',
-  phone: '771234567',
-  address: '123 Rue Félix Faure',
-  city: 'Dakar',
-  region: 'dakar',
-  bio: 'Pratiquant de Kung Fu depuis 5 ans. Passionné par les arts martiaux traditionnels chinois.',
-  avatar: null,
-};
-
 export default function ProfilePage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+  const { logout } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [notifications, setNotifications] = useState({
     email: true,
     sms: false,
@@ -80,10 +76,42 @@ export default function ProfilePage() {
     newsletter: true,
   });
 
+  const { data, isLoading } = useQuery({
+    queryKey: ['member', 'profile'],
+    queryFn: () => membersApi.me(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const member = data?.data;
+
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-    defaultValues: mockUser,
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      region: '',
+      bio: '',
+    },
   });
+
+  useEffect(() => {
+    if (member) {
+      profileForm.reset({
+        firstName: member.user?.firstName || '',
+        lastName: member.user?.lastName || '',
+        email: member.user?.email || '',
+        phone: member.telephone || '',
+        address: member.adresse || '',
+        city: member.ville || '',
+        region: member.region || '',
+        bio: member.bio || '',
+      });
+    }
+  }, [member, profileForm]);
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -94,20 +122,79 @@ export default function ProfilePage() {
     },
   });
 
-  const onProfileSubmit = async (data: ProfileFormData) => {
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log('Profile updated:', data);
-    setIsSubmitting(false);
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: ProfileFormData) => {
+      return membersApi.updateMe({
+        telephone: data.phone,
+        adresse: data.address,
+        ville: data.city,
+        region: data.region,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['member', 'profile'] });
+      toast.success('Profil mis à jour', {
+        description: 'Vos informations ont été enregistrées avec succès.'
+      });
+    },
+    onError: () => {
+      toast.error('Erreur', {
+        description: 'Une erreur est survenue lors de la mise à jour du profil.'
+      });
+    }
+  });
+
+  const onProfileSubmit = (data: ProfileFormData) => {
+    updateProfileMutation.mutate(data);
   };
 
-  const onPasswordSubmit = async (data: PasswordFormData) => {
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log('Password updated:', data);
-    setIsSubmitting(false);
-    passwordForm.reset();
+  const uploadPhotoMutation = useMutation({
+    mutationFn: (file: File) => uploadApi.uploadMemberPhoto(file),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['member', 'profile'] });
+      setPhotoPreview(result.url);
+      toast.success('Photo mise à jour');
+    },
+    onError: () => {
+      toast.error('Erreur lors de l\'upload de la photo');
+    },
+  });
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Prévisualisation locale immédiate
+    setPhotoPreview(URL.createObjectURL(file));
+    uploadPhotoMutation.mutate(file);
   };
+
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: PasswordFormData) =>
+      authApi.changePassword({ currentPassword: data.currentPassword, newPassword: data.newPassword }),
+    onSuccess: () => {
+      toast.success('Mot de passe mis à jour', {
+        description: 'Vous allez être déconnecté pour sécuriser votre session.',
+      });
+      passwordForm.reset();
+      setTimeout(() => logout(), 2000);
+    },
+    onError: (err: unknown) => {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      toast.error(apiError?.response?.data?.error ?? 'Erreur lors du changement de mot de passe');
+    },
+  });
+
+  const onPasswordSubmit = (data: PasswordFormData) => {
+    changePasswordMutation.mutate(data);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20 text-muted-foreground gap-2">
+        <Loader2 className="w-6 h-6 animate-spin" /> Chargement de votre profil...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -152,18 +239,35 @@ export default function ProfilePage() {
                   {/* Avatar */}
                   <div className="flex items-center gap-6">
                     <Avatar className="w-24 h-24">
-                      <AvatarImage src={mockUser.avatar || undefined} />
+                      <AvatarImage src={photoPreview || member?.photoUrl || undefined} />
                       <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                        {mockUser.firstName[0]}{mockUser.lastName[0]}
+                        {profileForm.watch('firstName')?.[0] || 'U'}{profileForm.watch('lastName')?.[0] || 'S'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <Button type="button" variant="outline" className="gap-2">
-                        <Camera className="w-4 h-4" />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoChange}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        disabled={uploadPhotoMutation.isPending}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {uploadPhotoMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Camera className="w-4 h-4" />
+                        )}
                         Changer la photo
                       </Button>
                       <p className="text-xs text-muted-foreground mt-2">
-                        JPG, PNG ou GIF. Max 2MB.
+                        JPG, PNG ou WebP. Max 5MB.
                       </p>
                     </div>
                   </div>
@@ -178,25 +282,19 @@ export default function ProfilePage() {
                           id="firstName"
                           className="pl-10"
                           {...profileForm.register('firstName')}
+                          disabled
                         />
                       </div>
-                      {profileForm.formState.errors.firstName && (
-                        <p className="text-sm text-destructive">
-                          {profileForm.formState.errors.firstName.message}
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground">Le prénom ne peut être modifié.</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Nom</Label>
                       <Input
                         id="lastName"
                         {...profileForm.register('lastName')}
+                        disabled
                       />
-                      {profileForm.formState.errors.lastName && (
-                        <p className="text-sm text-destructive">
-                          {profileForm.formState.errors.lastName.message}
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground">Le nom ne peut être modifié.</p>
                     </div>
                   </div>
 
@@ -211,13 +309,10 @@ export default function ProfilePage() {
                           type="email"
                           className="pl-10"
                           {...profileForm.register('email')}
+                          disabled
                         />
                       </div>
-                      {profileForm.formState.errors.email && (
-                        <p className="text-sm text-destructive">
-                          {profileForm.formState.errors.email.message}
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground">L&apos;email ne peut être modifié.</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Téléphone</Label>
@@ -286,6 +381,11 @@ export default function ProfilePage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {profileForm.formState.errors.region && (
+                        <p className="text-sm text-destructive">
+                          {profileForm.formState.errors.region.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -303,10 +403,10 @@ export default function ProfilePage() {
                   <div className="flex justify-end">
                     <Button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={updateProfileMutation.isPending}
                       className="gap-2 bg-primary hover:bg-primary/90"
                     >
-                      {isSubmitting ? (
+                      {updateProfileMutation.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <Save className="w-4 h-4" />
@@ -383,10 +483,10 @@ export default function ProfilePage() {
                   <div className="flex justify-end pt-4">
                     <Button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={changePasswordMutation.isPending}
                       className="gap-2"
                     >
-                      {isSubmitting ? (
+                      {changePasswordMutation.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <Key className="w-4 h-4" />
