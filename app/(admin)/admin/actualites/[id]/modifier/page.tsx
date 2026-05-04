@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -48,7 +48,8 @@ const mockArticle: ArticleFormData = {
     isPublished: true,
 };
 
-export default function EditArticlePage({ params }: { params: { id: string } }) {
+export default function EditArticlePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+    const { id } = use(paramsPromise);
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -83,7 +84,7 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
                     </Button>
                     <div>
                         <h1 className="text-2xl font-bold text-foreground">Modifier l&apos;article</h1>
-                        <p className="text-muted-foreground text-sm">ID #{params.id}</p>
+                        <p className="text-muted-foreground text-sm">ID #{id}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">

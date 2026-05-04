@@ -66,7 +66,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
     );
 }
 
-export default function MemberDetailPage({ params }: { params: { id: string } }) {
+export default function MemberDetailPage({ params: _params }: { params: Promise<{ id: string }> }) {
     const member = mockMember; // TODO: fetch by params.id
     const status = statusConfig[member.status];
 

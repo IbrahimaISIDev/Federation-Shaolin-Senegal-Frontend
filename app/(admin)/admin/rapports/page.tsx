@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
     BarChart3,
     Users,
     Building2,
     TrendingUp,
     Calendar,
+    Loader2,
+    Award,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MultiExportButton } from '@/components/shared/export-button';
@@ -32,56 +34,135 @@ import {
     CartesianGrid,
     LineChart,
     Line,
-    ResponsiveContainer,
 } from 'recharts';
+import { statsApi, membersApi, clubsApi, competitionsApi, actualitesApi } from '@/lib/api';
+import type { Member, Club, Competition, Actualite } from '@/lib/api';
 
-// Mock data
-const membersByMonth = [
-    { month: 'Jan', membres: 12 },
-    { month: 'Fév', membres: 19 },
-    { month: 'Mar', membres: 8 },
-    { month: 'Avr', membres: 25 },
-    { month: 'Mai', membres: 31 },
-    { month: 'Jun', membres: 18 },
-    { month: 'Juil', membres: 22 },
-    { month: 'Aoû', membres: 14 },
-    { month: 'Sep', membres: 29 },
-    { month: 'Oct', membres: 35 },
-    { month: 'Nov', membres: 27 },
-    { month: 'Déc', membres: 16 },
-];
-
-const membersByRegion = [
-    { region: 'Dakar', membres: 312 },
-    { region: 'Thiès', membres: 98 },
-    { region: 'Kaolack', membres: 74 },
-    { region: 'Saint-Louis', membres: 61 },
-    { region: 'Ziguinchor', membres: 45 },
-    { region: 'Diourbel', membres: 38 },
-    { region: 'Louga', membres: 22 },
-];
-
-const membersByDiscipline = [
-    { name: 'Wushu', value: 287 },
-    { name: 'Sanda', value: 195 },
-    { name: 'Taolu', value: 143 },
-    { name: 'Kung Fu', value: 98 },
-    { name: 'Qi Gong', value: 47 },
-];
+const MONTH_LABELS: Record<string, string> = {
+    '01': 'Jan', '02': 'Fév', '03': 'Mar', '04': 'Avr', '05': 'Mai', '06': 'Jun',
+    '07': 'Jul', '08': 'Aoû', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Déc',
+};
 
 const chartConfig = {
     membres: { label: 'Membres', color: 'hsl(var(--primary))' },
 };
 
-const kpis = [
-    { label: 'Total membres', value: '856', change: '+12%', trend: 'up', icon: Users },
-    { label: 'Clubs actifs', value: '34', change: '+2', trend: 'up', icon: Building2 },
-    { label: 'Inscriptions ce mois', value: '29', change: '+18%', trend: 'up', icon: TrendingUp },
-    { label: 'Taux de renouvellement', value: '87%', change: '+3%', trend: 'up', icon: BarChart3 },
-];
+const currentYear = new Date().getFullYear();
+const YEARS = [currentYear, currentYear - 1, currentYear - 2].map(String);
 
 export default function AdminRapportsPage() {
-    const [period, setPeriod] = useState('2024');
+    const [period, setPeriod] = useState(String(currentYear));
+
+    const { data: statsData, isLoading } = useQuery({
+        queryKey: ['admin', 'stats'],
+        queryFn: () => statsApi.dashboard(),
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const stats = statsData?.data;
+
+    const membersByMonth = (stats?.membresMoisParMois ?? []).map(({ mois, total }) => ({
+        month: MONTH_LABELS[mois.split('-')[1]] ?? mois,
+        membres: Number(total),
+    }));
+
+    const membersByRegion = (stats?.membresParRegion ?? []).map(({ regionNom, total }) => ({
+        region: regionNom,
+        membres: Number(total),
+    }));
+
+    const kpis = [
+        { label: 'Total membres',    value: stats?.totalMembers   ?? '—', change: `+${stats?.newMembersThisWeek ?? 0} cette sem.`, icon: Users },
+        { label: 'Clubs actifs',     value: stats?.activeClubs    ?? '—', change: `/ ${stats?.totalClubs ?? 0} clubs`,             icon: Building2 },
+        { label: 'Licences actives', value: stats?.activeLicenses ?? '—', change: `${stats?.expiringLicenses ?? 0} expirent`,      icon: Award },
+        { label: 'En validation',    value: stats?.pendingMembers ?? '—', change: 'membres en attente',                            icon: TrendingUp },
+    ];
+
+    // ── Export getData callbacks ──────────────────────────────────────────────────
+
+    async function getMembresExport(): Promise<Record<string, unknown>[]> {
+        const res = await membersApi.adminList({ limit: 1000 });
+        return (res.data ?? []).map((m: Member) => ({
+            firstName:     m.prenom,
+            lastName:      m.nom,
+            email:         m.user?.email ?? '',
+            phone:         m.user?.phone ?? '',
+            gender:        m.sexe ?? '',
+            birthDate:     m.dateNaissance ? new Date(m.dateNaissance).toLocaleDateString('fr-FR') : '',
+            nationality:   '',
+            city:          m.ville ?? '',
+            region:        m.club?.region?.nom ?? '',
+            clubName:      m.club?.nom ?? '',
+            discipline:    m.discipline ?? '',
+            grade:         m.grade ?? '',
+            status:        m.user?.isActive ? 'Actif' : 'Inactif',
+            licenseNumber: m.licenses?.[0]
+                ? `SHN-${m.licenses[0].annee}-${String(m.licenses[0].id).padStart(5, '0')}`
+                : '',
+            registeredAt:  new Date(m.createdAt).toLocaleDateString('fr-FR'),
+        }));
+    }
+
+    async function getClubsExport(): Promise<Record<string, unknown>[]> {
+        const res = await clubsApi.adminList({ limit: 1000 });
+        return (res.data ?? []).map((c: Club) => ({
+            code:          `${c.region?.code ?? ''}-${c.id}`,
+            name:          c.nom,
+            region:        c.region?.nom ?? '',
+            city:          c.ville ?? '',
+            phone:         c.telephone ?? '',
+            email:         c.email ?? '',
+            presidentName: c.nomMaitre ?? '',
+            membersCount:  c._count?.members ?? 0,
+            status:        c.isActive ? 'Actif' : 'Inactif',
+            createdAt:     new Date(c.createdAt).toLocaleDateString('fr-FR'),
+        }));
+    }
+
+    async function getCompetitionsExport(): Promise<Record<string, unknown>[]> {
+        const res = await competitionsApi.adminList({ limit: 1000 });
+        return (res.data ?? []).map((c: Competition) => ({
+            title:           c.titre,
+            discipline:      '',
+            date:            new Date(c.dateDebut).toLocaleDateString('fr-FR'),
+            location:        c.lieu ?? '',
+            status:          c.isPublished ? 'Publié' : 'Brouillon',
+            participants:    c._count?.inscriptions ?? 0,
+            maxParticipants: '',
+        }));
+    }
+
+    async function getActualitesExport(): Promise<Record<string, unknown>[]> {
+        const res = await actualitesApi.adminList({ limit: 1000 });
+        return (res.data ?? []).map((a: Actualite) => ({
+            title:       a.titre,
+            slug:        a.slug,
+            category:    '',
+            status:      a.isPublished ? 'Publié' : 'Brouillon',
+            author:      'Secrétariat ADSS',
+            publishedAt: a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('fr-FR') : '',
+        }));
+    }
+
+    async function getLicencesExport(): Promise<Record<string, unknown>[]> {
+        const res = await membersApi.adminList({ limit: 1000 });
+        const rows: Record<string, unknown>[] = [];
+        for (const m of (res.data ?? [])) {
+            for (const lic of (m.licenses ?? [])) {
+                rows.push({
+                    licenseNumber: `SHN-${lic.annee}-${String(lic.id).padStart(5, '0')}`,
+                    memberName:    `${m.prenom} ${m.nom}`,
+                    clubName:      m.club?.nom ?? '',
+                    discipline:    m.discipline ?? '',
+                    grade:         m.grade ?? '',
+                    issueDate:     '',
+                    expiryDate:    lic.dateFin ? new Date(lic.dateFin).toLocaleDateString('fr-FR') : `31/12/${lic.annee}`,
+                    status:        lic.status,
+                });
+            }
+        }
+        return rows;
+    }
 
     return (
         <div className="space-y-6">
@@ -97,18 +178,18 @@ export default function AdminRapportsPage() {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="2024">2024</SelectItem>
-                            <SelectItem value="2023">2023</SelectItem>
-                            <SelectItem value="2022">2022</SelectItem>
+                            {YEARS.map((y) => (
+                                <SelectItem key={y} value={y}>{y}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     <MultiExportButton
                         exports={[
-                            { label: 'Membres (Excel)', entity: 'membres', getData: () => [] },
-                            { label: 'Clubs (Excel)', entity: 'clubs', getData: () => [] },
-                            { label: 'Compétitions (Excel)', entity: 'competitions', getData: () => [] },
-                            { label: 'Actualités (Excel)', entity: 'actualites', getData: () => [] },
-                            { label: 'Licences (Excel)', entity: 'licences', getData: () => [] },
+                            { label: 'Membres (Excel)',      entity: 'membres',      getData: getMembresExport },
+                            { label: 'Clubs (Excel)',         entity: 'clubs',        getData: getClubsExport },
+                            { label: 'Compétitions (Excel)',  entity: 'competitions', getData: getCompetitionsExport },
+                            { label: 'Actualités (Excel)',    entity: 'actualites',   getData: getActualitesExport },
+                            { label: 'Licences (Excel)',      entity: 'licences',     getData: getLicencesExport },
                         ]}
                     />
                 </div>
@@ -125,7 +206,11 @@ export default function AdminRapportsPage() {
                                     {kpi.change}
                                 </Badge>
                             </div>
-                            <p className="text-2xl font-bold">{kpi.value}</p>
+                            {isLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground my-1" />
+                            ) : (
+                                <p className="text-2xl font-bold">{kpi.value}</p>
+                            )}
                             <p className="text-xs text-muted-foreground">{kpi.label}</p>
                         </CardContent>
                     </Card>
@@ -135,26 +220,32 @@ export default function AdminRapportsPage() {
             {/* Chart: inscriptions par mois */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Inscriptions par mois — {period}</CardTitle>
+                    <CardTitle>Inscriptions — 12 derniers mois</CardTitle>
                     <CardDescription>Nouveaux membres enregistrés chaque mois.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ChartContainer config={chartConfig} className="h-[260px] w-full">
-                        <LineChart data={membersByMonth}>
-                            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                            <Line
-                                type="monotone"
-                                dataKey="membres"
-                                stroke="var(--color-membres)"
-                                strokeWidth={2}
-                                dot={{ r: 3 }}
-                                activeDot={{ r: 5 }}
-                            />
-                        </LineChart>
-                    </ChartContainer>
+                    {isLoading ? (
+                        <div className="h-[260px] flex items-center justify-center">
+                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : (
+                        <ChartContainer config={chartConfig} className="h-[260px] w-full">
+                            <LineChart data={membersByMonth}>
+                                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                                <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                                <ChartTooltip content={<ChartTooltipContent />} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="membres"
+                                    stroke="var(--color-membres)"
+                                    strokeWidth={2}
+                                    dot={{ r: 3 }}
+                                    activeDot={{ r: 5 }}
+                                />
+                            </LineChart>
+                        </ChartContainer>
+                    )}
                 </CardContent>
             </Card>
 
@@ -166,45 +257,60 @@ export default function AdminRapportsPage() {
                         <CardDescription>Répartition géographique des adhérents.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ChartContainer config={chartConfig} className="h-[260px] w-full">
-                            <BarChart data={membersByRegion} layout="vertical">
-                                <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-                                <XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} />
-                                <YAxis type="category" dataKey="region" tickLine={false} axisLine={false} tickMargin={8} width={70} />
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                                <Bar dataKey="membres" fill="var(--color-membres)" radius={[0, 4, 4, 0]} />
-                            </BarChart>
-                        </ChartContainer>
+                        {isLoading ? (
+                            <div className="h-[260px] flex items-center justify-center">
+                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : (
+                            <ChartContainer config={chartConfig} className="h-[260px] w-full">
+                                <BarChart data={membersByRegion} layout="vertical">
+                                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                                    <XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} />
+                                    <YAxis type="category" dataKey="region" tickLine={false} axisLine={false} tickMargin={8} width={80} />
+                                    <ChartTooltip content={<ChartTooltipContent />} />
+                                    <Bar dataKey="membres" fill="var(--color-membres)" radius={[0, 4, 4, 0]} />
+                                </BarChart>
+                            </ChartContainer>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Disciplines breakdown */}
+                {/* Licences summary */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Répartition par discipline</CardTitle>
-                        <CardDescription>Nombre de membres par discipline pratiquée.</CardDescription>
+                        <CardTitle>État des licences</CardTitle>
+                        <CardDescription>Répartition par statut de licence.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-3 mt-2">
-                            {membersByDiscipline.map((d) => {
-                                const total = membersByDiscipline.reduce((s, x) => s + x.value, 0);
-                                const pct = Math.round((d.value / total) * 100);
-                                return (
-                                    <div key={d.name}>
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span className="font-medium">{d.name}</span>
-                                            <span className="text-muted-foreground">{d.value} ({pct}%)</span>
+                        {isLoading ? (
+                            <div className="h-[260px] flex items-center justify-center">
+                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : (
+                            <div className="space-y-4 mt-2">
+                                {[
+                                    { label: 'Actives',               value: stats?.activeLicenses  ?? 0, total: stats?.totalLicenses ?? 1, color: 'bg-emerald-500' },
+                                    { label: 'Expirent dans 30 jours', value: stats?.expiringLicenses ?? 0, total: stats?.totalLicenses ?? 1, color: 'bg-amber-500' },
+                                    { label: 'Expirées',               value: stats?.expiredLicenses  ?? 0, total: stats?.totalLicenses ?? 1, color: 'bg-muted-foreground' },
+                                ].map((item) => {
+                                    const pct = stats?.totalLicenses ? Math.round((item.value / stats.totalLicenses) * 100) : 0;
+                                    return (
+                                        <div key={item.label}>
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-medium">{item.label}</span>
+                                                <span className="text-muted-foreground">{item.value} ({pct}%)</span>
+                                            </div>
+                                            <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                                <div className={`h-full rounded-full ${item.color} transition-all`} style={{ width: `${pct}%` }} />
+                                            </div>
                                         </div>
-                                        <div className="h-2 rounded-full bg-muted overflow-hidden">
-                                            <div
-                                                className="h-full rounded-full bg-primary transition-all"
-                                                style={{ width: `${pct}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    );
+                                })}
+                                <p className="text-xs text-muted-foreground pt-2">
+                                    Total licences : {stats?.totalLicenses ?? '—'}
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

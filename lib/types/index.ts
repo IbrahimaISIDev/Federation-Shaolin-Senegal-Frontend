@@ -3,7 +3,7 @@
 // ============================================
 
 // --- User & Authentication ---
-export type UserRole = 'MEMBRE' | 'PRESIDENT_CLUB' | 'ADMIN';
+export type UserRole = 'MEMBRE' | 'PRESIDENT_CLUB' | 'CLUB_MANAGER' | 'ADMIN';
 export type LicenseStatus = 'ACTIVE' | 'EXPIRED' | 'PENDING' | 'SUSPENDED';
 export type Gender = 'HOMME' | 'FEMME';
 export type MembershipType = 'NOUVEAU' | 'RENOUVELLEMENT';

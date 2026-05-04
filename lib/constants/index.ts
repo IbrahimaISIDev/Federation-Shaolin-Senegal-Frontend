@@ -12,7 +12,7 @@ export const SITE_DESCRIPTION =
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaolin-senegal.sn';
 
 // --- API ---
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shaolin-senegal.sn';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 // --- Navigation ---
 export const PUBLIC_NAV_ITEMS: NavItem[] = [
