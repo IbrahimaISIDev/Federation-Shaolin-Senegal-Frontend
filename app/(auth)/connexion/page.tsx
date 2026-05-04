@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { authApi } from '@/lib/api/auth';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 
 export default function LoginPage() {
@@ -32,25 +33,44 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Mock login - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Mock successful login
-      const mockUser = {
-        id: '1',
+      const response = await authApi.login({
         email: formData.email,
-        firstName: 'Mamadou',
-        lastName: 'Diallo',
-        role: 'MEMBRE' as const,
-        licenseNumber: 'FSS-DK-001234',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      login(mockUser, 'mock-access-token');
-      router.push('/membre');
-    } catch {
-      setError('Email ou mot de passe incorrect');
+        password: formData.password,
+      });
+
+      const { accessToken, user: authUser } = response.data;
+
+      // Mapper AuthUser (backend) → User (store frontend)
+      const roleMap = {
+        MEMBER:       'MEMBRE',
+        CLUB_MANAGER: 'CLUB_MANAGER',
+        ADMIN:        'ADMIN',
+      } as const;
+
+      login(
+        {
+          id: String(authUser.id),
+          email: authUser.email,
+          firstName: authUser.prenom ?? '',
+          lastName: authUser.nom ?? '',
+          role: roleMap[authUser.role] ?? 'MEMBRE',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        accessToken
+      );
+
+      // Redirection selon le rôle
+      if (authUser.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (authUser.role === 'CLUB_MANAGER') {
+        router.push('/club');
+      } else {
+        router.push('/membre');
+      }
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError?.response?.data?.error ?? 'Email ou mot de passe incorrect');
     } finally {
       setIsLoading(false);
     }
