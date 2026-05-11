@@ -33,9 +33,10 @@ const typeLabels: Record<string, string> = {
 };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  PENDING:  { label: 'En attente', className: 'bg-amber-100 text-amber-700 border-amber-200' },
-  APPROVED: { label: 'Approuvée',  className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  REJECTED: { label: 'Rejetée',    className: 'bg-rose-100 text-rose-700 border-rose-200' },
+  PENDING_PAYMENT: { label: 'Attente paiement', className: 'bg-sky-100 text-sky-700 border-sky-200' },
+  PENDING:  { label: 'En attente',  className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  APPROVED: { label: 'Approuvée',   className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+  REJECTED: { label: 'Rejetée',     className: 'bg-rose-100 text-rose-700 border-rose-200' },
 };
 
 const typeConfig: Record<string, { className: string }> = {
@@ -150,7 +151,8 @@ export default function AdminAffiliationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="PENDING">En attente</SelectItem>
+                <SelectItem value="PENDING_PAYMENT">Attente paiement</SelectItem>
+                <SelectItem value="PENDING">En attente (payées)</SelectItem>
                 <SelectItem value="APPROVED">Approuvées</SelectItem>
                 <SelectItem value="REJECTED">Rejetées</SelectItem>
               </SelectContent>

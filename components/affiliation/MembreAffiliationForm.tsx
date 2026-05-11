@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,7 @@ const GRADES_JI = [
 const GROUPES_SANGUINS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 export function MembreAffiliationForm() {
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
   const [serverError, setServerError] = useState('');
 
   const { data: clubsData } = useQuery({
@@ -51,27 +52,13 @@ export function MembreAffiliationForm() {
   const onSubmit = async (data: MembreAffiliationData) => {
     setServerError('');
     try {
-      await affiliationApi.submitMembre(data);
-      setSubmitted(true);
+      const res = await affiliationApi.submitMembre(data);
+      const demandeId = (res as any)?.data?.id;
+      router.push(`/affiliation/paiement?id=${demandeId}`);
     } catch (err: any) {
       setServerError(err?.response?.data?.message ?? 'Une erreur est survenue. Veuillez réessayer.');
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="text-center py-16 space-y-4">
-        <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
-        <h2 className="text-2xl font-bold text-foreground">Demande envoyée !</h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Votre demande d&apos;affiliation en tant que Membre/Disciple a bien été reçue. Un email de confirmation vous a été envoyé.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Votre dossier sera examiné par notre équipe. Vous recevrez vos identifiants de connexion dès l&apos;approbation.
-        </p>
-      </div>
-    );
-  }
 
   const clubs = (clubsData as any)?.data?.data ?? [];
 
