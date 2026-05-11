@@ -60,6 +60,10 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Fired once sessionStorage has been read — stop the loading spinner
+        state?.setLoading(false);
+      },
     }
   )
 );
