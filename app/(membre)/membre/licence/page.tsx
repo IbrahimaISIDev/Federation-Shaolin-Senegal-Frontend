@@ -19,7 +19,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAuthStore } from '@/lib/store/auth-store';
 import { membersApi, licensesApi } from '@/lib/api';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 
@@ -31,7 +30,6 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function LicensePage() {
-  const { user } = useAuthStore();
   const [showQRCode, setShowQRCode] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -175,7 +173,7 @@ export default function LicensePage() {
                   <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                     <div>
                       <p className="text-xs text-primary-foreground/70">Titulaire</p>
-                      <p className="font-semibold">{member?.user?.firstName || user?.firstName} {member?.user?.lastName || user?.lastName}</p>
+                      <p className="font-semibold">{member?.prenom} {member?.nom}</p>
                     </div>
                     <div>
                       <p className="text-xs text-primary-foreground/70">Club</p>
@@ -305,7 +303,7 @@ export default function LicensePage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Nom complet</p>
-                  <p className="font-medium">{member?.prenom || user?.firstName} {member?.nom || user?.lastName}</p>
+                  <p className="font-medium">{member?.prenom} {member?.nom}</p>
                 </div>
               </div>
 
