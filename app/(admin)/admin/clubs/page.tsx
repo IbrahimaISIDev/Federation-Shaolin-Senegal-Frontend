@@ -1,161 +1,169 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useDebounce } from 'use-debounce';
 import {
-    Search,
-    Filter,
-    PlusCircle,
-    MoreHorizontal,
-    Eye,
-    Pencil,
-    Trash2,
-    Building2,
-    Users,
-    MapPin,
-    ChevronLeft,
-    ChevronRight,
+    Search, Filter, PlusCircle, MoreHorizontal, Eye, Pencil, Trash2,
+    Building2, Users, MapPin, ChevronLeft, ChevronRight, Loader2, AlertCircle,
+    ToggleLeft, ToggleRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { ExportButton } from '@/components/shared/export-button';
+import { clubsApi, type Club } from '@/lib/api';
+import { toast } from 'sonner';
 
-const mockClubs = [
-    { id: '1', code: 'TSK-001', name: 'Temple Shaolin Dakar', region: 'Dakar', city: 'Dakar', president: 'Cheikh Diallo', memberCount: 145, phone: '771234567', email: 'tsdk@email.com', isActive: true, createdAt: '2019-03-15' },
-    { id: '2', code: 'DFS-002', name: 'Dragon de Feu Saint-Louis', region: 'Saint-Louis', city: 'Saint-Louis', president: 'Ibrahima Fall', memberCount: 78, phone: '772345678', email: 'dfs@email.com', isActive: true, createdAt: '2020-06-20' },
-    { id: '3', code: 'WAT-003', name: 'Wushu Academy Thiès', region: 'Thiès', city: 'Thiès', president: 'Fatou Ndiaye', memberCount: 92, phone: '773456789', email: 'wat@email.com', isActive: true, createdAt: '2020-09-01' },
-    { id: '4', code: 'SHZ-004', name: 'Shaolin Ziguinchor', region: 'Ziguinchor', city: 'Ziguinchor', president: 'Omar Bodian', memberCount: 54, phone: '774567890', email: 'shz@email.com', isActive: false, createdAt: '2021-01-10' },
-    { id: '5', code: 'KFD-005', name: 'Kung Fu Diourbel', region: 'Diourbel', city: 'Diourbel', president: 'Aissatou Sarr', memberCount: 38, phone: '775678901', email: 'kfd@email.com', isActive: true, createdAt: '2021-04-05' },
-    { id: '6', code: 'SKO-006', name: 'Shaolin Kaolack', region: 'Kaolack', city: 'Kaolack', president: 'Moussa Diouf', memberCount: 61, phone: '776789012', email: 'sko@email.com', isActive: true, createdAt: '2022-02-14' },
-];
+const PAGE_SIZE = 20;
 
 function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+        day: 'numeric', month: 'short', year: 'numeric',
+    });
 }
 
 export default function AdminClubsPage() {
-    const [searchQuery, setSearchQuery] = useState('');
+    const queryClient = useQueryClient();
+    const [searchInput, setSearchInput] = useState('');
+    const [search] = useDebounce(searchInput, 400);
     const [statusFilter, setStatusFilter] = useState('all');
-    const [regionFilter, setRegionFilter] = useState('all');
+    const [page, setPage] = useState(1);
 
-    const filteredClubs = mockClubs.filter((club) => {
-        const matchesSearch =
-            club.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            club.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            club.president.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? club.isActive : !club.isActive);
-        const matchesRegion = regionFilter === 'all' || club.region.toLowerCase() === regionFilter.toLowerCase();
-        return matchesSearch && matchesStatus && matchesRegion;
+    // ── Data ────────────────────────────────────────────────────────────────────
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['admin', 'clubs', { search, status: statusFilter, page }],
+        queryFn: () =>
+            clubsApi.adminList({
+                search: search || undefined,
+                active: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined,
+                page,
+                limit: PAGE_SIZE,
+            }),
+        staleTime: 60 * 1000,
     });
 
-    const regions = [...new Set(mockClubs.map((c) => c.region))].sort();
+    const clubs: Club[] = data?.data ?? [];
+    const total = data?.total ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-    const totalMembers = mockClubs.reduce((acc, c) => acc + c.memberCount, 0);
-    const activeClubs = mockClubs.filter((c) => c.isActive).length;
+    // ── Mutations ────────────────────────────────────────────────────────────────
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'clubs'] });
+
+    const activateMutation = useMutation({
+        mutationFn: (id: number) => clubsApi.activate(id),
+        onSuccess: () => { toast.success('Club activé'); invalidate(); },
+        onError: () => toast.error('Erreur lors de l\'activation'),
+    });
+
+    const deactivateMutation = useMutation({
+        mutationFn: (id: number) => clubsApi.deactivate(id),
+        onSuccess: () => { toast.success('Club désactivé'); invalidate(); },
+        onError: () => toast.error('Erreur lors de la désactivation'),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => clubsApi.delete(id),
+        onSuccess: () => { toast.success('Club supprimé'); invalidate(); },
+        onError: (err: any) => toast.error(err?.response?.data?.error ?? 'Erreur lors de la suppression'),
+    });
+
+    // ── Export ───────────────────────────────────────────────────────────────────
+    const getClubsForExport = useCallback(() =>
+        clubs.map((c) => ({
+            name: c.nom,
+            region: c.region?.nom ?? '',
+            city: c.ville ?? '',
+            phone: c.telephone ?? '',
+            email: c.email ?? '',
+            presidentName: c.nomMaitre ?? '',
+            membersCount: c._count?.members ?? 0,
+            status: c.isActive ? 'Actif' : 'Inactif',
+            createdAt: c.createdAt,
+        })),
+        [clubs]);
 
     return (
         <div className="space-y-6">
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Clubs</h1>
                     <p className="text-muted-foreground">Gérez les clubs affiliés à la fédération.</p>
                 </div>
-                <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
-                    <Link href="/admin/clubs/nouveau">
-                        <PlusCircle className="w-4 h-4" />
-                        <span className="hidden sm:inline">Nouveau club</span>
-                    </Link>
-                </Button>
+                <div className="flex gap-2">
+                    <ExportButton entity="clubs" getData={getClubsForExport} />
+                    <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
+                        <Link href="/admin/clubs/nouveau">
+                            <PlusCircle className="w-4 h-4" />
+                            <span className="hidden sm:inline">Nouveau club</span>
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
+            {/* Error */}
+            {isError && (
+                <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    Impossible de charger les clubs. Vérifiez que l&apos;API est démarrée.
+                </div>
+            )}
+
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Total</p>
-                            <p className="text-2xl font-bold">{mockClubs.length}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-emerald-500" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Actifs</p>
-                            <p className="text-2xl font-bold text-emerald-600">{activeClubs}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-orange-500" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Membres</p>
-                            <p className="text-2xl font-bold">{totalMembers}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <MapPin className="w-5 h-5 text-blue-500" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Régions</p>
-                            <p className="text-2xl font-bold">{regions.length}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                    { label: 'Total clubs', value: total, icon: Building2, color: 'text-foreground' },
+                    { label: 'Actifs', value: clubs.filter(c => c.isActive).length, icon: ToggleRight, color: 'text-emerald-600' },
+                    { label: 'Total membres', value: clubs.reduce((s, c) => s + (c._count?.members ?? 0), 0), icon: Users, color: 'text-blue-600' },
+                ].map(({ label, value, icon: Icon, color }) => (
+                    <Card key={label}>
+                        <CardContent className="p-4 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                                <Icon className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">{label}</p>
+                                <p className={`text-xl font-bold ${color}`}>
+                                    {isLoading
+                                        ? <span className="inline-block w-10 h-5 bg-muted animate-pulse rounded" />
+                                        : value.toLocaleString('fr-FR')}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
 
             {/* Filters */}
             <Card>
                 <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
-                                placeholder="Rechercher par nom, code, président..."
+                                id="club-search"
+                                placeholder="Rechercher par nom, ville, maître..."
                                 className="pl-10"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                value={searchInput}
+                                onChange={(e) => { setSearchInput(e.target.value); setPage(1); }}
                             />
                         </div>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[140px]">
+                        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+                            <SelectTrigger className="w-[160px]">
                                 <Filter className="w-4 h-4 mr-2" />
                                 <SelectValue placeholder="Statut" />
                             </SelectTrigger>
@@ -163,17 +171,6 @@ export default function AdminClubsPage() {
                                 <SelectItem value="all">Tous</SelectItem>
                                 <SelectItem value="active">Actifs</SelectItem>
                                 <SelectItem value="inactive">Inactifs</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={regionFilter} onValueChange={setRegionFilter}>
-                            <SelectTrigger className="w-[150px]">
-                                <SelectValue placeholder="Région" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Toutes les régions</SelectItem>
-                                {regions.map((r) => (
-                                    <SelectItem key={r} value={r.toLowerCase()}>{r}</SelectItem>
-                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -187,63 +184,79 @@ export default function AdminClubsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Code</TableHead>
                                     <TableHead>Club</TableHead>
-                                    <TableHead className="hidden md:table-cell">Président</TableHead>
-                                    <TableHead className="hidden sm:table-cell">Région</TableHead>
-                                    <TableHead>Membres</TableHead>
+                                    <TableHead className="hidden md:table-cell">Région / Ville</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Maître</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Membres</TableHead>
                                     <TableHead>Statut</TableHead>
-                                    <TableHead className="hidden lg:table-cell">Date d'adhésion</TableHead>
-                                    <TableHead className="w-12"></TableHead>
+                                    <TableHead className="hidden md:table-cell">Depuis</TableHead>
+                                    <TableHead className="w-12" />
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredClubs.length === 0 ? (
+                                {isLoading ? (
+                                    [...Array(5)].map((_, i) => (
+                                        <TableRow key={i}>
+                                            {[...Array(7)].map((__, j) => (
+                                                <TableCell key={j}>
+                                                    <div className="h-5 rounded bg-muted animate-pulse" />
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))
+                                ) : clubs.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
                                             Aucun club trouvé.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredClubs.map((club) => (
+                                    clubs.map((club) => (
                                         <TableRow key={club.id}>
-                                            <TableCell className="font-mono text-sm text-muted-foreground">{club.code}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                                                        <Building2 className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-foreground">{club.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{club.city}</p>
-                                                    </div>
+                                                    {club.logoUrl ? (
+                                                        <img src={club.logoUrl} alt={club.nom} className="w-8 h-8 rounded-lg object-cover" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                                                            <Building2 className="w-4 h-4 text-muted-foreground" />
+                                                        </div>
+                                                    )}
+                                                    <span className="font-medium text-foreground">{club.nom}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="hidden md:table-cell text-muted-foreground">{club.president}</TableCell>
-                                            <TableCell className="hidden sm:table-cell">
-                                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                            <TableCell className="hidden md:table-cell">
+                                                <div className="flex items-center gap-1 text-muted-foreground">
                                                     <MapPin className="w-3 h-3" />
-                                                    {club.region}
+                                                    <span>{club.region?.nom ?? '—'}{club.ville ? `, ${club.ville}` : ''}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="hidden lg:table-cell text-muted-foreground">
+                                                {club.nomMaitre ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="hidden sm:table-cell">
+                                                <div className="flex items-center gap-1 text-muted-foreground">
+                                                    <Users className="w-3 h-3" />
+                                                    <span>{club._count?.members ?? 0}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-1 font-medium">
-                                                    <Users className="w-3 h-3 text-muted-foreground" />
-                                                    {club.memberCount}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={club.isActive ? 'default' : 'secondary'}>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={club.isActive
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-slate-50 text-slate-500 border-slate-200'}
+                                                >
                                                     {club.isActive ? 'Actif' : 'Inactif'}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
+                                            <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
                                                 {formatDate(club.createdAt)}
                                             </TableCell>
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
                                                             <MoreHorizontal className="w-4 h-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -260,9 +273,29 @@ export default function AdminClubsPage() {
                                                                 <Pencil className="w-4 h-4 mr-2" /> Modifier
                                                             </Link>
                                                         </DropdownMenuItem>
+                                                        {club.isActive ? (
+                                                            <DropdownMenuItem
+                                                                onClick={() => deactivateMutation.mutate(club.id)}
+                                                                className="text-amber-600"
+                                                            >
+                                                                <ToggleLeft className="w-4 h-4 mr-2" /> Désactiver
+                                                            </DropdownMenuItem>
+                                                        ) : (
+                                                            <DropdownMenuItem
+                                                                onClick={() => activateMutation.mutate(club.id)}
+                                                                className="text-emerald-600"
+                                                            >
+                                                                <ToggleRight className="w-4 h-4 mr-2" /> Activer
+                                                            </DropdownMenuItem>
+                                                        )}
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="text-destructive">
-                                                            <Trash2 className="w-4 h-4 mr-2" /> Désaffilier
+                                                        <DropdownMenuItem
+                                                            className="text-destructive"
+                                                            onClick={() => {
+                                                                if (confirm(`Supprimer le club "${club.nom}" ?`)) deleteMutation.mutate(club.id);
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4 mr-2" /> Supprimer
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -276,14 +309,20 @@ export default function AdminClubsPage() {
 
                     {/* Pagination */}
                     <div className="flex items-center justify-between px-4 py-4 border-t">
-                        <p className="text-sm text-muted-foreground">{filteredClubs.length} résultat(s)</p>
+                        <p className="text-sm text-muted-foreground">{total.toLocaleString('fr-FR')} club(s)</p>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" disabled>
+                            <Button variant="outline" size="sm"
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                disabled={page <= 1 || isLoading}
+                            >
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
-                            <span className="text-sm text-muted-foreground">Page 1 / 1</span>
-                            <Button variant="outline" size="sm" disabled>
-                                <ChevronRight className="w-4 h-4" />
+                            <span className="text-sm text-muted-foreground">Page {page} / {totalPages}</span>
+                            <Button variant="outline" size="sm"
+                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={page >= totalPages || isLoading}
+                            >
+                                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
                             </Button>
                         </div>
                     </div>

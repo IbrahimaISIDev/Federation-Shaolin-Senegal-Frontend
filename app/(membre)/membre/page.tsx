@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import {
   CreditCard,
   Calendar,
@@ -11,64 +12,57 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { membersApi, competitionsApi, type Competition } from '@/lib/api';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 
-// Mock data
-const mockLicenseStatus = {
-  status: 'ACTIVE' as const,
-  expiryDate: '2025-12-31',
-  daysUntilExpiry: 280,
-};
-
-const upcomingCompetitions = [
-  {
-    id: '1',
-    name: 'Championnat Régional Dakar',
-    date: '2024-05-15',
-    location: 'Stade Léopold Sédar Senghor',
-    isRegistered: true,
-  },
-  {
-    id: '2',
-    name: 'Open National de Wushu',
-    date: '2024-06-20',
-    location: 'Palais des Sports',
-    isRegistered: false,
-  },
-];
-
-const notifications = [
-  {
-    id: '1',
-    title: 'Licence renouvelée',
-    message: 'Votre licence a été renouvelée avec succès.',
-    type: 'success',
-    date: '2024-03-10',
-  },
-  {
-    id: '2',
-    title: 'Nouvelle compétition',
-    message: 'Le Championnat Régional de Dakar est ouvert aux inscriptions.',
-    type: 'info',
-    date: '2024-03-08',
-  },
-];
-
-const statusConfig = {
-  ACTIVE: { label: 'Active', color: 'bg-success text-success-foreground', icon: CheckCircle2 },
-  PENDING: { label: 'En attente', color: 'bg-warning text-warning-foreground', icon: Clock },
-  EXPIRED: { label: 'Expirée', color: 'bg-destructive text-destructive-foreground', icon: AlertCircle },
-  SUSPENDED: { label: 'Suspendue', color: 'bg-muted text-muted-foreground', icon: AlertCircle },
+const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+  active: { label: 'Active', color: 'bg-success text-success-foreground', icon: CheckCircle2 },
+  pending: { label: 'En attente', color: 'bg-warning text-warning-foreground', icon: Clock },
+  suspended: { label: 'Suspendue', color: 'bg-muted text-muted-foreground', icon: AlertCircle },
+  rejected: { label: 'Rejetée', color: 'bg-destructive text-destructive-foreground', icon: AlertCircle },
 };
 
 export default function MemberDashboardPage() {
   const { user } = useAuthStore();
-  const status = statusConfig[mockLicenseStatus.status];
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['member', 'profile'],
+    queryFn: () => membersApi.me(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: compsData } = useQuery({
+    queryKey: ['public', 'competitions', 'upcoming'],
+    queryFn: () => competitionsApi.list({ status: 'upcoming', limit: 3 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: inscData } = useQuery({
+    queryKey: ['member', 'inscriptions'],
+    queryFn: () => membersApi.myInscriptions(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const member = data?.data;
+  const activeLicense = member?.licenses?.[0];
+  const statusKey = activeLicense?.status?.toLowerCase() ?? 'pending';
+  const status = statusConfig[statusKey] || statusConfig.pending;
+  const upcomingCompetitions: Competition[] = compsData?.data ?? [];
+  const myInscriptionIds = new Set((inscData?.data ?? []).map((i: any) => i.competitionId));
 
   return (
     <motion.div
@@ -98,13 +92,15 @@ export default function MemberDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Ma Licence</p>
-                <p className="text-lg font-semibold">{user?.licenseNumber || 'N/A'}</p>
+                <p className="text-lg font-semibold">
+                  {activeLicense ? `SHN-${activeLicense.annee}-${String(activeLicense.id).padStart(5,'0')}` : 'N/A'}
+                </p>
               </div>
               <div className={`rounded-full p-2 ${status.color}`}>
                 <status.icon className="h-5 w-5" />
               </div>
             </div>
-            <Badge className={`mt-2 ${status.color}`}>
+            <Badge className={`mt-2 border-none ${status.color}`}>
               {status.label}
             </Badge>
           </CardContent>
@@ -117,7 +113,9 @@ export default function MemberDashboardPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Expiration</p>
                 <p className="text-lg font-semibold">
-                  {new Date(mockLicenseStatus.expiryDate).toLocaleDateString('fr-FR')}
+                  {activeLicense?.dateFin
+                    ? new Date(activeLicense.dateFin).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : `31/12/${activeLicense?.annee ?? new Date().getFullYear()}`}
                 </p>
               </div>
               <div className="rounded-full bg-muted p-2">
@@ -125,7 +123,7 @@ export default function MemberDashboardPage() {
               </div>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Dans {mockLicenseStatus.daysUntilExpiry} jours
+              Saison {activeLicense?.annee ?? new Date().getFullYear()}
             </p>
           </CardContent>
         </Card>
@@ -136,32 +134,32 @@ export default function MemberDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Compétitions</p>
-                <p className="text-lg font-semibold">2 à venir</p>
+                <p className="text-lg font-semibold">{upcomingCompetitions.length} à venir</p>
               </div>
               <div className="rounded-full bg-accent/10 p-2">
                 <Trophy className="h-5 w-5 text-accent" />
               </div>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              1 inscription confirmée
+              {myInscriptionIds.size} inscription{myInscriptionIds.size !== 1 ? 's' : ''} confirmée{myInscriptionIds.size !== 1 ? 's' : ''}
             </p>
           </CardContent>
         </Card>
 
-        {/* Notifications Card */}
+        {/* Mes inscriptions Card */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Notifications</p>
-                <p className="text-lg font-semibold">2 nouvelles</p>
+                <p className="text-sm text-muted-foreground">Mes inscriptions</p>
+                <p className="text-lg font-semibold">{myInscriptionIds.size} compétition{myInscriptionIds.size !== 1 ? 's' : ''}</p>
               </div>
               <div className="rounded-full bg-primary/10 p-2">
                 <Bell className="h-5 w-5 text-primary" />
               </div>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Dernière: il y a 2 jours
+              Saison {activeLicense?.annee ?? new Date().getFullYear()}
             </p>
           </CardContent>
         </Card>
@@ -207,7 +205,7 @@ export default function MemberDashboardPage() {
 
                   <div className="mb-4">
                     <p className="text-2xl font-bold tracking-wider">
-                      {user?.licenseNumber || 'FSS-XX-XXXXXX'}
+                      {activeLicense ? `SHN-${activeLicense.annee}-${String(activeLicense.id).padStart(5,'0')}` : 'N/A'}
                     </p>
                   </div>
 
@@ -215,12 +213,16 @@ export default function MemberDashboardPage() {
                     <div>
                       <p className="text-xs text-primary-foreground/70">Titulaire</p>
                       <p className="font-medium">
-                        {user?.firstName} {user?.lastName}
+                        {member?.prenom || user?.firstName} {member?.nom || user?.lastName}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-primary-foreground/70">Validité</p>
-                      <p className="font-medium">12/2025</p>
+                      <p className="font-medium">
+                        {activeLicense?.dateFin
+                          ? new Date(activeLicense.dateFin).toLocaleDateString('fr-FR', { month: '2-digit', year: 'numeric' })
+                          : `12/${activeLicense?.annee ?? new Date().getFullYear()}`}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -235,40 +237,38 @@ export default function MemberDashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Compétitions à venir</CardTitle>
               <Button asChild variant="ghost" size="sm">
-                <Link href="/membre/competitions">
+                <Link href="/competitions">
                   Voir tout
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {upcomingCompetitions.map((competition) => (
+              {upcomingCompetitions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  Aucune compétition à venir pour le moment.
+                </p>
+              ) : upcomingCompetitions.map((comp: Competition) => (
                 <div
-                  key={competition.id}
+                  key={comp.id}
                   className="flex items-center justify-between rounded-lg border border-border p-4"
                 >
                   <div>
-                    <h4 className="font-medium text-foreground">
-                      {competition.name}
-                    </h4>
+                    <h4 className="font-medium text-foreground">{comp.titre}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(competition.date).toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
+                      {new Date(comp.dateDebut).toLocaleDateString('fr-FR', {
+                        day: 'numeric', month: 'long', year: 'numeric',
                       })}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {competition.location}
-                    </p>
+                    {comp.lieu && (
+                      <p className="text-sm text-muted-foreground">{comp.lieu}</p>
+                    )}
                   </div>
-                  {competition.isRegistered ? (
-                    <Badge className="bg-success text-success-foreground">
-                      Inscrit
-                    </Badge>
+                  {myInscriptionIds.has(comp.id) ? (
+                    <Badge className="bg-emerald-100 text-emerald-700 border-none">Inscrit</Badge>
                   ) : (
-                    <Button size="sm" variant="outline">
-                      S&apos;inscrire
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={`/competitions/${comp.id}/inscription`}>S&apos;inscrire</Link>
                     </Button>
                   )}
                 </div>
@@ -277,48 +277,6 @@ export default function MemberDashboardPage() {
           </Card>
         </motion.div>
       </div>
-
-      {/* Recent Notifications */}
-      <motion.div variants={FADE_IN_UP}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Notifications récentes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className="flex items-start gap-4 rounded-lg border border-border p-4"
-              >
-                <div
-                  className={`mt-0.5 rounded-full p-2 ${
-                    notification.type === 'success'
-                      ? 'bg-success/10 text-success'
-                      : 'bg-primary/10 text-primary'
-                  }`}
-                >
-                  {notification.type === 'success' ? (
-                    <CheckCircle2 className="h-4 w-4" />
-                  ) : (
-                    <Bell className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-foreground">
-                    {notification.title}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {notification.message}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(notification.date).toLocaleDateString('fr-FR')}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </motion.div>
     </motion.div>
   );
 }

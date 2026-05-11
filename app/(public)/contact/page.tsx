@@ -18,6 +18,7 @@ import {
   Youtube,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { contactApi } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -76,11 +77,15 @@ export default function ContactPage() {
 
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log('Contact form submitted:', data);
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    reset();
+    try {
+      await contactApi.send(data);
+      setIsSubmitted(true);
+      reset();
+    } catch {
+      // Error handled silently — form stays open so user can retry
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

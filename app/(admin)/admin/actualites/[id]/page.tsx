@@ -47,7 +47,7 @@ function formatDate(d: string) {
     return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-export default function ArticleDetailPage({ params }: { params: { id: string } }) {
+export default function ArticleDetailPage({ params: _params }: { params: Promise<{ id: string }> }) {
     const article = mockArticle; // TODO: fetch by params.id
     const category = categoryConfig[article.category];
 

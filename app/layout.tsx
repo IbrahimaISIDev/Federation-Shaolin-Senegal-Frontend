@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { QueryProvider } from '@/lib/providers/query-provider'
+import { AuthInitializer } from '@/components/shared/AuthInitializer'
 import './globals.css'
 
 const inter = Inter({ 
@@ -65,6 +66,7 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased">
         <QueryProvider>
+          <AuthInitializer />
           {children}
         </QueryProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}

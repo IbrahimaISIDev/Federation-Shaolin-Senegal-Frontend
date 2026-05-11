@@ -61,7 +61,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
     );
 }
 
-export default function ClubDetailPage({ params }: { params: { id: string } }) {
+export default function ClubDetailPage({ params: _params }: { params: Promise<{ id: string }> }) {
     const club = mockClub; // TODO: fetch by params.id
 
     return (

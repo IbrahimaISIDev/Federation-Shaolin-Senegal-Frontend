@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -57,7 +57,8 @@ const mockMember: MemberFormData = {
     photo: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=400',
 };
 
-export default function EditMemberPage({ params }: { params: { id: string } }) {
+export default function EditMemberPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+    const { id } = use(paramsPromise);
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -78,7 +79,7 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
         try {
             await new Promise((r) => setTimeout(r, 1500));
             console.log('Updated member:', data);
-            router.push(`/admin/membres/${params.id}`);
+            router.push(`/admin/membres/${id}`);
         } catch (error) {
             console.error(error);
         } finally {
@@ -90,11 +91,11 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" asChild>
-                    <Link href={`/admin/membres/${params.id}`}><ArrowLeft className="w-4 h-4" /></Link>
+                    <Link href={`/admin/membres/${id}`}><ArrowLeft className="w-4 h-4" /></Link>
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Modifier le membre</h1>
-                    <p className="text-muted-foreground">Modifiez les informations du membre ID #{params.id}.</p>
+                    <p className="text-muted-foreground">Modifiez les informations du membre ID #{id}.</p>
                 </div>
             </div>
 
@@ -217,7 +218,7 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
 
                 <div className="flex justify-end gap-3">
                     <Button type="button" variant="outline" asChild>
-                        <Link href={`/admin/membres/${params.id}`}>Annuler</Link>
+                        <Link href={`/admin/membres/${id}`}>Annuler</Link>
                     </Button>
                     <Button type="submit" disabled={isSubmitting} className="gap-2 bg-accent hover:bg-accent/90">
                         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

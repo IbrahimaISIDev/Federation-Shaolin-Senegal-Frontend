@@ -1,82 +1,13 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Users, Trophy, Clock, ArrowRight } from 'lucide-react';
-
-export const metadata: Metadata = {
-  title: 'Compétitions',
-  description: 'Calendrier des compétitions de la Fédération Shaolin Sénégal : championnats, tournois et rencontres inter-clubs.',
-};
-
-// Mock competitions data
-const mockCompetitions = {
-  upcoming: [
-    {
-      id: '1',
-      title: 'Championnat National de Wushu 2024',
-      type: 'national',
-      date: '2024-03-15',
-      endDate: '2024-03-16',
-      location: 'Stade Iba Mar Diop, Dakar',
-      categories: ['Taolu', 'Sanda', 'Tai Chi'],
-      registrationDeadline: '2024-03-01',
-      participants: 120,
-      maxParticipants: 200,
-      status: 'inscriptions_ouvertes',
-    },
-    {
-      id: '2',
-      title: 'Tournoi Inter-Clubs Région Dakar',
-      type: 'regional',
-      date: '2024-04-20',
-      endDate: '2024-04-20',
-      location: 'Complexe Sportif Léopold Sédar Senghor',
-      categories: ['Taolu Junior', 'Taolu Senior', 'Combat'],
-      registrationDeadline: '2024-04-10',
-      participants: 45,
-      maxParticipants: 100,
-      status: 'inscriptions_ouvertes',
-    },
-    {
-      id: '3',
-      title: 'Coupe de la Fédération',
-      type: 'national',
-      date: '2024-06-08',
-      endDate: '2024-06-09',
-      location: 'Dakar Arena',
-      categories: ['Toutes catégories'],
-      registrationDeadline: '2024-05-25',
-      participants: 0,
-      maxParticipants: 300,
-      status: 'a_venir',
-    },
-  ],
-  past: [
-    {
-      id: '4',
-      title: 'Tournoi Inter-Clubs Saint-Louis',
-      type: 'regional',
-      date: '2024-01-20',
-      location: 'Gymnase Municipal de Saint-Louis',
-      categories: ['Taolu', 'Sanda'],
-      participants: 85,
-      winner: 'Dragon de Feu Saint-Louis',
-    },
-    {
-      id: '5',
-      title: 'Championnat National 2023',
-      type: 'national',
-      date: '2023-11-25',
-      location: 'Stade Iba Mar Diop, Dakar',
-      categories: ['Toutes catégories'],
-      participants: 180,
-      winner: 'Temple Shaolin Dakar',
-    },
-  ],
-};
+import { Calendar, MapPin, Users, Trophy, Clock, ArrowRight, Loader2 } from 'lucide-react';
+import { competitionsApi, type Competition } from '@/lib/api';
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   inscriptions_ouvertes: { label: 'Inscriptions ouvertes', variant: 'default' },
@@ -85,11 +16,16 @@ const statusLabels: Record<string, { label: string; variant: 'default' | 'second
   termine: { label: 'Terminé', variant: 'outline' },
 };
 
-const typeLabels: Record<string, string> = {
-  national: 'National',
-  regional: 'Régional',
-  international: 'International',
-};
+function getCompetitionStatus(c: Competition) {
+  const now = new Date();
+  const debut = new Date(c.dateDebut);
+  const fin = c.dateFin ? new Date(c.dateFin) : debut;
+  fin.setHours(23, 59, 59, 999);
+
+  if (now < debut) return 'a_venir';
+  if (now >= debut && now <= fin) return 'inscriptions_ouvertes';
+  return 'termine';
+}
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -99,10 +35,10 @@ function formatDate(dateString: string): string {
   });
 }
 
-function formatDateRange(startDate: string, endDate?: string): string {
+function formatDateRange(startDate: string, endDate?: string | null): string {
   const start = formatDate(startDate);
   if (!endDate || startDate === endDate) return start;
-  
+
   const end = new Date(endDate).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -111,8 +47,22 @@ function formatDateRange(startDate: string, endDate?: string): string {
 }
 
 export default function CompetitionsPage() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['public', 'competitions'],
+    queryFn: () => competitionsApi.list({ limit: 100 }), // Fetching all for now
+    staleTime: 60 * 1000,
+  });
+
+  const competitions: Competition[] = data?.data ?? [];
+
+  const upcoming = competitions.filter(c => {
+    const s = getCompetitionStatus(c);
+    return s === 'a_venir' || s === 'inscriptions_ouvertes';
+  });
+  const past = competitions.filter(c => getCompetitionStatus(c) === 'termine');
+
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background pb-20">
       {/* Hero */}
       <section className="bg-primary py-16">
         <div className="container mx-auto px-4 text-center">
@@ -125,162 +75,145 @@ export default function CompetitionsPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-8 border-b">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-accent">12</p>
-              <p className="text-sm text-muted-foreground">Compétitions / an</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-accent">500+</p>
-              <p className="text-sm text-muted-foreground">Participants</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-accent">14</p>
-              <p className="text-sm text-muted-foreground">Régions couvertes</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-accent">25</p>
-              <p className="text-sm text-muted-foreground">Clubs participants</p>
-            </div>
-          </div>
+      {isLoading ? (
+        <div className="flex justify-center py-20 text-muted-foreground gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" /> Chargement du calendrier...
         </div>
-      </section>
+      ) : (
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <Tabs defaultValue="upcoming" className="space-y-8">
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+                <TabsTrigger value="upcoming" className="gap-2">
+                  <Calendar className="w-4 h-4" />
+                  À venir ({upcoming.length})
+                </TabsTrigger>
+                <TabsTrigger value="past" className="gap-2">
+                  <Trophy className="w-4 h-4" />
+                  Passées ({past.length})
+                </TabsTrigger>
+              </TabsList>
 
-      {/* Competitions List */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <Tabs defaultValue="upcoming" className="space-y-8">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-              <TabsTrigger value="upcoming" className="gap-2">
-                <Calendar className="w-4 h-4" />
-                À venir
-              </TabsTrigger>
-              <TabsTrigger value="past" className="gap-2">
-                <Trophy className="w-4 h-4" />
-                Passées
-              </TabsTrigger>
-            </TabsList>
+              <TabsContent value="upcoming" className="space-y-6">
+                {upcoming.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">Aucune compétition à venir pour le moment.</div>
+                ) : upcoming.map((comp) => {
+                  const statusInfo = statusLabels[getCompetitionStatus(comp)];
+                  return (
+                    <Card key={comp.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex flex-col md:flex-row">
+                        {/* Date Badge */}
+                        <div className="bg-primary/10 text-primary p-6 md:w-48 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-border">
+                          <span className="text-4xl font-bold">
+                            {new Date(comp.dateDebut).getDate()}
+                          </span>
+                          <span className="text-sm uppercase font-semibold">
+                            {new Date(comp.dateDebut).toLocaleDateString('fr-FR', { month: 'short' })}
+                          </span>
+                          <span className="text-sm opacity-80">
+                            {new Date(comp.dateDebut).getFullYear()}
+                          </span>
+                        </div>
 
-            <TabsContent value="upcoming" className="space-y-6">
-              {mockCompetitions.upcoming.map((comp) => (
-                <Card key={comp.id} className="overflow-hidden">
-                  <div className="flex flex-col lg:flex-row">
-                    {/* Date Badge */}
-                    <div className="bg-primary text-primary-foreground p-6 lg:w-48 flex flex-col items-center justify-center">
-                      <span className="text-4xl font-bold">
-                        {new Date(comp.date).getDate()}
-                      </span>
-                      <span className="text-sm uppercase">
-                        {new Date(comp.date).toLocaleDateString('fr-FR', { month: 'short' })}
-                      </span>
-                      <span className="text-sm opacity-80">
-                        {new Date(comp.date).getFullYear()}
-                      </span>
-                    </div>
-
-                    {/* Content */}
-                    <CardContent className="flex-1 p-6">
-                      <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline">{typeLabels[comp.type]}</Badge>
-                            <Badge variant={statusLabels[comp.status]?.variant || 'default'}>
-                              {statusLabels[comp.status]?.label || comp.status}
-                            </Badge>
+                        {/* Content */}
+                        <CardContent className="flex-1 p-6">
+                          <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge variant={statusInfo.variant}>
+                                  {statusInfo.label}
+                                </Badge>
+                              </div>
+                              <h3 className="text-xl font-bold text-foreground">
+                                {comp.titre}
+                              </h3>
+                            </div>
+                            {(comp.dateFin && new Date() <= new Date(comp.dateFin)) && (
+                              <Button className="bg-accent hover:bg-accent/90 gap-2 w-full md:w-auto" asChild>
+                                <Link href={`/competitions/${comp.id}/inscription`}>
+                                  S&apos;inscrire
+                                  <ArrowRight className="w-4 h-4" />
+                                </Link>
+                              </Button>
+                            )}
                           </div>
-                          <h3 className="text-xl font-bold text-foreground">
-                            {comp.title}
-                          </h3>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-6">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Calendar className="w-4 h-4 shrink-0 text-muted-foreground" />
+                              {formatDateRange(comp.dateDebut, comp.dateFin)}
+                            </div>
+                            {comp.lieu && (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <MapPin className="w-4 h-4 shrink-0 text-muted-foreground" />
+                                {comp.lieu}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Users className="w-4 h-4 shrink-0 text-muted-foreground" />
+                              {comp._count?.inscriptions ?? 0} inscrits
+                            </div>
+                          </div>
+
+                          {comp.description && (
+                            <div className="mt-6 border-t pt-4 text-sm text-muted-foreground">
+                              <p className="line-clamp-2">{comp.description}</p>
+                            </div>
+                          )}
+                          <div className="mt-4 pt-4 text-sm">
+                            <Link href={`/competitions/${comp.id}`} className="text-accent font-medium hover:underline flex items-center gap-1">Voir les détails de la compétition <ArrowRight className="w-3 h-3" /></Link>
+                          </div>
+                        </CardContent>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </TabsContent>
+
+              <TabsContent value="past" className="space-y-6">
+                {past.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">Aucune compétition passée.</div>
+                ) : past.map((comp) => (
+                  <Card key={comp.id} className="overflow-hidden opacity-90 shadow-sm">
+                    <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline">Terminée</Badge>
+                      </div>
+                      <CardTitle className="text-lg">{comp.titre}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="w-4 h-4 shrink-0" />
+                          {formatDateRange(comp.dateDebut, comp.dateFin)}
                         </div>
-                        {comp.status === 'inscriptions_ouvertes' && (
-                          <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
-                            <Link href={`/competitions/${comp.id}/inscription`}>
-                              S&apos;inscrire
-                              <ArrowRight className="w-4 h-4" />
-                            </Link>
-                          </Button>
+                        {comp.lieu && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="w-4 h-4 shrink-0" />
+                            {comp.lieu}
+                          </div>
                         )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="w-4 h-4 text-primary" />
-                          {formatDateRange(comp.date, comp.endDate)}
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="w-4 h-4 text-primary" />
-                          {comp.location}
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Users className="w-4 h-4 text-primary" />
-                          {comp.participants} / {comp.maxParticipants} participants
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="w-4 h-4 text-primary" />
-                          Inscriptions jusqu&apos;au {formatDate(comp.registrationDeadline)}
+                          <Users className="w-4 h-4 shrink-0" />
+                          {comp._count?.inscriptions ?? 0} participants
                         </div>
                       </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {comp.categories.map((cat) => (
-                          <Badge key={cat} variant="secondary">
-                            {cat}
-                          </Badge>
-                        ))}
+                      <div className="mt-6 pt-4 border-t flex justify-end">
+                        <Button variant="outline" className="gap-2" asChild>
+                          <Link href={`/competitions/${comp.id}`}>
+                            Détails & Résultats
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        </Button>
                       </div>
                     </CardContent>
-                  </div>
-                </Card>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="past" className="space-y-6">
-              {mockCompetitions.past.map((comp) => (
-                <Card key={comp.id} className="overflow-hidden opacity-80">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline">{typeLabels[comp.type]}</Badge>
-                      <Badge variant="outline">Terminé</Badge>
-                    </div>
-                    <CardTitle className="text-lg">{comp.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="w-4 h-4" />
-                        {formatDate(comp.date)}
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        {comp.location}
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="w-4 h-4" />
-                        {comp.participants} participants
-                      </div>
-                    </div>
-                    {comp.winner && (
-                      <div className="mt-4 p-3 bg-accent/10 rounded-lg flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-accent" />
-                        <span className="font-medium">Vainqueur : {comp.winner}</span>
-                      </div>
-                    )}
-                    <Button variant="link" className="mt-4 p-0 text-accent" asChild>
-                      <Link href={`/competitions/${comp.id}/resultats`}>
-                        Voir les résultats
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
+                  </Card>
+                ))}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="py-12 bg-muted/30">
@@ -289,7 +222,7 @@ export default function CompetitionsPage() {
             Prêt à participer ?
           </h2>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Pour participer aux compétitions officielles, vous devez être membre de la Fédération 
+            Pour participer aux compétitions officielles, vous devez être membre de la Fédération
             et posséder une licence valide.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

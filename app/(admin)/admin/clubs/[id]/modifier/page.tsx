@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -49,7 +49,8 @@ const mockClub: ClubFormData = {
     description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de la fédération.',
 };
 
-export default function EditClubPage({ params }: { params: { id: string } }) {
+export default function EditClubPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+    const { id } = use(paramsPromise);
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -66,7 +67,7 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
         try {
             await new Promise((r) => setTimeout(r, 1500));
             console.log('Updated club:', data);
-            router.push(`/admin/clubs/${params.id}`);
+            router.push(`/admin/clubs/${id}`);
         } catch (error) {
             console.error(error);
         } finally {
@@ -78,7 +79,7 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" asChild>
-                    <Link href={`/admin/clubs/${params.id}`}><ArrowLeft className="w-4 h-4" /></Link>
+                    <Link href={`/admin/clubs/${id}`}><ArrowLeft className="w-4 h-4" /></Link>
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Modifier le club</h1>
@@ -179,7 +180,7 @@ export default function EditClubPage({ params }: { params: { id: string } }) {
 
                 <div className="flex justify-end gap-3">
                     <Button type="button" variant="outline" asChild>
-                        <Link href={`/admin/clubs/${params.id}`}>Annuler</Link>
+                        <Link href={`/admin/clubs/${id}`}>Annuler</Link>
                     </Button>
                     <Button type="submit" disabled={isSubmitting} className="gap-2 bg-accent hover:bg-accent/90">
                         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

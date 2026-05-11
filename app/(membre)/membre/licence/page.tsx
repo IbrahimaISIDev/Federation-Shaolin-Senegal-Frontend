@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import {
   Download,
   Share2,
@@ -11,40 +12,76 @@ import {
   Building2,
   User,
   Award,
+  AlertCircle,
+  Clock,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { membersApi, licensesApi } from '@/lib/api';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 
-// Mock license data
-const mockLicense = {
-  id: '1',
-  licenseNumber: 'FSS-DK-001234',
-  memberId: '1',
-  memberName: 'Mamadou Diallo',
-  clubName: 'Club Shaolin Dakar Centre',
-  discipline: 'Kung Fu Shaolin',
-  grade: 'Ceinture Bleue',
-  issueDate: '2024-01-01',
-  expiryDate: '2025-12-31',
-  status: 'ACTIVE' as const,
-  qrCodeUrl: '',
-  photoUrl: '',
+const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+  ACTIVE:    { label: 'Active',      color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 },
+  PENDING:   { label: 'En attente',  color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',         icon: Clock },
+  EXPIRED:   { label: 'Expirée',     color: 'bg-muted text-muted-foreground',                                               icon: AlertCircle },
+  SUSPENDED: { label: 'Suspendue',   color: 'bg-destructive/10 text-destructive',                                           icon: AlertCircle },
 };
 
 export default function LicensePage() {
   const { user } = useAuthStore();
   const [showQRCode, setShowQRCode] = useState(false);
 
-  const formatDate = (dateString: string) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ['member', 'profile'],
+    queryFn: () => membersApi.me(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const member = data?.data;
+  // Utilise la licence la plus récente
+  const activeLicense = member?.licenses?.[0];
+  const statusKey = activeLicense?.status ?? 'PENDING';
+  const statusInfo = statusConfig[statusKey] ?? statusConfig['PENDING'];
+
+  const { data: qrData, isLoading: isQrLoading } = useQuery({
+    queryKey: ['license', 'qrcode', activeLicense?.id],
+    queryFn: () => licensesApi.getQrCode(activeLicense!.id),
+    enabled: showQRCode && !!activeLicense?.id && activeLicense.status === 'ACTIVE',
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const handleDownloadPDF = () => {
+    if (!activeLicense?.id) return;
+    const url = licensesApi.getPdfUrl(activeLicense.id);
+    window.open(url, '_blank');
+  };
+
+  const formatDate = (dateString: string | Date | undefined | null) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
   };
+
+  const getDaysUntilExpiry = () => {
+    // Assuming valid until end of current year generally for mock logic if not specified
+    const expiry = new Date(new Date().getFullYear(), 11, 31);
+    const diff = expiry.getTime() - new Date().getTime();
+    return Math.ceil(diff / (1000 * 3600 * 24));
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <motion.div
@@ -64,7 +101,12 @@ export default function LicensePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadPDF}
+            disabled={!activeLicense || activeLicense.status !== 'ACTIVE'}
+          >
             <Download className="mr-2 h-4 w-4" />
             Télécharger PDF
           </Button>
@@ -123,94 +165,102 @@ export default function LicensePage() {
                   <div className="mb-6">
                     <p className="text-xs text-primary-foreground/70">Numéro de licence</p>
                     <p className="text-3xl font-bold tracking-wider">
-                      {mockLicense.licenseNumber}
+                      {activeLicense
+                        ? `SHN-${activeLicense.annee}-${String(activeLicense.id).padStart(5, '0')}`
+                        : 'N/A'}
                     </p>
                   </div>
 
                   {/* Member Info */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                     <div>
                       <p className="text-xs text-primary-foreground/70">Titulaire</p>
-                      <p className="font-semibold">{mockLicense.memberName}</p>
+                      <p className="font-semibold">{member?.user?.firstName || user?.firstName} {member?.user?.lastName || user?.lastName}</p>
                     </div>
                     <div>
                       <p className="text-xs text-primary-foreground/70">Club</p>
-                      <p className="font-semibold">{mockLicense.clubName}</p>
+                      <p className="font-semibold">{member?.club?.nom || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-primary-foreground/70">Discipline</p>
-                      <p className="font-semibold">{mockLicense.discipline}</p>
+                      <p className="font-semibold">{member?.disciplines || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-primary-foreground/70">Grade</p>
-                      <p className="font-semibold">{mockLicense.grade}</p>
+                      <p className="font-semibold">{member?.grade || 'N/A'}</p>
                     </div>
                   </div>
 
                   {/* Validity */}
                   <div className="mt-6 flex items-center justify-between border-t border-primary-foreground/20 pt-4">
                     <div>
-                      <p className="text-xs text-primary-foreground/70">Valide du</p>
-                      <p className="font-medium">{formatDate(mockLicense.issueDate)}</p>
+                      <p className="text-xs text-primary-foreground/70">Saison</p>
+                      <p className="font-medium">{activeLicense?.annee ?? new Date().getFullYear()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-primary-foreground/70">Au</p>
-                      <p className="font-medium">{formatDate(mockLicense.expiryDate)}</p>
+                      <p className="text-xs text-primary-foreground/70">Expire le</p>
+                      <p className="font-medium">
+                        {activeLicense?.dateFin
+                          ? new Date(activeLicense.dateFin).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                          : `31/12/${activeLicense?.annee ?? new Date().getFullYear()}`}
+                      </p>
                     </div>
                   </div>
 
                   {/* Status Badge */}
                   <div className="absolute right-6 top-24">
-                    <Badge className="bg-success text-success-foreground">
-                      <CheckCircle2 className="mr-1 h-3 w-3" />
-                      Active
+                    <Badge className={`border-none ${statusInfo.color}`}>
+                      <statusInfo.icon className="mr-1 h-3 w-3" />
+                      {statusInfo.label}
                     </Badge>
                   </div>
                 </div>
               </div>
 
               {/* QR Code Section */}
-              <div className="border-t border-border bg-card p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Code QR de vérification</p>
-                    <p className="text-sm text-muted-foreground">
-                      Scannez pour vérifier l&apos;authenticité
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowQRCode(!showQRCode)}
-                  >
-                    <QrCode className="mr-2 h-4 w-4" />
-                    {showQRCode ? 'Masquer' : 'Afficher'}
-                  </Button>
-                </div>
-
-                {showQRCode && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-4 flex justify-center"
-                  >
-                    <div className="rounded-xl bg-white p-4">
-                      {/* Placeholder QR Code */}
-                      <div className="grid h-32 w-32 grid-cols-8 grid-rows-8 gap-0.5">
-                        {Array.from({ length: 64 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`${
-                              Math.random() > 0.5 ? 'bg-foreground' : 'bg-white'
-                            }`}
-                          />
-                        ))}
-                      </div>
+              {activeLicense?.status === 'ACTIVE' && (
+                <div className="border-t border-border bg-card p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">Code QR de vérification</p>
+                      <p className="text-sm text-muted-foreground">
+                        Scannez pour vérifier l&apos;authenticité
+                      </p>
                     </div>
-                  </motion.div>
-                )}
-              </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowQRCode(!showQRCode)}
+                    >
+                      <QrCode className="mr-2 h-4 w-4" />
+                      {showQRCode ? 'Masquer' : 'Afficher'}
+                    </Button>
+                  </div>
+
+                  {showQRCode && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 flex justify-center"
+                    >
+                      <div className="rounded-xl bg-white p-4">
+                        {isQrLoading ? (
+                          <div className="w-32 h-32 flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          </div>
+                        ) : qrData?.qrDataURL ? (
+                          <img src={qrData.qrDataURL} alt="QR Code licence" className="w-32 h-32" />
+                        ) : (
+                          <div className="w-32 h-32 flex items-center justify-center text-xs text-muted-foreground">
+                            QR indisponible
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -223,14 +273,20 @@ export default function LicensePage() {
               <CardTitle className="text-lg">Statut de la licence</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-4 rounded-lg bg-success/10 p-4">
-                <div className="rounded-full bg-success p-2 text-success-foreground">
-                  <CheckCircle2 className="h-6 w-6" />
+              <div className="flex items-center gap-4 rounded-lg p-4 bg-muted">
+                <div className={`rounded-full p-2 ${statusInfo.color}`}>
+                  <statusInfo.icon className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="font-semibold text-success">Licence Active</p>
+                  <p className="font-semibold">Licence {statusInfo.label}</p>
                   <p className="text-sm text-muted-foreground">
-                    Votre licence est valide jusqu&apos;au {formatDate(mockLicense.expiryDate)}
+                    {activeLicense?.status === 'ACTIVE'
+                      ? `Valide jusqu'au ${activeLicense.dateFin
+                          ? new Date(activeLicense.dateFin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                          : `31 décembre ${activeLicense.annee}`}`
+                      : activeLicense
+                        ? 'Votre licence est en cours de traitement'
+                        : 'Aucune licence trouvée — contactez votre club'}
                   </p>
                 </div>
               </div>
@@ -249,7 +305,7 @@ export default function LicensePage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Nom complet</p>
-                  <p className="font-medium">{mockLicense.memberName}</p>
+                  <p className="font-medium">{member?.prenom || user?.firstName} {member?.nom || user?.lastName}</p>
                 </div>
               </div>
 
@@ -259,7 +315,7 @@ export default function LicensePage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Club affilié</p>
-                  <p className="font-medium">{mockLicense.clubName}</p>
+                  <p className="font-medium">{member?.club?.nom || 'N/A'}</p>
                 </div>
               </div>
 
@@ -270,7 +326,7 @@ export default function LicensePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Discipline & Grade</p>
                   <p className="font-medium">
-                    {mockLicense.discipline} - {mockLicense.grade}
+                    {member?.discipline || 'N/A'} — {member?.grade || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -280,9 +336,9 @@ export default function LicensePage() {
                   <Calendar className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Période de validité</p>
+                  <p className="text-sm text-muted-foreground">Adhésion</p>
                   <p className="font-medium">
-                    {formatDate(mockLicense.issueDate)} - {formatDate(mockLicense.expiryDate)}
+                    Depuis le {formatDate(member?.createdAt)}
                   </p>
                 </div>
               </div>
@@ -290,20 +346,22 @@ export default function LicensePage() {
           </Card>
 
           {/* Renewal CTA */}
-          <Card className="border-accent/50 bg-accent/5">
-            <CardContent className="p-6">
-              <h3 className="mb-2 font-semibold text-foreground">
-                Renouveler ma licence
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Votre licence expire dans 280 jours. Renouvelez-la maintenant pour 
-                éviter toute interruption.
-              </p>
-              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                Renouveler maintenant
-              </Button>
-            </CardContent>
-          </Card>
+          {activeLicense?.status === 'ACTIVE' && (
+            <Card className="border-accent/50 bg-accent/5">
+              <CardContent className="p-6">
+                <h3 className="mb-2 font-semibold text-foreground">
+                  Renouveler ma licence
+                </h3>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Votre licence expire dans {getDaysUntilExpiry()} jours. Renouvelez-la maintenant pour
+                  éviter toute interruption.
+                </p>
+                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled>
+                  Renouvellement non ouvert
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </div>
     </motion.div>
