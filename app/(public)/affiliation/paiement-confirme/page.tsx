@@ -9,8 +9,7 @@ import { paymentApi } from '@/lib/api/payment';
 
 export default function PaiementConfirmePage() {
   const searchParams = useSearchParams();
-  const demandeId = searchParams.get('id') ?? '';
-  const sessionId = searchParams.get('session_id') ?? '';
+  const demandeId = Number(searchParams.get('id') ?? '0');
 
   const [info, setInfo] = useState<{
     prenom?: string; nom?: string; type?: string; montant?: number;
@@ -18,16 +17,15 @@ export default function PaiementConfirmePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!sessionId && !demandeId) { setLoading(false); return; }
-    const id = sessionId || demandeId;
-    paymentApi.checkStatus(id)
+    if (!demandeId) { setLoading(false); return; }
+    paymentApi.checkStatus(demandeId)
       .then((res) => {
         const d = (res as any)?.data;
         setInfo({ prenom: d?.prenom, nom: d?.nom, type: d?.type, montant: d?.montant });
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [sessionId, demandeId]);
+  }, [demandeId]);
 
   const typeLabel: Record<string, string> = {
     CLUB: 'Club', MAITRE: 'Maître', MEMBRE: 'Membre/Disciple',
