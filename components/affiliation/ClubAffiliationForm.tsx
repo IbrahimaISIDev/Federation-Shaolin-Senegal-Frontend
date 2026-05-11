@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +18,7 @@ import { affiliationApi } from '@/lib/api/affiliation';
 import { REGIONS } from '@/lib/constants';
 
 export function ClubAffiliationForm() {
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
   const [serverError, setServerError] = useState('');
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
@@ -29,25 +30,15 @@ export function ClubAffiliationForm() {
   const onSubmit = async (data: ClubAffiliationData) => {
     setServerError('');
     try {
-      await affiliationApi.submitClub(data);
-      setSubmitted(true);
+      const res = await affiliationApi.submitClub(data);
+      const demandeId = (res as any)?.data?.id;
+      router.push(`/affiliation/paiement?id=${demandeId}`);
     } catch (err: any) {
       setServerError(err?.response?.data?.message ?? 'Une erreur est survenue. Veuillez réessayer.');
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="text-center py-16 space-y-4">
-        <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
-        <h2 className="text-2xl font-bold text-foreground">Demande envoyée !</h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Votre demande d&apos;affiliation de club a bien été reçue. Notre équipe vous contactera sous 48h après examen de votre dossier.
-        </p>
-        <p className="text-sm text-muted-foreground">Un email de confirmation vous a été envoyé.</p>
-      </div>
-    );
-  }
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
