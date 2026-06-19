@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, Smartphone, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,14 @@ const POLL_INTERVAL = 3000;
 const MAX_POLLS = 40;
 
 export default function PaiementPage() {
+  return (
+    <Suspense fallback={null}>
+      <PaiementContent />
+    </Suspense>
+  );
+}
+
+function PaiementContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const demandeId = Number(searchParams.get('id') ?? '0');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -30,6 +30,14 @@ function formatDate(d: string | null) {
 }
 
 export default function ClubLicencesPage() {
+  return (
+    <Suspense fallback={null}>
+      <ClubLicencesContent />
+    </Suspense>
+  );
+}
+
+function ClubLicencesContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState(searchParams.get('status') ?? '');
   const [page, setPage]     = useState(1);

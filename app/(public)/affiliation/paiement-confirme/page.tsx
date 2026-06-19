@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,22 @@ import Link from 'next/link';
 import { paymentApi } from '@/lib/api/payment';
 
 export default function PaiementConfirmePage() {
+  return (
+    <Suspense fallback={<PaiementConfirmeFallback />}>
+      <PaiementConfirmeContent />
+    </Suspense>
+  );
+}
+
+function PaiementConfirmeFallback() {
+  return (
+    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+      <Loader2 className="w-12 h-12 animate-spin text-muted-foreground mx-auto" />
+    </div>
+  );
+}
+
+function PaiementConfirmeContent() {
   const searchParams = useSearchParams();
   const demandeId = Number(searchParams.get('id') ?? '0');
 

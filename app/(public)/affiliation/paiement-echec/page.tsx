@@ -1,10 +1,19 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { XCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function PaiementEchecPage() {
+  return (
+    <Suspense fallback={null}>
+      <PaiementEchecContent />
+    </Suspense>
+  );
+}
+
+function PaiementEchecContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const demandeId = searchParams.get('id') ?? '';
