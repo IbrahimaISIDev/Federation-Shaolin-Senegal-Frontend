@@ -16,8 +16,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd ~/shaolin-frontend
+            cd ~/shaolin/frontend
             git pull origin main
-            pnpm install --frozen-lockfile
-            pnpm build
-            pm2 restart frontend --update-env
+            cd ~/shaolin
+            docker compose up -d --build frontend
