@@ -327,7 +327,7 @@ export default function FederationPage() {
               title="Présidence"
               subtitle="Direction générale de l'ADSS"
             />
-            <div className="grid gap-6 sm:grid-cols-2 lg:max-w-2xl">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:max-w-4xl">
               {presidency.map((m) => <PresidencyCard key={m.id} member={m} />)}
             </div>
           </motion.div>

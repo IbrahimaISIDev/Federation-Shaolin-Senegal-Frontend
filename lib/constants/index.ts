@@ -143,15 +143,28 @@ export interface HistoryEvent {
 export const ADSS_HISTORY: HistoryEvent[] = [
   {
     year: '1981',
-    title: 'Naissance du Wushu au Sénégal',
+    title: 'Le Kung Fu s\'implante au Sénégal',
     description:
-      'Introduction du Wushu traditionnel au Sénégal — les premières graines des arts martiaux chinois sont plantées sur le sol sénégalais.',
+      'Le Kung Fu est introduit officiellement au Sénégal par Maître Ivan Fam Loi, franco-vietnamien, qui enseigne le style traditionnel Hung Chia Paï — les premières graines des arts martiaux chinois sont plantées sur le sol sénégalais.',
   },
   {
-    year: '2014 – 2015',
-    title: 'Mission au Temple Shaolin',
+    year: '2010',
+    title: 'Les bases du Wushu moderne',
     description:
-      "La fédération envoie 8 personnes au Temple Shaolin de Chine. Parmi eux : Shifu Abdoulaye Diarra, Shifu Abdoulaye Badji et Shifu El Hadji Yaya Sène. Cette expérience forge une expertise authentique et directement transmise par le temple.",
+      "Après une formation de 45 jours à l'Université de sport de Shandong, en Chine, le Directeur Technique National Maître Ousmane Ngom pose les bases du Wushu moderne et propulse le Kung Fu sénégalais sur la scène africaine et mondiale.",
+  },
+  {
+    year: '2014',
+    title: 'Première génération de maîtres formés au Temple Shaolin',
+    description:
+      "Grâce à une bourse de formation de trois ans, quatre maîtres partent se former directement au Temple Shaolin de Chine : Moussa Diallo, Abdoulaye Badji, Mamadou Fall et Cheikhna Thiam.",
+    highlight: true,
+  },
+  {
+    year: '2015',
+    title: 'Deuxième génération de maîtres formés au Temple Shaolin',
+    description:
+      "Quatre autres maîtres suivent la même formation au Temple Shaolin : Abdoulaye Diarra, El Hadji Yaya Sène, Made Gueye et Birane Kane — portant à huit le nombre de maîtres formés directement en Chine.",
     highlight: true,
   },
   {
@@ -161,19 +174,19 @@ export const ADSS_HISTORY: HistoryEvent[] = [
       "Maître Ousmane Ngom quitte ses fonctions de Directeur Technique National pour se consacrer entièrement à l'enseignement et à la promotion du Shaolin au Sénégal.",
   },
   {
-    year: '2021',
+    year: 'Janvier 2022',
     title: 'Championnat du Monde Virtuel de Shaolin',
     description:
-      'Abdoulaye Diarra et El Hadji Yaya Sène représentent le Sénégal au Championnat du Monde Virtuel organisé par le Temple Shaolin.',
+      "Sous le thème « Paix-amitié, santé-bonheur, héritage-partage », plus de 100 pays et 10 000 participants prennent part au championnat organisé par le Temple Shaolin. Le Sénégal y est représenté par Abdoulaye Diarra et El Hadji Yaya Sène, coachés par Maître Ousmane Ngom.",
     medals: '3 médailles d\'or · 1 médaille de bronze',
     highlight: true,
   },
   {
-    year: '2023',
-    title: 'Championnats d\'Afrique en Zambie',
+    year: 'Juin 2023',
+    title: "Création de la Fédération Africaine de Shaolin et 1ers championnats d'Afrique",
     description:
-      "La délégation sénégalaise participe aux Championnats d'Afrique de Shaolin en Zambie. À l'issue des passages de grades organisés par le Temple, tous les maîtres de la délégation obtiennent le grade de 3e Duan Shaolin.",
-    medals: '2 médailles d\'or · Grade 3e Duan Shaolin',
+      "Réuni à Lusaka (Zambie) du 22 au 25 juin, un congrès présidé par l'abbé Shi Yong Xin et réunissant 23 pays africains fonde la Fédération Africaine de Shaolin. Six athlètes sénégalais, issus des promotions 2014 et 2015, y disputent les premiers championnats d'Afrique de Shaolin sous la conduite de Maître Ousmane Ngom.",
+    medals: '5 médailles (2 or, 3 argent) · Grade 3e Duan Shaolin pour toute la délégation',
     highlight: true,
   },
   {
@@ -187,7 +200,22 @@ export const ADSS_HISTORY: HistoryEvent[] = [
     year: 'Mars 2024',
     title: "Création officielle de l'ADSS",
     description:
-      "Fondation de l'« Association Disciples Shaolin Si Sénégal » (ADSS). Association nationale avec plus de 1 000 adhérents, dotée d'un compte bancaire et d'un NINEA, officiellement reconnue par le Ministère de l'Intérieur du Sénégal. L'ADSS dispose d'un siège entièrement équipé, financé à hauteur de 10 millions FCFA par la société Mangane Holding.",
+      "Fondation de l'« Association Disciples Shaolin Si Sénégal » (ADSS), association nationale reconnue par le Ministère de l'Intérieur du Sénégal, dotée d'un siège entièrement équipé et financé à hauteur de 10 millions FCFA par la société Mangane Holding. Maître Abdoulaye Diarra est nommé Directeur Technique de l'ADSS.",
+    highlight: true,
+  },
+  {
+    year: 'Juillet 2024',
+    title: 'Shaolin World Games',
+    description:
+      "Le Temple organise les Shaolin World Games, réunissant 101 pays des six continents. Le Sénégal y est représenté par Ousmane Ngom, Abdoulaye Diarra, Mamadou Fall et Made Gueye, qui décrochent tous le grade de 6e Duan Shaolin. Maître Ngom est officiellement nommé représentant du Temple Shaolin au Sénégal.",
+    highlight: true,
+  },
+  {
+    year: 'Juillet 2025',
+    title: 'Shaolin Duan Wei — le Temple accueilli au Sénégal',
+    description:
+      "À l'initiative de l'ADSS, six moines du Temple Shaolin séjournent au Sénégal du 20 au 24 juillet pour un stage suivi d'un passage de grade. 103 ceintures noires sont décernées, en présence de l'ambassade de Chine, qui reconnaît officiellement l'ADSS et son président comme représentants du Temple Shaolin au Sénégal.",
+    medals: '103 ceintures noires décernées',
     highlight: true,
   },
 ];
@@ -219,9 +247,15 @@ export const BUREAU_MEMBERS: BureauMember[] = [
     tier: 'presidency',
   },
   {
-    id: 'vice-president',
+    id: 'vice-president-1',
     name: 'Abdoulaye Badji',
-    role: 'Vice-président',
+    role: '1er Vice-président',
+    tier: 'presidency',
+  },
+  {
+    id: 'vice-president-2',
+    name: 'Abdoulaye Sogué',
+    role: '2e Vice-président',
     tier: 'presidency',
   },
   {
@@ -232,7 +266,7 @@ export const BUREAU_MEMBERS: BureauMember[] = [
   },
   {
     id: 'secretaire',
-    name: 'Valere Senghor',
+    name: 'Valère Senghor',
     role: 'Secrétaire général',
     tier: 'executive',
   },
