@@ -21,13 +21,34 @@ export interface License {
     };
 }
 
+export interface VerifyResult {
+    valid: boolean;
+    reason?: string;
+    member?: {
+        nom: string;
+        prenom: string;
+        photoUrl: string | null;
+        grade: string | null;
+        discipline: string | null;
+        club: string;
+        region: string;
+    };
+    license?: {
+        uuid?: string;
+        annee: number;
+        status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'SUSPENDED';
+        dateDebut?: string | null;
+        dateFin: string | null;
+    };
+}
+
 export const licensesApi = {
     /**
      * GET /api/licenses/verify?token=xxx  — PUBLIC
      * Vérifie un QR code lors d'un événement
      */
     verify: (token: string) =>
-        api.get<{ data: License }>('/licenses/verify', { params: { token } }),
+        api.get<{ data: VerifyResult }>('/licenses/verify', { params: { token } }),
 
     /**
      * GET /api/licenses/:id/qrcode  — membre connecté
