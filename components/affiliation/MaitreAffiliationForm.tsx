@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/shared/date-picker';
 import { maitreAffiliationSchema, type MaitreAffiliationData } from '@/lib/validations/affiliation';
 import { affiliationApi } from '@/lib/api/affiliation';
 import { clubsApi } from '@/lib/api/clubs';
@@ -90,7 +91,12 @@ export function MaitreAffiliationForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="dateNaissance">Date de naissance</Label>
-            <Input id="dateNaissance" type="date" {...register('dateNaissance')} />
+            <DatePicker
+                id="dateNaissance"
+                value={watch('dateNaissance')}
+                onChange={(v) => setValue('dateNaissance', v, { shouldValidate: true })}
+                maxDate={new Date()}
+            />
           </div>
           <div className="space-y-2">
             <Label>Sexe</Label>

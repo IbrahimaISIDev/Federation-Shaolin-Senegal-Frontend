@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/shared/date-picker';
 import { membreAffiliationSchema, type MembreAffiliationData } from '@/lib/validations/affiliation';
 import { affiliationApi } from '@/lib/api/affiliation';
 import { clubsApi } from '@/lib/api/clubs';
@@ -97,7 +98,13 @@ export function MembreAffiliationForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="dateNaissance">Date de naissance *</Label>
-            <Input id="dateNaissance" type="date" {...register('dateNaissance')} className={errors.dateNaissance ? 'border-destructive' : ''} />
+            <DatePicker
+                id="dateNaissance"
+                value={watch('dateNaissance')}
+                onChange={(v) => setValue('dateNaissance', v, { shouldValidate: true })}
+                error={!!errors.dateNaissance}
+                maxDate={new Date()}
+            />
             {errors.dateNaissance && <p className="text-sm text-destructive">{errors.dateNaissance.message}</p>}
           </div>
           <div className="space-y-2">
