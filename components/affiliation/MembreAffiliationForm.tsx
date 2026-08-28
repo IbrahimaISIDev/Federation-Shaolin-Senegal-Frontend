@@ -223,7 +223,7 @@ export function MembreAffiliationForm() {
           <p className="font-semibold text-foreground">Frais d&apos;affiliation Membre</p>
           <p className="text-sm text-muted-foreground">Payables à la validation de votre dossier</p>
         </div>
-        <p className="text-2xl font-bold text-accent">5 000 FCFA</p>
+        <p className="text-2xl font-bold text-accent">5 300 FCFA</p>
       </div>
 
       {/* Conditions */}

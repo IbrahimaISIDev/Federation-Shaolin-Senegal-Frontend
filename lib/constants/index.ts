@@ -111,7 +111,7 @@ export const PAYMENT_METHODS = [
 // --- License Fees ---
 export const LICENSE_FEES = {
   NEW: 15000, // XOF
-  RENEWAL: 10000, // XOF
+  RENEWAL: 10300, // XOF
 } as const;
 
 // --- Social Links ---
