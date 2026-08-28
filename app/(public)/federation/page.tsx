@@ -2,7 +2,10 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Star, Shield, Users, Settings, Medal, CalendarDays, CheckCircle2, Building } from 'lucide-react';
+import {
+  Star, Shield, Users, Settings, Medal, CalendarDays, CheckCircle2, Building,
+  GraduationCap, Trophy, Globe, MapPin, Sparkles, Target,
+} from 'lucide-react';
 import { BUREAU_MEMBERS, ADSS_HISTORY, FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 import type { BureauMember, HistoryEvent } from '@/lib/constants';
 
@@ -82,6 +85,23 @@ function CommissionCard({ member }: { member: BureauMember }) {
           <div className={`mt-0.5 text-xs font-medium ${isPresident ? 'text-accent' : 'text-muted-foreground'}`}>{member.role}</div>
         </div>
         {isPresident && <Star className="h-4 w-4 shrink-0 fill-accent/30 text-accent/60" />}
+      </div>
+    </motion.div>
+  );
+}
+
+function ZoneCard({ zone, area, coordinators }: { zone: string; area: string; coordinators: string }) {
+  return (
+    <motion.div variants={FADE_IN_UP}>
+      <div className="group h-full rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-accent/30 hover:shadow-sm">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors group-hover:bg-accent/15">
+            <MapPin className="h-4 w-4" />
+          </div>
+          <h3 className="font-serif text-base font-semibold text-foreground">{zone}</h3>
+        </div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{area}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{coordinators}</p>
       </div>
     </motion.div>
   );
@@ -171,6 +191,38 @@ function SectionTitle({ icon, title, subtitle, compact = false }: {
     </motion.div>
   );
 }
+
+// ─── Data: rôle & activités, présence nationale ────────────────────────────────
+
+const ACTIVITES = [
+  {
+    icon: GraduationCap,
+    title: 'Formation des cadres',
+    description:
+      "L'ADSS forme ses cadres techniques, arbitres et officiels, et organise régulièrement des stages de mise à niveau ainsi que des formations d'Initiateur de Shaolin.",
+  },
+  {
+    icon: Trophy,
+    title: 'Compétitions nationales',
+    description:
+      "Championnats du Sénégal, coupe du PDG de Mangane Holding, coupe de la marraine nationale, et le Takoussanou Shaolin — un festival de démonstration réunissant tous les clubs affiliés.",
+  },
+  {
+    icon: Globe,
+    title: 'Rayonnement international',
+    description:
+      "L'ADSS participe activement à toutes les compétitions organisées par la Fédération Africaine de Shaolin ainsi qu'à celles du Temple Shaolin de Chine.",
+  },
+];
+
+const ZONES = [
+  { zone: 'Zone Sud', area: 'Kolda', coordinators: 'Coordonnée par Maître Abdoulaye Kandé.' },
+  { zone: 'Zone Centre-Ouest', area: 'Fatick · Kaffrine · Kaolack', coordinators: 'Gérée par Maître Alpha Mbassor Faye, assisté par Maître Niokhor Diouf.' },
+  { zone: 'Zone Nord', area: 'Saint-Louis · Louga', coordinators: 'Responsable : Maître Mamadou Lamine Sarr, basé à Podor.' },
+  { zone: 'Région de Thiès', area: 'Thiès · Mbour · Tivaouane · Ngaye · Pire', coordinators: 'District de Mbour piloté par Maître Izi Diassy ; Tivaouane, Ngaye et Pire par Maître Mohamed Fall.' },
+  { zone: 'Région de Diourbel', area: 'Touba · Mbacké · Diourbel', coordinators: 'Menée par Maître Cheikh Mbacké Diagne, avec Maîtres Ibrahima Sylla, Modou Diouf et Cheikh Ndigal Gning.' },
+  { zone: 'Région de Dakar', area: 'Capitale — cœur du Shaolin sénégalais', coordinators: "Dirigée par le Directeur Technique National, Maître Abdoulaye Diarra." },
+];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -274,6 +326,35 @@ export default function FederationPage() {
           </motion.div>
         </section>
 
+        {/* ── Rôle & activités ─────────────────────────────────────────── */}
+        <section>
+          <motion.div
+            variants={STAGGER_CONTAINER}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <SectionTitle
+              icon={<Target className="h-5 w-5" />}
+              title="Rôle & activités"
+              subtitle="Ce que fait l'ADSS au quotidien, au Sénégal et au-delà"
+            />
+            <div className="grid gap-4 sm:grid-cols-3">
+              {ACTIVITES.map((a) => (
+                <motion.div key={a.title} variants={FADE_IN_UP}>
+                  <div className="h-full rounded-xl border border-border/60 bg-card p-6 transition-all hover:border-accent/25 hover:shadow-sm">
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                      <a.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="mb-2 font-serif text-base font-semibold text-foreground">{a.title}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{a.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
         {/* ── Partenaires stratégiques ─────────────────────────────────── */}
         <section>
           <motion.div
@@ -287,7 +368,7 @@ export default function FederationPage() {
               title="Partenaires & soutiens"
               subtitle="Les institutions et partenaires qui nous accompagnent"
             />
-            <motion.div variants={FADE_IN_UP} className="grid gap-4 sm:grid-cols-2">
+            <motion.div variants={FADE_IN_UP} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-xl border border-accent/20 bg-primary/[0.03] p-6">
                 <div className="mb-3 font-serif text-lg font-semibold text-foreground">
                   🇨🇳 Ambassade de Chine au Sénégal
@@ -310,7 +391,58 @@ export default function FederationPage() {
                   <span className="font-medium text-accent">10 000 000 FCFA</span>.
                 </p>
               </div>
+              <div className="rounded-xl border border-accent/20 bg-primary/[0.03] p-6">
+                <div className="mb-3 font-serif text-lg font-semibold text-foreground">
+                  🎗️ Marraine de l&apos;ADSS
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">Madame Aïssatou Mané Mangane</span>,
+                  DG de MSTAL, accompagne l&apos;association dans toutes ses activités et prend en
+                  charge la location des plus grandes salles de spectacle de Dakar (The Ground,
+                  Grand Théâtre, Sorano, Dakar Arena). Elle organise chaque année la Coupe de la
+                  Marraine, un rendez-vous majeur de l&apos;ADSS.
+                </p>
+              </div>
+              <div className="rounded-xl border border-accent/20 bg-primary/[0.03] p-6">
+                <div className="mb-3 font-serif text-lg font-semibold text-foreground">
+                  🚌 Logistique & transport
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Le commandant <span className="font-medium text-foreground">Ismaïla Basse</span>,
+                  du Port Autonome de Dakar, met à disposition un bus climatisé de 60 places
+                  (SENECAR TOURS) lors de la Grande Nuit des Arts Martiaux et des événements majeurs.
+                </p>
+              </div>
+              <div className="rounded-xl border border-accent/20 bg-primary/[0.03] p-6">
+                <div className="mb-3 font-serif text-lg font-semibold text-foreground">
+                  📱 Sponsors techniques
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Huawei, Infinix et Itel accompagnent l&apos;ADSS lors de ses grands événements,
+                  aux côtés de Mangane Holding qui finance l&apos;intégralité du matériel des
+                  athlètes (kimonos, armes, flyers, restauration).
+                </p>
+              </div>
             </motion.div>
+          </motion.div>
+        </section>
+
+        {/* ── Présence nationale ────────────────────────────────────────── */}
+        <section>
+          <motion.div
+            variants={STAGGER_CONTAINER}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <SectionTitle
+              icon={<MapPin className="h-5 w-5" />}
+              title="Présence nationale"
+              subtitle="Des points focaux organisés en zones et districts, dans les 14 régions du Sénégal"
+            />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ZONES.map((z) => <ZoneCard key={z.zone} {...z} />)}
+            </div>
           </motion.div>
         </section>
 
@@ -386,7 +518,50 @@ export default function FederationPage() {
           </motion.div>
         </section>
 
-        {/* ── Citation finale ───────────────────────────────────────────── */}
+      </div>
+
+      {/* ── Perspectives ───────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-primary py-20 lg:py-24">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.8'%3E%3Ccircle cx='60' cy='60' r='50'/%3E%3Ccircle cx='60' cy='60' r='35'/%3E%3Ccircle cx='60' cy='60' r='15'/%3E%3Cline x1='60' y1='10' x2='60' y2='110'/%3E%3Cline x1='10' y1='60' x2='110' y2='60'/%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '120px 120px',
+          }}
+        />
+        <div className="pointer-events-none absolute -right-40 -top-40 h-80 w-80 rounded-full bg-accent/10 blur-[80px]" />
+        <div className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-accent/8 blur-[80px]" />
+
+        <div className="container relative mx-auto px-4">
+          <motion.div
+            variants={STAGGER_CONTAINER}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="mx-auto max-w-2xl text-center"
+          >
+            <motion.span
+              variants={FADE_IN_UP}
+              className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Perspectives
+            </motion.span>
+            <motion.h2 variants={FADE_IN_UP} className="mb-4 font-serif text-3xl font-bold text-white md:text-4xl">
+              Vers une pleine autonomie, et demain une fédération nationale
+            </motion.h2>
+            <motion.p variants={FADE_IN_UP} className="text-base leading-relaxed text-white/65 lg:text-lg">
+              Avec l&apos;accompagnement de Mangane Holding, l&apos;ADSS ambitionne de se doter
+              d&apos;un temple dédié et d&apos;un véhicule pour garantir sa pleine autonomie —
+              et de rivaliser, à terme, avec les meilleurs temples Shaolin au monde en se
+              transformant en fédération nationale.
+            </motion.p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Citation finale ───────────────────────────────────────────── */}
+      <div className="container mx-auto px-4 py-16 lg:py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -402,7 +577,6 @@ export default function FederationPage() {
             Association Disciples Shaolin Si Sénégal (ADSS) · Fondée en Mars 2024
           </div>
         </motion.div>
-
       </div>
     </div>
   );
