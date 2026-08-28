@@ -70,7 +70,7 @@ export default function CompetitionsPage() {
             Compétitions
           </h1>
           <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
-            Participez aux compétitions officielles de la Fédération et mesurez-vous aux meilleurs pratiquants.
+            Participez aux compétitions officielles de l&apos;ADSS et mesurez-vous aux meilleurs pratiquants.
           </p>
         </div>
       </section>
@@ -222,7 +222,7 @@ export default function CompetitionsPage() {
             Prêt à participer ?
           </h2>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Pour participer aux compétitions officielles, vous devez être membre de la Fédération
+            Pour participer aux compétitions officielles, vous devez être membre de l&apos;ADSS
             et posséder une licence valide.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

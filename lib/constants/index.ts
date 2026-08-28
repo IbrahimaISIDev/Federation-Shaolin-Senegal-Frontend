@@ -1,5 +1,5 @@
 // ============================================
-// Fédération Shaolin Sénégal - Constants
+// Association Disciples Shaolin Si Sénégal (ADSS) - Constants
 // ============================================
 
 import type { NavItem, Region } from '@/lib/types';
@@ -201,7 +201,7 @@ export const VALIDATION = {
   LICENSE_NUMBER_REGEX: /^FSS-[A-Z]{2}-\d{6}$/,
 } as const;
 
-// --- Bureau de la Fédération ---
+// --- Bureau de l'Association ---
 export interface BureauMember {
   id: string;
   name: string;

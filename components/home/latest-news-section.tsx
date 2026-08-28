@@ -23,7 +23,7 @@ const latestNews = [
   {
     id: '3',
     title: 'Médailles au Championnat d\'Afrique 2023',
-    excerpt: 'L\'ADSS décroche 5 médailles au Championnat d\'Afrique, confirmant sa place parmi les meilleures fédérations du continent.',
+    excerpt: 'L\'ADSS décroche 5 médailles au Championnat d\'Afrique, confirmant sa place parmi les meilleures délégations du continent.',
     category: 'COMPETITION',
     publishedAt: '2023-11-20',
     readTime: '5 min',

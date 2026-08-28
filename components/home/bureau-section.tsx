@@ -43,7 +43,7 @@ export function BureauSection() {
             variants={FADE_IN_UP}
             className="mb-4 font-serif text-3xl font-bold text-foreground md:text-4xl lg:text-5xl"
           >
-            Bureau de la Fédération
+            Bureau de l&apos;Association
           </motion.h2>
           <motion.div variants={FADE_IN_UP} className="mb-5 flex justify-center">
             <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent to-transparent" />
@@ -52,7 +52,7 @@ export function BureauSection() {
             variants={FADE_IN_UP}
             className="mx-auto max-w-xl text-base text-muted-foreground"
           >
-            Le bureau directeur de la Fédération Shaolin Sénégal, élu pour diriger
+            Le bureau directeur de l&apos;ADSS, élu pour diriger
             et développer les arts martiaux chinois à travers le pays.
           </motion.p>
         </motion.div>

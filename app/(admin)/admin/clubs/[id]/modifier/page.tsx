@@ -46,7 +46,7 @@ const mockClub: ClubFormData = {
     address: 'Avenue Cheikh Anta Diop, Point-E', phone: '771234567', email: 'tsdk@email.com',
     presidentName: 'Cheikh Diallo', presidentPhone: '771234567', isActive: true,
     logo: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400',
-    description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de la fédération.',
+    description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de l\'association.',
 };
 
 export default function EditClubPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {

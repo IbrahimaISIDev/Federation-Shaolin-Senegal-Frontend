@@ -70,7 +70,7 @@ export function HeroSection() {
             variants={FADE_IN_UP}
             className="mb-6 font-serif text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl xl:text-7xl"
           >
-            <span className="block text-balance">Fédération</span>
+            <span className="block text-balance">Association</span>
             <span className="block text-balance">
               <span className="text-accent">Shaolin Si</span>
             </span>

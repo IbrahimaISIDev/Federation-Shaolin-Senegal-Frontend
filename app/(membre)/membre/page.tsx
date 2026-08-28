@@ -194,7 +194,7 @@ export default function MemberDashboardPage() {
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-wider text-primary-foreground/70">
-                        Fédération Shaolin Sénégal
+                        Association Disciples Shaolin Si Sénégal
                       </p>
                       <p className="text-lg font-bold">Licence Membre</p>
                     </div>

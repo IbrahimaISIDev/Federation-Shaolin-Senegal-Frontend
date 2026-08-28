@@ -1,5 +1,5 @@
 // ============================================
-// Fédération Shaolin Sénégal - Types & Interfaces
+// Association Disciples Shaolin Si Sénégal (ADSS) - Types & Interfaces
 // ============================================
 
 // --- User & Authentication ---

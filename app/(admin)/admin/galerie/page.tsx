@@ -52,7 +52,7 @@ const mockMedia = [
     { id: '1', type: 'image', title: 'Championnat Dakar 1', category: 'Compétitions', size: '1.2 Mo', dimension: '1920x1080', uploadedAt: '2024-02-10', url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=400' },
     { id: '2', type: 'image', title: 'Stage Saint-Louis', category: 'Stages', size: '850 Ko', dimension: '1200x800', uploadedAt: '2024-02-05', url: 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?q=80&w=400' },
     { id: '3', type: 'video', title: 'Démo Sanda', category: 'Vidéo', size: '15.4 Mo', duration: '0:45', uploadedAt: '2024-02-01', url: '#' },
-    { id: '4', type: 'image', title: 'Logo Fédération', category: 'Branding', size: '45 Ko', dimension: '512x512', uploadedAt: '2024-01-20', url: '/icon.svg' },
+    { id: '4', type: 'image', title: 'Logo Association', category: 'Branding', size: '45 Ko', dimension: '512x512', uploadedAt: '2024-01-20', url: '/icon.svg' },
     { id: '5', type: 'image', title: 'Temple Dakar Façade', category: 'Clubs', size: '2.1 Mo', dimension: '2560x1440', uploadedAt: '2024-01-15', url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400' },
     { id: '6', type: 'image', title: 'Groupe Formation', category: 'Formation', size: '1.8 Mo', dimension: '2000x1333', uploadedAt: '2024-01-10', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400' },
 ];

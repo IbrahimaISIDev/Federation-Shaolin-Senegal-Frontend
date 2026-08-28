@@ -34,7 +34,7 @@ const mockClub = {
     memberCount: 145,
     isActive: true,
     createdAt: '2019-03-15',
-    description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de la fédération, fondé en 2019 par Maître Cheikh Diallo. Spécialisé dans le Kung Fu traditionnel Shaolin et le Wushu moderne.',
+    description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de l\'association, fondé en 2019 par Maître Cheikh Diallo. Spécialisé dans le Kung Fu traditionnel Shaolin et le Wushu moderne.',
 };
 
 const mockMembers = [

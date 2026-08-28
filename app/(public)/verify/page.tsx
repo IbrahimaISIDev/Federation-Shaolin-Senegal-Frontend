@@ -51,7 +51,7 @@ function VerifyContent() {
         <div className="text-center space-y-1">
           <h1 className="text-xl font-bold text-foreground">Vérification de licence</h1>
           <p className="text-sm text-muted-foreground">
-            Fédération ADSS — Association Disciples Shaolin Si Sénégal
+            Association Disciples Shaolin Si Sénégal (ADSS)
           </p>
         </div>
 

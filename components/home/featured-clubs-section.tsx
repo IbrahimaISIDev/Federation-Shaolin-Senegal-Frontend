@@ -70,7 +70,7 @@ export function FeaturedClubsSection() {
             variants={FADE_IN_UP}
             className="mb-4 font-serif text-3xl font-bold text-foreground md:text-4xl"
           >
-            <span className="text-balance">Clubs affiliés à la Fédération</span>
+            <span className="text-balance">Clubs affiliés à l&apos;Association</span>
           </motion.h2>
           <motion.p
             variants={FADE_IN_UP}

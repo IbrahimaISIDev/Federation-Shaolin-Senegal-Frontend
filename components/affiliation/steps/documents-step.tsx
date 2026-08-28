@@ -55,7 +55,7 @@ export function DocumentsStep() {
               <a href="/confidentialite" className="text-accent hover:underline">
                 politique de confidentialité
               </a>{' '}
-              de la Fédération Shaolin Sénégal.
+              de l&apos;ADSS.
             </p>
             {errors.termsAccepted && (
               <p className="text-sm text-destructive">{errors.termsAccepted.message}</p>
@@ -87,7 +87,7 @@ export function DocumentsStep() {
               <a href="/reglement" className="text-accent hover:underline">
                 règlement intérieur
               </a>{' '}
-              de la Fédération et m&apos;engage à le respecter.
+              de l&apos;ADSS et m&apos;engage à le respecter.
             </p>
             {errors.rulesAccepted && (
               <p className="text-sm text-destructive">{errors.rulesAccepted.message}</p>
@@ -114,7 +114,7 @@ export function DocumentsStep() {
               </Label>
             </div>
             <p className="text-sm text-muted-foreground">
-              J&apos;autorise la Fédération Shaolin Sénégal à utiliser mon image (photos, vidéos) 
+              J&apos;autorise l&apos;ADSS à utiliser mon image (photos, vidéos)
               à des fins de communication et de promotion de ses activités.
             </p>
           </div>
@@ -124,7 +124,7 @@ export function DocumentsStep() {
       <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 mt-6">
         <h4 className="font-medium text-foreground mb-2">Prochaines étapes</h4>
         <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-          <li>Votre demande sera examinée par la Fédération</li>
+          <li>Votre demande sera examinée par l&apos;ADSS</li>
           <li>Vous recevrez un email de confirmation sous 48h</li>
           <li>Après validation, vous pourrez procéder au paiement de votre licence</li>
           <li>Votre licence numérique sera générée et accessible dans votre espace membre</li>

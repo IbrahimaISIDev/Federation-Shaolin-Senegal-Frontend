@@ -128,7 +128,7 @@ export default function LicensePage() {
                   <div className="mb-5 flex items-start justify-between">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wider text-primary-foreground/70">
-                        Fédération Shaolin Sénégal
+                        Association Disciples Shaolin Si Sénégal
                       </p>
                       <p className="text-xl font-bold">Licence Officielle</p>
                     </div>

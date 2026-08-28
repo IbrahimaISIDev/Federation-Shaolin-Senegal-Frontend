@@ -169,7 +169,7 @@ export default function AdminRapportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold">Rapports & Statistiques</h1>
-                    <p className="text-muted-foreground">Vue d&apos;ensemble analytique de la fédération.</p>
+                    <p className="text-muted-foreground">Vue d&apos;ensemble analytique de l&apos;association.</p>
                 </div>
                 <div className="flex gap-2">
                     <Select value={period} onValueChange={setPeriod}>

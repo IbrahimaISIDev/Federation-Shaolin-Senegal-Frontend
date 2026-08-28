@@ -83,7 +83,7 @@ export default function NewClubPage() {
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Nouveau club</h1>
-                    <p className="text-muted-foreground">Affiliez un nouveau club à la fédération.</p>
+                    <p className="text-muted-foreground">Affiliez un nouveau club à l&apos;association.</p>
                 </div>
             </div>
 

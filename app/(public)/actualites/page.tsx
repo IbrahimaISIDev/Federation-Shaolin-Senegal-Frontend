@@ -16,7 +16,7 @@ const categoryLabels: Record<string, { label: string; variant: 'default' | 'seco
   evenement: { label: 'Événement', variant: 'secondary' },
   club: { label: 'Club', variant: 'outline' },
   formation: { label: 'Formation', variant: 'secondary' },
-  federation: { label: 'Fédération', variant: 'default' },
+  federation: { label: 'Association', variant: 'default' },
 };
 
 function formatDate(dateString: string | null): string {
@@ -56,7 +56,7 @@ export default function NewsPage() {
             Actualités
           </h1>
           <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
-            Restez informé des dernières nouvelles de la Fédération Shaolin Sénégal.
+            Restez informé des dernières nouvelles de l&apos;ADSS.
           </p>
         </div>
       </section>

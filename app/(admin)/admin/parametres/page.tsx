@@ -39,12 +39,12 @@ export default function AdminParametresPage() {
                         <Globe className="w-5 h-5 text-primary" />
                         <CardTitle>Informations générales</CardTitle>
                     </div>
-                    <CardDescription>Informations publiques de la fédération.</CardDescription>
+                    <CardDescription>Informations publiques de l&apos;association.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Nom de l&apos;organisation</Label>
-                        <Input defaultValue="Fédération Sénégalaise des Arts Martiaux Shaolin" />
+                        <Input defaultValue="Association Disciples Shaolin Si Sénégal" />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">

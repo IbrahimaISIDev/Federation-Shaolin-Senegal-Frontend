@@ -58,7 +58,7 @@ export function Footer() {
                 Restez informé des actualités
               </h3>
               <p className="text-sm text-white/60">
-                Compétitions, événements, nouvelles de la fédération — directement dans votre boîte mail.
+                Compétitions, événements, nouvelles de l&apos;association — directement dans votre boîte mail.
               </p>
             </div>
             <NewsletterForm />
@@ -119,7 +119,7 @@ export function Footer() {
           {/* Links Columns */}
           <div>
             <h3 className="mb-5 text-xs font-semibold uppercase tracking-[0.15em] text-accent/80">
-              La Fédération
+              L&apos;Association
             </h3>
             <ul className="space-y-3">
               {footerLinks.federation.map((link) => (

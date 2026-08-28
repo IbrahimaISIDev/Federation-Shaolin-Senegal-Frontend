@@ -152,7 +152,7 @@ export default async function CompetitionResultsPage({ params }: PageProps) {
                     <Trophy className="w-12 h-12 text-accent mx-auto mb-4" />
                     <h3 className="text-xl font-bold mb-2">Félicitations à tous les participants !</h3>
                     <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-                        La Fédération remercie tous les athlètes, entraîneurs et arbitres pour leur contribution
+                        L&apos;Association remercie tous les athlètes, entraîneurs et arbitres pour leur contribution
                         à la réussite de cet événement sportif.
                     </p>
                     <Button variant="outline" asChild>

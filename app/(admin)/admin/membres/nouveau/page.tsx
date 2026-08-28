@@ -97,7 +97,7 @@ export default function NewMemberPage() {
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Nouveau membre</h1>
-                    <p className="text-muted-foreground">Enregistrez un nouveau membre dans la fédération.</p>
+                    <p className="text-muted-foreground">Enregistrez un nouveau membre dans l&apos;association.</p>
                 </div>
             </div>
 
