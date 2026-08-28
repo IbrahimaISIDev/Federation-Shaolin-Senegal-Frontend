@@ -44,6 +44,16 @@ export interface Member {
     }>;
 }
 
+export interface GradeHistoryEntry {
+    id: number;
+    memberId: number;
+    ancienGrade: string | null;
+    nouveauGrade: string;
+    notes: string | null;
+    createdAt: string;
+    changedBy?: { email: string } | null;
+}
+
 export interface MemberListParams {
     search?: string;
     club?: number;
@@ -132,4 +142,10 @@ export const membersApi = {
      */
     suspend: (id: number) =>
         api.patch<{ message: string }>(`/admin/members/${id}/suspend`),
+
+    /**
+     * GET /api/admin/members/:id/grade-history
+     */
+    gradeHistory: (id: number) =>
+        api.get<{ data: GradeHistoryEntry[] }>(`/admin/members/${id}/grade-history`),
 };

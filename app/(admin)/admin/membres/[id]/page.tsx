@@ -1,5 +1,6 @@
 'use client';
 
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft,
@@ -13,11 +14,13 @@ import {
     Shield,
     User,
     Trash2,
+    History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { membersApi, type GradeHistoryEntry } from '@/lib/api/members';
 
 // Mock member data — replace with real API call
 const mockMember = {
@@ -66,9 +69,23 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
     );
 }
 
-export default function MemberDetailPage({ params: _params }: { params: Promise<{ id: string }> }) {
+export default function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const member = mockMember; // TODO: fetch by params.id
     const status = statusConfig[member.status];
+
+    const [gradeHistory, setGradeHistory] = useState<GradeHistoryEntry[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+
+    useEffect(() => {
+        const memberId = Number(id);
+        if (!memberId) { setLoadingHistory(false); return; }
+        membersApi
+            .gradeHistory(memberId)
+            .then((res) => setGradeHistory(res.data))
+            .catch(() => setGradeHistory([]))
+            .finally(() => setLoadingHistory(false));
+    }, [id]);
 
     return (
         <div className="space-y-6">
@@ -143,6 +160,44 @@ export default function MemberDetailPage({ params: _params }: { params: Promise<
                                 <InfoRow icon={Shield} label="Discipline" value={member.discipline} />
                                 <InfoRow icon={Shield} label="Grade" value={member.grade} />
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Grade history */}
+                    <Card>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><History className="w-5 h-5" /> Historique des grades</CardTitle></CardHeader>
+                        <CardContent>
+                            {loadingHistory ? (
+                                <p className="text-sm text-muted-foreground">Chargement…</p>
+                            ) : gradeHistory.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Aucun changement de grade enregistré.</p>
+                            ) : (
+                                <ul className="space-y-4">
+                                    {gradeHistory.map((entry) => (
+                                        <li key={entry.id} className="flex items-start gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                                                <History className="w-4 h-4 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm">
+                                                    {entry.ancienGrade ? (
+                                                        <>
+                                                            <span className="text-muted-foreground">{entry.ancienGrade}</span>{' '}
+                                                            → <span className="font-medium">{entry.nouveauGrade}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="font-medium">{entry.nouveauGrade}</span>
+                                                    )}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatDate(entry.createdAt)}
+                                                    {entry.changedBy?.email ? ` · par ${entry.changedBy.email}` : ''}
+                                                </p>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
