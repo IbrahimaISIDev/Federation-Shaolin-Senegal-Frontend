@@ -17,7 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { membreAffiliationSchema, type MembreAffiliationData } from '@/lib/validations/affiliation';
 import { affiliationApi } from '@/lib/api/affiliation';
 import { clubsApi } from '@/lib/api/clubs';
-import { REGIONS, DISCIPLINES } from '@/lib/constants';
+import { regionsApi } from '@/lib/api/regions';
+import { DISCIPLINES } from '@/lib/constants';
 
 const GRADES_JI = [
   '1er Ji', '2ème Ji', '3ème Ji', '4ème Ji',
@@ -34,6 +35,12 @@ export function MembreAffiliationForm() {
     queryKey: ['clubs-list'],
     queryFn: () => clubsApi.list({ limit: 100 }),
   });
+
+  const { data: regionsData } = useQuery({
+    queryKey: ['regions-list'],
+    queryFn: () => regionsApi.list(),
+  });
+  const regions = regionsData?.data ?? [];
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
     useForm<MembreAffiliationData>({
@@ -139,8 +146,8 @@ export function MembreAffiliationForm() {
                 <SelectValue placeholder="Sélectionner" />
               </SelectTrigger>
               <SelectContent>
-                {REGIONS.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                {regions.map((r) => (
+                  <SelectItem key={r.id} value={String(r.id)}>{r.nom}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

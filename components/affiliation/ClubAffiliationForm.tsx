@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { clubAffiliationSchema, type ClubAffiliationData } from '@/lib/validations/affiliation';
 import { affiliationApi } from '@/lib/api/affiliation';
-import { REGIONS } from '@/lib/constants';
+import { regionsApi } from '@/lib/api/regions';
 
 export function ClubAffiliationForm() {
   const router = useRouter();
@@ -23,6 +24,12 @@ export function ClubAffiliationForm() {
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
     useForm<ClubAffiliationData>({ resolver: zodResolver(clubAffiliationSchema) });
+
+  const { data: regionsData } = useQuery({
+    queryKey: ['regions-list'],
+    queryFn: () => regionsApi.list(),
+  });
+  const regions = regionsData?.data ?? [];
 
   const sexe = watch('sexe');
   const regionId = watch('regionId');
@@ -96,8 +103,8 @@ export function ClubAffiliationForm() {
             >
               <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
               <SelectContent>
-                {REGIONS.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                {regions.map((r) => (
+                  <SelectItem key={r.id} value={String(r.id)}>{r.nom}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

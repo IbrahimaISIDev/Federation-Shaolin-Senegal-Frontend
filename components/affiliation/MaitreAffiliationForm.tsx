@@ -17,7 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { maitreAffiliationSchema, type MaitreAffiliationData } from '@/lib/validations/affiliation';
 import { affiliationApi } from '@/lib/api/affiliation';
 import { clubsApi } from '@/lib/api/clubs';
-import { REGIONS, DISCIPLINES } from '@/lib/constants';
+import { regionsApi } from '@/lib/api/regions';
+import { DISCIPLINES } from '@/lib/constants';
 
 const GRADES_DUAN = [
   '1er Duan', '2ème Duan', '3ème Duan', '4ème Duan',
@@ -32,6 +33,12 @@ export function MaitreAffiliationForm() {
     queryKey: ['clubs-list'],
     queryFn: () => clubsApi.list({ limit: 100 }),
   });
+
+  const { data: regionsData } = useQuery({
+    queryKey: ['regions-list'],
+    queryFn: () => regionsApi.list(),
+  });
+  const regions = regionsData?.data ?? [];
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
     useForm<MaitreAffiliationData>({ resolver: zodResolver(maitreAffiliationSchema) });
@@ -110,8 +117,8 @@ export function MaitreAffiliationForm() {
                 <SelectValue placeholder="Sélectionner" />
               </SelectTrigger>
               <SelectContent>
-                {REGIONS.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                {regions.map((r) => (
+                  <SelectItem key={r.id} value={String(r.id)}>{r.nom}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

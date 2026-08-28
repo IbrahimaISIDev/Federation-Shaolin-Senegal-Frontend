@@ -30,4 +30,7 @@ export type { ContactPayload } from './contact';
 
 export { clubApi } from './club';
 
+export { regionsApi } from './regions';
+export type { Region } from './regions';
+
 export { default as apiClient, api } from './client';
