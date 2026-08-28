@@ -393,7 +393,75 @@ export default function AdminDashboard() {
             ) : null}
           </CardContent>
         </Card>
+
+        {/* Répartition par grade / discipline */}
+        <Card className="lg:col-span-1 border-none shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg">Répartition par grade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BreakdownList
+              isLoading={isLoading}
+              items={(data?.membresParGrade ?? []).map((g) => ({ label: g.grade, total: Number(g.total) }))}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2 border-none shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg">Répartition par discipline</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BreakdownList
+              isLoading={isLoading}
+              items={(data?.membresParDiscipline ?? []).map((d) => ({ label: d.discipline, total: Number(d.total) }))}
+            />
+          </CardContent>
+        </Card>
       </div>
+    </div>
+  );
+}
+
+function BreakdownList({
+  isLoading,
+  items,
+}: {
+  isLoading: boolean;
+  items: Array<{ label: string; total: number }>;
+}) {
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-6 rounded bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return <p className="text-sm text-muted-foreground">Aucune donnée disponible.</p>;
+  }
+
+  const max = Math.max(...items.map((i) => i.total), 1);
+
+  return (
+    <div className="space-y-3">
+      {items.slice(0, 8).map((item) => (
+        <div key={item.label} className="space-y-1">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-foreground">{item.label}</span>
+            <span className="text-muted-foreground font-medium">{item.total}</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${(item.total / max) * 100}%` }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

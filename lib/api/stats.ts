@@ -34,6 +34,8 @@ export interface DashboardStats {
         mois: string;   // format: "YYYY-MM"
         total: number;
     }>;
+    membresParGrade: Array<{ grade: string; total: number }>;
+    membresParDiscipline: Array<{ discipline: string; total: number }>;
 }
 
 export const statsApi = {

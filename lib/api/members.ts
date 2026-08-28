@@ -1,5 +1,6 @@
 // ─── lib/api/members.ts ───────────────────────────────────────────────────────
 import { api } from './client';
+import apiClient from './client';
 import type { PaginatedResponse } from './clubs';
 
 export interface Member {
@@ -58,6 +59,7 @@ export interface MemberListParams {
     search?: string;
     club?: number;
     status?: string;
+    annee?: number;
     page?: number;
     limit?: number;
 }
@@ -148,4 +150,12 @@ export const membersApi = {
      */
     gradeHistory: (id: number) =>
         api.get<{ data: GradeHistoryEntry[] }>(`/admin/members/${id}/grade-history`),
+
+    /**
+     * GET /api/admin/members/export/pdf?search=&club=&status=&annee=
+     */
+    exportPdf: (params?: MemberListParams) =>
+        apiClient
+            .get('/admin/members/export/pdf', { params, responseType: 'blob' })
+            .then((res) => res.data as Blob),
 };

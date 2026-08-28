@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useDebounce } from 'use-debounce';
 import {
   Search, Filter, UserPlus, MoreHorizontal, Eye, Pencil, Trash2,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle, XCircle,
+  ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle, XCircle, FileDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +25,12 @@ import {
 } from '@/components/ui/table';
 import { ExportButton } from '@/components/shared/export-button';
 import { membersApi, statsApi, type Member } from '@/lib/api';
+import { downloadBlob } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 20;
+const CURRENT_YEAR = new Date().getFullYear();
+const SEASON_OPTIONS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
   active: { label: 'Actif', variant: 'default', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
@@ -54,16 +57,19 @@ export default function AdminMembersPage() {
   const [searchInput, setSearchInput] = useState('');
   const [search] = useDebounce(searchInput, 400);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [seasonFilter, setSeasonFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // ── Data fetching ────────────────────────────────────────────────────────────
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['admin', 'members', { search, status: statusFilter, page }],
+    queryKey: ['admin', 'members', { search, status: statusFilter, annee: seasonFilter, page }],
     queryFn: () =>
       membersApi.adminList({
         search: search || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
+        annee: seasonFilter !== 'all' ? Number(seasonFilter) : undefined,
         page,
         limit: PAGE_SIZE,
       }),
@@ -131,6 +137,22 @@ export default function AdminMembersPage() {
       registeredAt: m.createdAt,
     }));
 
+  const handleExportPdf = async () => {
+    setIsExportingPdf(true);
+    try {
+      const blob = await membersApi.exportPdf({
+        search: search || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        annee: seasonFilter !== 'all' ? Number(seasonFilter) : undefined,
+      });
+      downloadBlob(blob, 'membres.pdf');
+    } catch {
+      toast.error("Erreur lors de l'export PDF");
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
 
@@ -142,6 +164,10 @@ export default function AdminMembersPage() {
         </div>
         <div className="flex gap-2">
           <ExportButton entity="membres" getData={getMembersForExport} />
+          <Button variant="outline" className="gap-2" onClick={handleExportPdf} disabled={isExportingPdf}>
+            {isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+            <span className="hidden sm:inline">Exporter PDF</span>
+          </Button>
           <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
             <Link href="/admin/membres/nouveau">
               <UserPlus className="w-4 h-4" />
@@ -208,6 +234,20 @@ export default function AdminMembersPage() {
                 <SelectItem value="PENDING">En attente</SelectItem>
                 <SelectItem value="EXPIRED">Expirés</SelectItem>
                 <SelectItem value="SUSPENDED">Suspendus</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={seasonFilter}
+              onValueChange={(v) => { setSeasonFilter(v); setPage(1); }}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Saison" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes saisons</SelectItem>
+                {SEASON_OPTIONS.map((year) => (
+                  <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

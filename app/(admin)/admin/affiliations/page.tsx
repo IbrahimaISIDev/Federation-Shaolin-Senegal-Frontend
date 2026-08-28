@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 import {
-  Search, CheckCircle, XCircle, Eye, Loader2, ChevronLeft, ChevronRight,
+  Search, CheckCircle, XCircle, Eye, Loader2, ChevronLeft, ChevronRight, FileDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { affiliationApi } from '@/lib/api/affiliation';
+import { downloadBlob } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 20;
@@ -62,6 +63,23 @@ export default function AdminAffiliationsPage() {
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [motifRejet, setMotifRejet] = useState('');
   const [adminNote, setAdminNote] = useState('');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const handleExportPdf = async () => {
+    setIsExportingPdf(true);
+    try {
+      const blob = await affiliationApi.exportPdf({
+        search: search || undefined,
+        type: typeFilter === 'all' ? undefined : typeFilter,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+      });
+      downloadBlob(blob, 'affiliations.pdf');
+    } catch {
+      toast.error("Erreur lors de l'export PDF");
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-affiliations', search, typeFilter, statusFilter, page],
@@ -116,9 +134,15 @@ export default function AdminAffiliationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Demandes d&apos;affiliation</h1>
-        <p className="text-muted-foreground">Gérez les demandes d&apos;affiliation Club, Maître et Membre.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Demandes d&apos;affiliation</h1>
+          <p className="text-muted-foreground">Gérez les demandes d&apos;affiliation Club, Maître et Membre.</p>
+        </div>
+        <Button variant="outline" className="gap-2" onClick={handleExportPdf} disabled={isExportingPdf}>
+          {isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+          Exporter PDF
+        </Button>
       </div>
 
       {/* Filters */}

@@ -1,4 +1,5 @@
 import { api } from './client';
+import apiClient from './client';
 
 export const affiliationApi = {
   submitClub: (data: Record<string, any>) =>
@@ -22,4 +23,9 @@ export const affiliationApi = {
 
   reject: (id: number, motifRejet: string) =>
     api.patch(`/affiliations/${id}/reject`, { motifRejet }),
+
+  exportPdf: (params?: Record<string, any>) =>
+    apiClient
+      .get('/affiliations/export/pdf', { params, responseType: 'blob' })
+      .then((res) => res.data as Blob),
 };
