@@ -232,12 +232,12 @@ export function MembreAffiliationForm() {
       </Card>
 
       {/* Frais */}
-      <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-center justify-between">
+      <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-semibold text-foreground">Frais d&apos;affiliation Membre</p>
-          <p className="text-sm text-muted-foreground">Payables à la validation de votre dossier</p>
+          <p className="text-sm text-muted-foreground">Réglables à l&apos;étape suivante, avant l&apos;examen de votre dossier</p>
         </div>
-        <p className="text-2xl font-bold text-accent">5 300 FCFA</p>
+        <p className="text-2xl font-bold text-accent whitespace-nowrap sm:text-right">5 300 FCFA</p>
       </div>
 
       {/* Conditions */}
