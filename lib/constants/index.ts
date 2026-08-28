@@ -120,13 +120,13 @@ export const SOCIAL_LINKS = {
   instagram: 'https://instagram.com/shaolinsn',
   twitter: 'https://twitter.com/shaolinsn',
   youtube: 'https://youtube.com/@shaolinsn',
-  whatsapp: '+221771234567',
+  whatsapp: '+221772657426',
 } as const;
 
 // --- Contact Info ---
 export const CONTACT_INFO = {
   address: 'Siège ADSS, Dakar, Sénégal',
-  phone: '+221 77 123 45 67',
+  phone: '+221 77 265 74 26',
   email: 'contact@shaolin-senegal.sn',
   hours: 'Lundi - Vendredi: 9h00 - 18h00',
 } as const;

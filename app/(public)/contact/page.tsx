@@ -136,7 +136,7 @@ export default function ContactPage() {
                         <h3 className="font-medium text-foreground">Téléphone</h3>
                         <p className="text-sm text-muted-foreground mt-1">
                           +221 33 123 45 67<br />
-                          +221 77 123 45 67
+                          +221 77 265 74 26
                         </p>
                       </div>
                     </div>
