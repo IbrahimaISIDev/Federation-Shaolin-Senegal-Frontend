@@ -4,11 +4,20 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ChevronDown, User, LogOut, Phone, Mail } from 'lucide-react';
+import {
+  Menu, X, ChevronDown, User, LogOut, Phone, Mail, Clock,
+  Facebook, Instagram, Youtube,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/shared/logo';
-import { PUBLIC_NAV_ITEMS, CONTACT_INFO } from '@/lib/constants';
+import { PUBLIC_NAV_ITEMS, CONTACT_INFO, SOCIAL_LINKS } from '@/lib/constants';
+
+const topBarSocialIcons = {
+  facebook: Facebook,
+  instagram: Instagram,
+  youtube: Youtube,
+} as const;
 import { useAuthStore } from '@/lib/store/auth-store';
 import {
   DropdownMenu,
@@ -42,29 +51,69 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      {/* Top info bar */}
-      <div className="hidden border-b border-primary/10 bg-primary/[0.03] lg:block">
-        <div className="container mx-auto flex h-9 items-center justify-between px-4 text-xs text-muted-foreground">
-          <span className="font-medium text-primary/70">
-            Association Disciples Shaolin Si Sénégal
-          </span>
-          <div className="flex items-center gap-5">
+      {/* Gold accent line */}
+      <div className="h-[3px] bg-gradient-to-r from-primary via-accent to-primary" />
+
+      {/* Top info bar — desktop */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="hidden border-b border-primary/10 bg-primary text-primary-foreground/80 lg:block"
+      >
+        <div className="container mx-auto flex h-10 items-center justify-between px-4 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-accent">少林寺</span>
+            <span className="font-medium tracking-wide text-white/85">
+              Association Disciples Shaolin Si Sénégal
+            </span>
+            <span className="hidden items-center gap-1.5 border-l border-white/15 pl-4 text-white/55 xl:flex">
+              <Clock className="h-3 w-3" />
+              {CONTACT_INFO.hours}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
             <a
               href={`tel:${CONTACT_INFO.phone}`}
-              className="flex items-center gap-1.5 transition-colors hover:text-accent"
+              className="flex items-center gap-1.5 text-white/70 transition-colors hover:text-accent"
             >
               <Phone className="h-3 w-3" />
               {CONTACT_INFO.phone}
             </a>
             <a
               href={`mailto:${CONTACT_INFO.email}`}
-              className="flex items-center gap-1.5 transition-colors hover:text-accent"
+              className="flex items-center gap-1.5 text-white/70 transition-colors hover:text-accent"
             >
               <Mail className="h-3 w-3" />
               {CONTACT_INFO.email}
             </a>
+            <div className="flex items-center gap-2.5 border-l border-white/15 pl-4">
+              {Object.entries(topBarSocialIcons).map(([key, Icon]) => (
+                <a
+                  key={key}
+                  href={SOCIAL_LINKS[key as keyof typeof SOCIAL_LINKS]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={key}
+                  className="text-white/55 transition-colors hover:text-accent"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* Top info bar — mobile (click-to-call only) */}
+      <div className="border-b border-primary/10 bg-primary lg:hidden">
+        <a
+          href={`tel:${CONTACT_INFO.phone}`}
+          className="flex h-8 items-center justify-center gap-1.5 text-xs font-medium text-white/80 transition-colors active:text-accent"
+        >
+          <Phone className="h-3 w-3" />
+          {CONTACT_INFO.phone}
+        </a>
       </div>
 
       {/* Main nav */}
