@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { use } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import {
     ArrowLeft,
     Pencil,
@@ -14,40 +15,21 @@ import {
     UserCircle,
     CheckCircle,
     XCircle,
+    Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { clubsApi } from '@/lib/api/clubs';
+import { membersApi } from '@/lib/api/members';
 
-const mockClub = {
-    id: '1',
-    code: 'TSK-001',
-    name: 'Temple Shaolin Dakar',
-    region: 'Dakar',
-    city: 'Dakar',
-    address: 'Avenue Cheikh Anta Diop, Point-E',
-    phone: '771234567',
-    email: 'tsdk@email.com',
-    president: 'Cheikh Diallo',
-    presidentPhone: '771234567',
-    memberCount: 145,
-    isActive: true,
-    createdAt: '2019-03-15',
-    description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de l\'association, fondé en 2019 par Maître Cheikh Diallo. Spécialisé dans le Kung Fu traditionnel Shaolin et le Wushu moderne.',
-};
-
-const mockMembers = [
-    { id: '1', name: 'Amadou Ba', discipline: 'Kung Fu', status: 'active', registrationDate: '2024-01-15' },
-    { id: '4', name: 'Aissatou Sall', discipline: 'Kung Fu', status: 'active', registrationDate: '2024-02-05' },
-    { id: '7', name: 'Ibrahima Gueye', discipline: 'Kung Fu', status: 'pending', registrationDate: '2024-02-12' },
-];
-
-function formatDate(d: string) {
+function formatDate(d: string | null | undefined) {
+    if (!d) return '—';
     return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
     return (
         <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
@@ -55,14 +37,48 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
             </div>
             <div>
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="font-medium text-foreground">{value}</p>
+                <p className="font-medium text-foreground">{value || '—'}</p>
             </div>
         </div>
     );
 }
 
-export default function ClubDetailPage({ params: _params }: { params: Promise<{ id: string }> }) {
-    const club = mockClub; // TODO: fetch by params.id
+export default function ClubDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
+    const clubId = Number(id);
+
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['admin', 'club', clubId],
+        queryFn: () => clubsApi.get(clubId),
+        enabled: !!clubId,
+    });
+    const club = data?.data as any;
+
+    const { data: membersData } = useQuery({
+        queryKey: ['admin', 'members', { club: clubId }],
+        queryFn: () => membersApi.adminList({ club: clubId, limit: 5 }),
+        enabled: !!clubId,
+    });
+    const recentMembers = membersData?.data ?? [];
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-24">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (isError || !club) {
+        return (
+            <div className="space-y-4">
+                <Button variant="outline" size="icon" asChild>
+                    <Link href="/admin/clubs"><ArrowLeft className="w-4 h-4" /></Link>
+                </Button>
+                <p className="text-muted-foreground">Club introuvable.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -77,8 +93,8 @@ export default function ClubDetailPage({ params: _params }: { params: Promise<{ 
                             <Building2 className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-foreground">{club.name}</h1>
-                            <p className="text-sm font-mono text-muted-foreground">{club.code}</p>
+                            <h1 className="text-xl font-bold text-foreground">{club.nom}</h1>
+                            {club.code && <p className="text-sm font-mono text-muted-foreground">{club.code}</p>}
                         </div>
                     </div>
                 </div>
@@ -114,9 +130,8 @@ export default function ClubDetailPage({ params: _params }: { params: Promise<{ 
                         <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="w-5 h-5" /> Coordonnées</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <InfoRow icon={MapPin} label="Adresse" value={club.address} />
-                                <InfoRow icon={MapPin} label="Ville / Région" value={`${club.city}, ${club.region}`} />
-                                <InfoRow icon={Phone} label="Téléphone" value={club.phone} />
+                                <InfoRow icon={MapPin} label="Ville / Région" value={`${club.ville ?? '—'}, ${club.region?.nom ?? '—'}`} />
+                                <InfoRow icon={Phone} label="Téléphone" value={club.telephone} />
                                 <InfoRow icon={Mail} label="Email" value={club.email} />
                             </div>
                         </CardContent>
@@ -131,24 +146,32 @@ export default function ClubDetailPage({ params: _params }: { params: Promise<{ 
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
-                                {mockMembers.map((member) => (
-                                    <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                                                {member.name.split(' ').map((n) => n[0]).join('')}
+                            {recentMembers.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Aucun membre pour l&apos;instant.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {recentMembers.map((member: any) => (
+                                        <Link
+                                            key={member.id}
+                                            href={`/admin/membres/${member.id}`}
+                                            className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                                                    {member.prenom[0]}{member.nom[0]}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{member.prenom} {member.nom}</p>
+                                                    <p className="text-xs text-muted-foreground">{member.discipline ?? '—'}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-medium text-sm">{member.name}</p>
-                                                <p className="text-xs text-muted-foreground">{member.discipline}</p>
-                                            </div>
-                                        </div>
-                                        <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
-                                            {member.status === 'active' ? 'Actif' : 'En attente'}
-                                        </Badge>
-                                    </div>
-                                ))}
-                            </div>
+                                            <Badge variant={member.user?.isActive ? 'default' : 'secondary'}>
+                                                {member.user?.isActive ? 'Actif' : 'En attente'}
+                                            </Badge>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -160,20 +183,19 @@ export default function ClubDetailPage({ params: _params }: { params: Promise<{ 
                         <CardHeader><CardTitle>Statistiques</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <div className="text-center p-4 bg-primary/5 rounded-xl">
-                                <p className="text-4xl font-bold text-primary">{club.memberCount}</p>
-                                <p className="text-sm text-muted-foreground">membres actifs</p>
+                                <p className="text-4xl font-bold text-primary">{club._count?.members ?? 0}</p>
+                                <p className="text-sm text-muted-foreground">membres</p>
                             </div>
                             <Separator />
                             <InfoRow icon={Calendar} label="Date d'affiliation" value={formatDate(club.createdAt)} />
                         </CardContent>
                     </Card>
 
-                    {/* President */}
+                    {/* Master */}
                     <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><UserCircle className="w-5 h-5" /> Président</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><UserCircle className="w-5 h-5" /> Maître</CardTitle></CardHeader>
                         <CardContent className="space-y-3">
-                            <InfoRow icon={UserCircle} label="Nom" value={club.president} />
-                            {club.presidentPhone && <InfoRow icon={Phone} label="Téléphone" value={club.presidentPhone} />}
+                            <InfoRow icon={UserCircle} label="Nom" value={club.nomMaitre} />
                         </CardContent>
                     </Card>
                 </div>

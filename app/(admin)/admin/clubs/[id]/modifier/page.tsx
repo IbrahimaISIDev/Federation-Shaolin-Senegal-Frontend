@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,60 +21,100 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { REGIONS } from '@/lib/constants';
 import { MediaPicker } from '@/components/shared/media-picker';
+import { clubsApi } from '@/lib/api/clubs';
+import { regionsApi } from '@/lib/api/regions';
+import { toast } from 'sonner';
 
 const clubSchema = z.object({
-    name: z.string().min(3, 'Nom requis'),
-    code: z.string().min(3, 'Code requis').max(10, 'Code trop long'),
-    region: z.string().min(1, 'Région requise'),
-    city: z.string().min(2, 'Ville requise'),
-    address: z.string().min(5, 'Adresse requise'),
-    phone: z.string().regex(/^(\+221)?[0-9]{9}$/, 'Téléphone invalide'),
-    email: z.string().email('Email invalide'),
-    presidentName: z.string().min(3, 'Nom du président requis'),
-    presidentPhone: z.string().optional(),
+    nom: z.string().min(3, 'Nom requis'),
+    regionId: z.string().min(1, 'Région requise'),
+    ville: z.string().optional(),
+    telephone: z.string().optional(),
+    email: z.string().email('Email invalide').optional().or(z.literal('')),
+    nomMaitre: z.string().optional(),
     description: z.string().optional(),
-    logo: z.string().optional().or(z.literal('')),
+    logoUrl: z.string().optional().or(z.literal('')),
     isActive: z.boolean(),
 });
 
 type ClubFormData = z.infer<typeof clubSchema>;
 
-// Mock loaded data — replace with real API fetch
-const mockClub: ClubFormData = {
-    name: 'Temple Shaolin Dakar', code: 'TSK-001', region: 'dakar', city: 'Dakar',
-    address: 'Avenue Cheikh Anta Diop, Point-E', phone: '771234567', email: 'tsdk@email.com',
-    presidentName: 'Cheikh Diallo', presidentPhone: '771234567', isActive: true,
-    logo: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400',
-    description: 'Le Temple Shaolin Dakar est l\'un des clubs pionniers de l\'association.',
-};
-
 export default function EditClubPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
     const { id } = use(paramsPromise);
+    const clubId = Number(id);
     const router = useRouter();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const queryClient = useQueryClient();
 
-    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ClubFormData>({
+    const { data, isLoading } = useQuery({
+        queryKey: ['admin', 'club', clubId],
+        queryFn: () => clubsApi.get(clubId),
+        enabled: !!clubId,
+    });
+    const club = data?.data as any;
+
+    const { data: regionsData } = useQuery({
+        queryKey: ['regions-list'],
+        queryFn: () => regionsApi.list(),
+    });
+    const regions = regionsData?.data ?? [];
+
+    const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<ClubFormData>({
         resolver: zodResolver(clubSchema),
-        defaultValues: mockClub,
+        defaultValues: { isActive: true },
     });
 
-    const region = watch('region');
-    const isActive = watch('isActive');
-
-    const onSubmit = async (data: ClubFormData) => {
-        setIsSubmitting(true);
-        try {
-            await new Promise((r) => setTimeout(r, 1500));
-            console.log('Updated club:', data);
-            router.push(`/admin/clubs/${id}`);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsSubmitting(false);
+    useEffect(() => {
+        if (club) {
+            reset({
+                nom: club.nom,
+                regionId: String(club.regionId),
+                ville: club.ville ?? '',
+                telephone: club.telephone ?? '',
+                email: club.email ?? '',
+                nomMaitre: club.nomMaitre ?? '',
+                description: club.description ?? '',
+                logoUrl: club.logoUrl ?? '',
+                isActive: club.isActive,
+            });
         }
-    };
+    }, [club, reset]);
+
+    const regionId = watch('regionId');
+    const isActive = watch('isActive');
+    const logoUrl = watch('logoUrl');
+
+    const updateMutation = useMutation({
+        mutationFn: (data: ClubFormData) =>
+            clubsApi.update(clubId, {
+                nom: data.nom,
+                regionId: parseInt(data.regionId),
+                ville: data.ville || undefined,
+                telephone: data.telephone || undefined,
+                email: data.email || undefined,
+                nomMaitre: data.nomMaitre || undefined,
+                description: data.description || undefined,
+                logoUrl: data.logoUrl || undefined,
+                isActive: data.isActive,
+            } as any),
+        onSuccess: () => {
+            toast.success('Club mis à jour');
+            queryClient.invalidateQueries({ queryKey: ['admin', 'club', clubId] });
+            queryClient.invalidateQueries({ queryKey: ['admin', 'clubs'] });
+            router.push(`/admin/clubs/${id}`);
+        },
+        onError: () => toast.error('Erreur lors de la mise à jour'),
+    });
+
+    const onSubmit = (data: ClubFormData) => updateMutation.mutate(data);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-24">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -83,7 +124,7 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Modifier le club</h1>
-                    <p className="text-muted-foreground">Mettez à jour les informations du club.</p>
+                    <p className="text-muted-foreground">{club ? club.nom : `Club #${id}`}</p>
                 </div>
             </div>
 
@@ -91,54 +132,45 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
                 <Card>
                     <CardHeader><CardTitle>Informations du club</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="sm:col-span-2 space-y-2">
-                                <Label htmlFor="name">Nom *</Label>
-                                <Input id="name" {...register('name')} className={errors.name ? 'border-destructive' : ''} />
-                                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="code">Code *</Label>
-                                <Input id="code" {...register('code')} className={errors.code ? 'border-destructive' : ''} />
-                                {errors.code && <p className="text-sm text-destructive">{errors.code.message}</p>}
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="nom">Nom *</Label>
+                            <Input id="nom" {...register('nom')} className={errors.nom ? 'border-destructive' : ''} />
+                            {errors.nom && <p className="text-sm text-destructive">{errors.nom.message}</p>}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Région *</Label>
-                                <Select value={region} onValueChange={(v) => setValue('region', v, { shouldValidate: true })}>
-                                    <SelectTrigger className={errors.region ? 'border-destructive' : ''}>
-                                        <SelectValue />
+                                <Select value={regionId} onValueChange={(v) => setValue('regionId', v, { shouldValidate: true })}>
+                                    <SelectTrigger className={errors.regionId ? 'border-destructive' : ''}>
+                                        <SelectValue placeholder="Sélectionner" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {REGIONS.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                                        {regions.map((r) => <SelectItem key={r.id} value={String(r.id)}>{r.nom}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
+                                {errors.regionId && <p className="text-sm text-destructive">{errors.regionId.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="city">Ville *</Label>
-                                <Input id="city" {...register('city')} className={errors.city ? 'border-destructive' : ''} />
+                                <Label htmlFor="ville">Ville</Label>
+                                <Input id="ville" {...register('ville')} />
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="address">Adresse *</Label>
-                            <Input id="address" {...register('address')} className={errors.address ? 'border-destructive' : ''} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Téléphone *</Label>
-                                <Input id="phone" type="tel" {...register('phone')} className={errors.phone ? 'border-destructive' : ''} />
+                                <Label htmlFor="telephone">Téléphone</Label>
+                                <Input id="telephone" type="tel" {...register('telephone')} />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email *</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input id="email" type="email" {...register('email')} className={errors.email ? 'border-destructive' : ''} />
+                                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
                             </div>
                         </div>
                         <div className="space-y-4">
                             <MediaPicker
                                 label="Logo du club"
-                                value={watch('logo')}
-                                onChange={(url) => setValue('logo', url)}
+                                value={logoUrl}
+                                onChange={(url) => setValue('logoUrl', url)}
                                 helperText="Changer le logo du club"
                             />
                             <div className="space-y-2">
@@ -150,17 +182,11 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
                 </Card>
 
                 <Card>
-                    <CardHeader><CardTitle>Président du club</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Maître du club</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="presidentName">Nom complet *</Label>
-                                <Input id="presidentName" {...register('presidentName')} className={errors.presidentName ? 'border-destructive' : ''} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="presidentPhone">Téléphone</Label>
-                                <Input id="presidentPhone" type="tel" {...register('presidentPhone')} />
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="nomMaitre">Nom complet</Label>
+                            <Input id="nomMaitre" {...register('nomMaitre')} />
                         </div>
                     </CardContent>
                 </Card>
@@ -182,8 +208,8 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
                     <Button type="button" variant="outline" asChild>
                         <Link href={`/admin/clubs/${id}`}>Annuler</Link>
                     </Button>
-                    <Button type="submit" disabled={isSubmitting} className="gap-2 bg-accent hover:bg-accent/90">
-                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <Button type="submit" disabled={updateMutation.isPending} className="gap-2 bg-accent hover:bg-accent/90">
+                        {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         Sauvegarder
                     </Button>
                 </div>
