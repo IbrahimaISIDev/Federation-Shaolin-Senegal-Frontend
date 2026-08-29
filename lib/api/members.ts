@@ -16,14 +16,11 @@ export interface Member {
     photoUrl: string | null;
     createdAt: string;
     updatedAt: string;
-    status?: string | null;
-    licenseNumber?: string | null;
-    telephone?: string | null;
     adresse?: string | null;
-    ville?: string | null;
-    region?: string | null;
-    bio?: string | null;
-    disciplines?: string | null;
+    nationalite?: string | null;
+    groupeSanguin?: string | null;
+    contactUrgenceNom?: string | null;
+    contactUrgencePhone?: string | null;
     user?: {
         email: string;
         phone: string | null;

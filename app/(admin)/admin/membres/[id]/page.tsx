@@ -1,7 +1,9 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use } from 'react';
 import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import {
     ArrowLeft,
     Pencil,
@@ -15,47 +17,29 @@ import {
     User,
     Trash2,
     History,
+    Loader2,
+    Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { membersApi, type GradeHistoryEntry } from '@/lib/api/members';
+import { membersApi } from '@/lib/api/members';
+import { toast } from 'sonner';
 
-// Mock member data — replace with real API call
-const mockMember = {
-    id: '1',
-    licenseNumber: 'FSS-2024-001',
-    firstName: 'Amadou',
-    lastName: 'Ba',
-    email: 'amadou.ba@email.com',
-    phone: '771234567',
-    birthDate: '1995-03-14',
-    gender: 'M',
-    nationality: 'Sénégalaise',
-    address: 'Rue 14, Médina',
-    city: 'Dakar',
-    region: 'Dakar',
-    club: 'Temple Shaolin Dakar',
-    discipline: 'Kung Fu Shaolin',
-    grade: 'Ceinture Verte',
-    status: 'active',
-    registrationDate: '2024-01-15',
-    licenseExpiryDate: '2024-12-31',
-    notes: '',
+const licenseStatusConfig: Record<string, { label: string; color: string }> = {
+    ACTIVE: { label: 'Active', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    PENDING: { label: 'En attente', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+    EXPIRED: { label: 'Expirée', color: 'bg-rose-100 text-rose-700 border-rose-200' },
+    SUSPENDED: { label: 'Suspendue', color: 'bg-slate-100 text-slate-600 border-slate-200' },
 };
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-    active: { label: 'Actif', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    pending: { label: 'En attente', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-    expired: { label: 'Expiré', color: 'bg-rose-100 text-rose-700 border-rose-200' },
-};
-
-function formatDate(d: string) {
+function formatDate(d: string | null | undefined) {
+    if (!d) return '—';
     return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
     return (
         <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
@@ -63,7 +47,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
             </div>
             <div>
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="font-medium text-foreground">{value}</p>
+                <p className="font-medium text-foreground">{value || '—'}</p>
             </div>
         </div>
     );
@@ -71,21 +55,55 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 
 export default function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const member = mockMember; // TODO: fetch by params.id
-    const status = statusConfig[member.status];
+    const memberId = Number(id);
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
-    const [gradeHistory, setGradeHistory] = useState<GradeHistoryEntry[]>([]);
-    const [loadingHistory, setLoadingHistory] = useState(true);
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['admin', 'member', memberId],
+        queryFn: () => membersApi.adminGet(memberId),
+        enabled: !!memberId,
+    });
+    const member = data?.data;
 
-    useEffect(() => {
-        const memberId = Number(id);
-        if (!memberId) { setLoadingHistory(false); return; }
-        membersApi
-            .gradeHistory(memberId)
-            .then((res) => setGradeHistory(res.data))
-            .catch(() => setGradeHistory([]))
-            .finally(() => setLoadingHistory(false));
-    }, [id]);
+    const { data: historyData, isLoading: loadingHistory } = useQuery({
+        queryKey: ['admin', 'member', memberId, 'grade-history'],
+        queryFn: () => membersApi.gradeHistory(memberId),
+        enabled: !!memberId,
+    });
+    const gradeHistory = historyData?.data ?? [];
+
+    const deleteMutation = useMutation({
+        mutationFn: () => membersApi.adminDelete(memberId),
+        onSuccess: () => {
+            toast.success('Membre supprimé');
+            queryClient.invalidateQueries({ queryKey: ['admin', 'members'] });
+            router.push('/admin/membres');
+        },
+        onError: () => toast.error('Erreur lors de la suppression'),
+    });
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-24">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (isError || !member) {
+        return (
+            <div className="space-y-4">
+                <Button variant="outline" size="icon" asChild>
+                    <Link href="/admin/membres"><ArrowLeft className="w-4 h-4" /></Link>
+                </Button>
+                <p className="text-muted-foreground">Membre introuvable.</p>
+            </div>
+        );
+    }
+
+    const latestLicense = member.licenses?.[0];
+    const licenseStatus = latestLicense ? licenseStatusConfig[latestLicense.status] : null;
 
     return (
         <div className="space-y-6">
@@ -97,17 +115,25 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                     </Button>
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                            {member.firstName[0]}{member.lastName[0]}
+                            {member.prenom[0]}{member.nom[0]}
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-foreground">{member.firstName} {member.lastName}</h1>
-                            <p className="text-sm font-mono text-muted-foreground">{member.licenseNumber}</p>
+                            <h1 className="text-xl font-bold text-foreground">{member.prenom} {member.nom}</h1>
+                            <p className="text-sm text-muted-foreground">{member.user?.email}</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2 text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" /> Supprimer
+                    <Button
+                        variant="outline"
+                        className="gap-2 text-destructive hover:text-destructive"
+                        onClick={() => {
+                            if (confirm('Supprimer ce membre ? Cette action est irréversible.')) deleteMutation.mutate();
+                        }}
+                        disabled={deleteMutation.isPending}
+                    >
+                        {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Supprimer
                     </Button>
                     <Button className="gap-2 bg-accent hover:bg-accent/90" asChild>
                         <Link href={`/admin/membres/${member.id}/modifier`}>
@@ -125,12 +151,18 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                         <CardHeader><CardTitle className="flex items-center gap-2"><User className="w-5 h-5" /> Informations personnelles</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <InfoRow icon={User} label="Prénom" value={member.firstName} />
-                                <InfoRow icon={User} label="Nom" value={member.lastName} />
-                                <InfoRow icon={Mail} label="Email" value={member.email} />
-                                <InfoRow icon={Phone} label="Téléphone" value={member.phone} />
-                                <InfoRow icon={Calendar} label="Date de naissance" value={formatDate(member.birthDate)} />
-                                <InfoRow icon={Shield} label="Nationalité" value={member.nationality} />
+                                <InfoRow icon={User} label="Prénom" value={member.prenom} />
+                                <InfoRow icon={User} label="Nom" value={member.nom} />
+                                <InfoRow icon={Mail} label="Email" value={member.user?.email} />
+                                <InfoRow icon={Phone} label="Téléphone" value={member.user?.phone} />
+                                <InfoRow icon={Calendar} label="Date de naissance" value={formatDate(member.dateNaissance)} />
+                                <InfoRow icon={Shield} label="Nationalité" value={member.nationalite} />
+                                <InfoRow icon={Heart} label="Groupe sanguin" value={member.groupeSanguin} />
+                                <InfoRow icon={Phone} label="Contact d'urgence" value={
+                                    member.contactUrgenceNom
+                                        ? `${member.contactUrgenceNom} — ${member.contactUrgencePhone ?? ''}`
+                                        : null
+                                } />
                             </div>
                         </CardContent>
                     </Card>
@@ -139,13 +171,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                     <Card>
                         <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="w-5 h-5" /> Adresse</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="sm:col-span-full">
-                                    <InfoRow icon={MapPin} label="Adresse" value={member.address} />
-                                </div>
-                                <InfoRow icon={MapPin} label="Ville" value={member.city} />
-                                <InfoRow icon={MapPin} label="Région" value={member.region} />
-                            </div>
+                            <InfoRow icon={MapPin} label="Adresse" value={member.adresse} />
                         </CardContent>
                     </Card>
 
@@ -155,7 +181,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="sm:col-span-full">
-                                    <InfoRow icon={Building2} label="Club" value={member.club} />
+                                    <InfoRow icon={Building2} label="Club" value={member.club ? `${member.club.nom} — ${member.club.region?.nom ?? ''}` : null} />
                                 </div>
                                 <InfoRow icon={Shield} label="Discipline" value={member.discipline} />
                                 <InfoRow icon={Shield} label="Grade" value={member.grade} />
@@ -206,30 +232,29 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 <div className="space-y-6">
                     {/* Status */}
                     <Card>
-                        <CardHeader><CardTitle>Statut de la licence</CardTitle></CardHeader>
+                        <CardHeader><CardTitle>Statut du compte & licence</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                            <div className={`p-3 rounded-lg border text-center font-medium ${status.color}`}>
-                                {status.label}
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Compte</span>
+                                <Badge variant="outline" className={member.user?.isActive ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}>
+                                    {member.user?.isActive ? 'Actif' : 'En attente de validation'}
+                                </Badge>
                             </div>
+                            {licenseStatus && (
+                                <div className={`p-3 rounded-lg border text-center font-medium ${licenseStatus.color}`}>
+                                    Licence {licenseStatus.label}
+                                </div>
+                            )}
                             <Separator />
                             <div className="space-y-3">
-                                <InfoRow icon={CreditCard} label="Numéro de licence" value={member.licenseNumber} />
-                                <InfoRow icon={Calendar} label="Date d'inscription" value={formatDate(member.registrationDate)} />
-                                <InfoRow icon={Calendar} label="Expiration licence" value={formatDate(member.licenseExpiryDate)} />
+                                <InfoRow icon={Calendar} label="Membre depuis" value={formatDate(member.createdAt)} />
+                                {latestLicense && (
+                                    <>
+                                        <InfoRow icon={CreditCard} label="Saison de licence" value={String(latestLicense.annee)} />
+                                        <InfoRow icon={Calendar} label="Expiration licence" value={formatDate(latestLicense.dateFin)} />
+                                    </>
+                                )}
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Quick Actions */}
-                    <Card>
-                        <CardHeader><CardTitle>Actions rapides</CardTitle></CardHeader>
-                        <CardContent className="space-y-2">
-                            <Button variant="outline" className="w-full justify-start gap-2">
-                                <CreditCard className="w-4 h-4" /> Renouveler la licence
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start gap-2">
-                                <Mail className="w-4 h-4" /> Envoyer un email
-                            </Button>
                         </CardContent>
                     </Card>
                 </div>
