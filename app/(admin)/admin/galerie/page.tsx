@@ -1,75 +1,95 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useRef, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Search,
     Upload,
     Plus,
     MoreHorizontal,
-    Eye,
     Trash2,
     Image as ImageIcon,
-    Play,
-    FileText,
-    Filter,
-    CheckCircle2,
-    X,
     Grid,
     List as ListIcon,
+    CheckCircle2,
+    Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
+import { mediaApi } from '@/lib/api/media';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
-// Mock media data
-const mockMedia = [
-    { id: '1', type: 'image', title: 'Championnat Dakar 1', category: 'Compétitions', size: '1.2 Mo', dimension: '1920x1080', uploadedAt: '2024-02-10', url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=400' },
-    { id: '2', type: 'image', title: 'Stage Saint-Louis', category: 'Stages', size: '850 Ko', dimension: '1200x800', uploadedAt: '2024-02-05', url: 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?q=80&w=400' },
-    { id: '3', type: 'video', title: 'Démo Sanda', category: 'Vidéo', size: '15.4 Mo', duration: '0:45', uploadedAt: '2024-02-01', url: '#' },
-    { id: '4', type: 'image', title: 'Logo Association', category: 'Branding', size: '45 Ko', dimension: '512x512', uploadedAt: '2024-01-20', url: '/icon.svg' },
-    { id: '5', type: 'image', title: 'Temple Dakar Façade', category: 'Clubs', size: '2.1 Mo', dimension: '2560x1440', uploadedAt: '2024-01-15', url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400' },
-    { id: '6', type: 'image', title: 'Groupe Formation', category: 'Formation', size: '1.8 Mo', dimension: '2000x1333', uploadedAt: '2024-01-10', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400' },
-];
+function formatSize(bytes: number | null) {
+    if (!bytes) return '—';
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 export default function AdminMediaPage() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [typeFilter, setTypeFilter] = useState('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
+    const [selectedMedia, setSelectedMedia] = useState<number[]>([]);
+    const [uploadOpen, setUploadOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const queryClient = useQueryClient();
 
-    const filteredMedia = mockMedia.filter((item) => {
-        const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = typeFilter === 'all' || item.type === typeFilter;
-        return matchesSearch && matchesType;
+    const { data, isLoading } = useQuery({
+        queryKey: ['admin', 'media', searchQuery],
+        queryFn: () => mediaApi.list({ search: searchQuery || undefined, limit: 100 }),
+    });
+    const items = data?.data ?? [];
+
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
+
+    const uploadMutation = useMutation({
+        mutationFn: (file: File) => mediaApi.upload(file),
+        onSuccess: () => {
+            toast.success('Fichier uploadé');
+            invalidate();
+            setUploadOpen(false);
+        },
+        onError: () => toast.error("Erreur lors de l'upload"),
     });
 
-    const toggleSelect = (id: string) => {
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => mediaApi.delete(id),
+        onSuccess: () => {
+            invalidate();
+            setSelectedMedia([]);
+        },
+        onError: () => toast.error('Erreur lors de la suppression'),
+    });
+
+    const deleteSelected = async () => {
+        if (!confirm(`Supprimer ${selectedMedia.length} fichier(s) ?`)) return;
+        await Promise.all(selectedMedia.map((id) => mediaApi.delete(id)));
+        toast.success('Fichiers supprimés');
+        invalidate();
+        setSelectedMedia([]);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) uploadMutation.mutate(file);
+        e.target.value = '';
+    };
+
+    const toggleSelect = (id: number) => {
         setSelectedMedia((prev) =>
             prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
         );
@@ -81,40 +101,52 @@ export default function AdminMediaPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Bibliothèque de médias</h1>
-                    <p className="text-muted-foreground">Gérez vos images, vidéos et documents.</p>
+                    <p className="text-muted-foreground">Gérez les images utilisées sur le site.</p>
                 </div>
                 <div className="flex gap-2">
                     {selectedMedia.length > 0 && (
-                        <Button variant="destructive" className="gap-2">
+                        <Button variant="destructive" className="gap-2" onClick={deleteSelected}>
                             <Trash2 className="w-4 h-4" /> Supprimer ({selectedMedia.length})
                         </Button>
                     )}
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button className="bg-accent hover:bg-accent/90 gap-2">
-                                <Upload className="w-4 h-4" /> Uploader
-                            </Button>
-                        </DialogTrigger>
+                    <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+                        <Button className="bg-accent hover:bg-accent/90 gap-2" onClick={() => setUploadOpen(true)}>
+                            <Upload className="w-4 h-4" /> Uploader
+                        </Button>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Uploader des médias</DialogTitle>
+                                <DialogTitle>Uploader un média</DialogTitle>
                                 <DialogDescription>
-                                    Glissez-déposez vos fichiers ici ou cliquez pour parcourir.
+                                    Formats acceptés : JPG, PNG, WebP — 5 Mo maximum.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="border-2 border-dashed border-muted rounded-lg p-12 text-center hover:border-accent transition-colors cursor-pointer">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadMutation.isPending}
+                                className="border-2 border-dashed border-muted rounded-lg p-12 text-center hover:border-accent transition-colors cursor-pointer w-full"
+                            >
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                                        <Plus className="w-6 h-6 text-accent" />
+                                        {uploadMutation.isPending ? (
+                                            <Loader2 className="w-6 h-6 text-accent animate-spin" />
+                                        ) : (
+                                            <Plus className="w-6 h-6 text-accent" />
+                                        )}
                                     </div>
-                                    <p className="text-sm font-medium">Sélectionner des fichiers</p>
-                                    <p className="text-xs text-muted-foreground">PNG, JPG, MP4 jusqu&apos;à 50 Mo</p>
+                                    <p className="text-sm font-medium">
+                                        {uploadMutation.isPending ? 'Envoi en cours...' : 'Sélectionner un fichier'}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">PNG, JPG, WebP jusqu&apos;à 5 Mo</p>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline">Annuler</Button>
-                                <Button>Uploader</Button>
-                            </DialogFooter>
+                            </button>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -133,45 +165,41 @@ export default function AdminMediaPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Select value={typeFilter} onValueChange={setTypeFilter}>
-                                <SelectTrigger className="w-full sm:w-[130px]">
-                                    <Filter className="w-4 h-4 mr-2" />
-                                    <SelectValue placeholder="Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Tous</SelectItem>
-                                    <SelectItem value="image">Images</SelectItem>
-                                    <SelectItem value="video">Vidéos</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <div className="flex border rounded-lg overflow-hidden shrink-0">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn('rounded-none', viewMode === 'grid' && 'bg-muted')}
-                                    onClick={() => setViewMode('grid')}
-                                >
-                                    <Grid className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn('rounded-none', viewMode === 'list' && 'bg-muted')}
-                                    onClick={() => setViewMode('list')}
-                                >
-                                    <ListIcon className="w-4 h-4" />
-                                </Button>
-                            </div>
+                        <div className="flex border rounded-lg overflow-hidden shrink-0">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn('rounded-none', viewMode === 'grid' && 'bg-muted')}
+                                onClick={() => setViewMode('grid')}
+                            >
+                                <Grid className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn('rounded-none', viewMode === 'list' && 'bg-muted')}
+                                onClick={() => setViewMode('list')}
+                            >
+                                <ListIcon className="w-4 h-4" />
+                            </Button>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Media Content */}
-            {viewMode === 'grid' ? (
+            {isLoading ? (
+                <div className="flex justify-center py-20">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+            ) : items.length === 0 ? (
+                <div className="text-center py-20 bg-muted/20 rounded-lg border-2 border-dashed">
+                    <ImageIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-muted-foreground italic">Aucun média trouvé</h3>
+                    <p className="text-sm text-muted-foreground">Uploadez votre premier fichier pour commencer.</p>
+                </div>
+            ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {filteredMedia.map((item) => (
+                    {items.map((item) => (
                         <div
                             key={item.id}
                             className={cn(
@@ -180,30 +208,20 @@ export default function AdminMediaPage() {
                             )}
                             onClick={() => toggleSelect(item.id)}
                         >
-                            {item.type === 'image' ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={item.url} alt={item.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                            ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                                    <Play className="w-8 h-8 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground">{item.duration}</span>
-                                </div>
-                            )}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={item.url} alt={item.title ?? ''} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
 
-                            {/* Selection overlay */}
                             {selectedMedia.includes(item.id) && (
                                 <div className="absolute inset-0 bg-accent/20 flex items-center justify-center">
                                     <CheckCircle2 className="w-8 h-8 text-accent fill-white" />
                                 </div>
                             )}
 
-                            {/* Hover info */}
                             <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                                 <p className="text-[10px] text-white font-medium truncate">{item.title}</p>
-                                <p className="text-[8px] text-white/70">{item.size}</p>
+                                <p className="text-[8px] text-white/70">{formatSize(item.size)}</p>
                             </div>
 
-                            {/* Actions dropdown button */}
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -212,10 +230,20 @@ export default function AdminMediaPage() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem><Eye className="w-4 h-4 mr-2" /> Voir</DropdownMenuItem>
-                                        <DropdownMenuItem><ImageIcon className="w-4 h-4 mr-2" /> Inspecter</DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-destructive"><Trash2 className="w-4 h-4 mr-2" /> Supprimer</DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                                <ImageIcon className="w-4 h-4 mr-2" /> Voir en grand
+                                            </a>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            className="text-destructive"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Supprimer ce fichier ?')) deleteMutation.mutate(item.id);
+                                            }}
+                                        >
+                                            <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+                                        </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
@@ -230,31 +258,29 @@ export default function AdminMediaPage() {
                                 <thead className="bg-muted/50 border-b">
                                     <tr>
                                         <th className="p-4 text-left font-medium">Nom</th>
-                                        <th className="p-4 text-left font-medium">Type</th>
                                         <th className="p-4 text-left font-medium">Taille</th>
+                                        <th className="p-4 text-left font-medium">Ajouté par</th>
                                         <th className="p-4 text-left font-medium">Date</th>
                                         <th className="p-4 w-12"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredMedia.map((item) => (
+                                    {items.map((item) => (
                                         <tr key={item.id} className="border-b hover:bg-muted/30 transition-colors">
                                             <td className="p-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded border overflow-hidden bg-muted flex items-center justify-center shrink-0">
-                                                        {item.type === 'image' ? (
-                                                            // eslint-disable-next-line @next/next/no-img-element
-                                                            <img src={item.url} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <Play className="w-5 h-5 text-muted-foreground" />
-                                                        )}
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={item.url} alt="" className="w-full h-full object-cover" />
                                                     </div>
                                                     <span className="font-medium truncate max-w-[200px]">{item.title}</span>
                                                 </div>
                                             </td>
-                                            <td className="p-4 text-muted-foreground italic capitalize">{item.type}</td>
-                                            <td className="p-4 text-muted-foreground">{item.size}</td>
-                                            <td className="p-4 text-muted-foreground">{item.uploadedAt}</td>
+                                            <td className="p-4 text-muted-foreground">{formatSize(item.size)}</td>
+                                            <td className="p-4 text-muted-foreground">{item.uploadedBy?.email ?? '—'}</td>
+                                            <td className="p-4 text-muted-foreground">
+                                                {new Date(item.createdAt).toLocaleDateString('fr-FR')}
+                                            </td>
                                             <td className="p-4">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -263,8 +289,19 @@ export default function AdminMediaPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem><Eye className="w-4 h-4 mr-2" /> Voir</DropdownMenuItem>
-                                                        <DropdownMenuItem className="text-destructive"><Trash2 className="w-4 h-4 mr-2" /> Supprimer</DropdownMenuItem>
+                                                        <DropdownMenuItem asChild>
+                                                            <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                                                <ImageIcon className="w-4 h-4 mr-2" /> Voir en grand
+                                                            </a>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="text-destructive"
+                                                            onClick={() => {
+                                                                if (confirm('Supprimer ce fichier ?')) deleteMutation.mutate(item.id);
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+                                                        </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </td>
@@ -276,19 +313,6 @@ export default function AdminMediaPage() {
                     </CardContent>
                 </Card>
             )}
-
-            {filteredMedia.length === 0 && (
-                <div className="text-center py-20 bg-muted/20 rounded-lg border-2 border-dashed">
-                    <ImageIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-muted-foreground italic">Aucun média trouvé</h3>
-                    <p className="text-sm text-muted-foreground">Essayez d&apos;ajuster vos filtres de recherche.</p>
-                </div>
-            )}
         </div>
     );
-}
-
-// Utility for conditional classes
-function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(' ');
 }

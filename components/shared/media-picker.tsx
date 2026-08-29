@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Image as ImageIcon,
-    Plus,
-    X,
     Search,
     CheckCircle2,
     Upload,
+    Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,10 +16,10 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { mediaApi } from '@/lib/api/media';
+import { toast } from 'sonner';
 
 interface MediaPickerProps {
     value?: string;
@@ -28,25 +28,34 @@ interface MediaPickerProps {
     helperText?: string;
 }
 
-// Mock media for picker
-const mockMedia = [
-    { id: '1', title: 'Championnat Dakar 1', url: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=400' },
-    { id: '2', title: 'Stage Saint-Louis', url: 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?q=80&w=400' },
-    { id: '5', title: 'Temple Dakar Façade', url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=400' },
-    { id: '6', title: 'Groupe Formation', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400' },
-];
-
 export function MediaPicker({ value, onChange, label, helperText }: MediaPickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedUrl, setSelectedUrl] = useState(value || '');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const queryClient = useQueryClient();
 
-    const filteredMedia = mockMedia.filter((item) =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const { data, isLoading } = useQuery({
+        queryKey: ['admin', 'media', searchQuery],
+        queryFn: () => mediaApi.list({ search: searchQuery || undefined, limit: 60 }),
+        enabled: isOpen,
+    });
+    const items = data?.data ?? [];
 
-    const handleSelect = (url: string) => {
-        setSelectedUrl(url);
+    const uploadMutation = useMutation({
+        mutationFn: (file: File) => mediaApi.upload(file),
+        onSuccess: (item) => {
+            toast.success('Fichier ajouté à la bibliothèque');
+            queryClient.invalidateQueries({ queryKey: ['admin', 'media'] });
+            setSelectedUrl(item.url);
+        },
+        onError: () => toast.error("Erreur lors de l'upload"),
+    });
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) uploadMutation.mutate(file);
+        e.target.value = '';
     };
 
     const confirmSelection = () => {
@@ -108,35 +117,58 @@ export function MediaPicker({ value, onChange, label, helperText }: MediaPickerP
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Button className="bg-accent hover:bg-accent/90 gap-2 shrink-0">
-                                <Upload className="w-4 h-4" /> Uploader
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                            <Button
+                                type="button"
+                                className="bg-accent hover:bg-accent/90 gap-2 shrink-0"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadMutation.isPending}
+                            >
+                                {uploadMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                Uploader
                             </Button>
                         </div>
 
                         {/* Media Grid */}
                         <ScrollArea className="flex-1 p-6">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {filteredMedia.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className={`relative aspect-square rounded-lg border overflow-hidden cursor-pointer group transition-all ${selectedUrl === item.url ? 'ring-4 ring-accent' : ''
-                                            }`}
-                                        onClick={() => handleSelect(item.url)}
-                                    >
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        {selectedUrl === item.url && (
-                                            <div className="absolute inset-0 bg-accent/20 flex items-center justify-center">
-                                                <CheckCircle2 className="w-8 h-8 text-accent fill-white" />
+                            {isLoading ? (
+                                <div className="flex justify-center py-12">
+                                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : items.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-12">
+                                    Aucun fichier dans la bibliothèque. Uploadez-en un pour commencer.
+                                </p>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                    {items.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className={`relative aspect-square rounded-lg border overflow-hidden cursor-pointer group transition-all ${selectedUrl === item.url ? 'ring-4 ring-accent' : ''
+                                                }`}
+                                            onClick={() => setSelectedUrl(item.url)}
+                                        >
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={item.url} alt={item.title ?? ''} className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            {selectedUrl === item.url && (
+                                                <div className="absolute inset-0 bg-accent/20 flex items-center justify-center">
+                                                    <CheckCircle2 className="w-8 h-8 text-accent fill-white" />
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-x-0 bottom-0 p-2 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <p className="text-[10px] text-white font-medium truncate">{item.title}</p>
                                             </div>
-                                        )}
-                                        <div className="absolute inset-x-0 bottom-0 p-2 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <p className="text-[10px] text-white font-medium truncate">{item.title}</p>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </ScrollArea>
                     </div>
 
