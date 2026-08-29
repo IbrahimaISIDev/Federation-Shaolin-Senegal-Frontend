@@ -61,7 +61,7 @@ export function MaitreAffiliationForm() {
     }
   };
 
-  const clubs = (clubsData as any)?.data?.data ?? [];
+  const clubs = (clubsData as any)?.data ?? [];
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
