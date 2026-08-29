@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { FADE_IN_UP, STAGGER_CONTAINER, LICENSE_FEES } from '@/lib/constants';
 
 const benefits = [
   'Licence officielle reconnue',
@@ -113,7 +113,7 @@ export function CTASection() {
               variants={FADE_IN_UP}
               className="mt-6 text-xs text-white/40"
             >
-              Licence annuelle à partir de <span className="text-accent">10 000 FCFA</span> · Paiement sécurisé via Wave, Orange Money ou carte
+              Licence annuelle à partir de <span className="text-accent">{LICENSE_FEES.RENEWAL.toLocaleString('fr-FR')} FCFA</span> · Paiement sécurisé via Wave, Orange Money ou carte
             </motion.p>
           </motion.div>
         </div>
