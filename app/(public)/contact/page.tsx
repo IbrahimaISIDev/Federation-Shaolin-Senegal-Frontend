@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import {
@@ -30,6 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { settingsApi } from '@/lib/api/settings';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -54,6 +56,14 @@ const subjects = [
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsApi.get(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const contactPhone = settingsData?.data.contactPhone || '+221 77 265 74 26';
+  const contactEmail = settingsData?.data.contactEmail || 'contact@shaolin-senegal.sn';
 
   const {
     register,
@@ -136,7 +146,7 @@ export default function ContactPage() {
                         <h3 className="font-medium text-foreground">Téléphone</h3>
                         <p className="text-sm text-muted-foreground mt-1">
                           +221 33 123 45 67<br />
-                          +221 77 265 74 26
+                          {contactPhone}
                         </p>
                       </div>
                     </div>
@@ -148,7 +158,7 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-medium text-foreground">Email</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          contact@shaolin-senegal.sn<br />
+                          {contactEmail}<br />
                           info@shaolin-senegal.sn
                         </p>
                       </div>

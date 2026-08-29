@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, ChevronDown, User, LogOut, Phone, Mail, Clock,
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/shared/logo';
 import { PUBLIC_NAV_ITEMS, CONTACT_INFO, SOCIAL_LINKS } from '@/lib/constants';
+import { settingsApi } from '@/lib/api/settings';
 
 const topBarSocialIcons = {
   facebook: Facebook,
@@ -31,6 +33,15 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
+
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsApi.get(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const orgName = settingsData?.data.orgName || 'Association Disciples Shaolin Si Sénégal';
+  const contactPhone = settingsData?.data.contactPhone || CONTACT_INFO.phone;
+  const contactEmail = settingsData?.data.contactEmail || CONTACT_INFO.email;
 
   const isActiveLink = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -65,7 +76,7 @@ export function Header() {
           <div className="flex items-center gap-2">
             <span className="text-accent">少林寺</span>
             <span className="font-medium tracking-wide text-white/85">
-              Association Disciples Shaolin Si Sénégal
+              {orgName}
             </span>
             <span className="hidden items-center gap-1.5 border-l border-white/15 pl-4 text-white/55 xl:flex">
               <Clock className="h-3 w-3" />
@@ -74,18 +85,18 @@ export function Header() {
           </div>
           <div className="flex items-center gap-4">
             <a
-              href={`tel:${CONTACT_INFO.phone}`}
+              href={`tel:${contactPhone}`}
               className="flex items-center gap-1.5 text-white/70 transition-colors hover:text-accent"
             >
               <Phone className="h-3 w-3" />
-              {CONTACT_INFO.phone}
+              {contactPhone}
             </a>
             <a
-              href={`mailto:${CONTACT_INFO.email}`}
+              href={`mailto:${contactEmail}`}
               className="flex items-center gap-1.5 text-white/70 transition-colors hover:text-accent"
             >
               <Mail className="h-3 w-3" />
-              {CONTACT_INFO.email}
+              {contactEmail}
             </a>
             <div className="flex items-center gap-2.5 border-l border-white/15 pl-4">
               {Object.entries(topBarSocialIcons).map(([key, Icon]) => (
@@ -108,11 +119,11 @@ export function Header() {
       {/* Top info bar — mobile (click-to-call only) */}
       <div className="border-b border-primary/10 bg-primary lg:hidden">
         <a
-          href={`tel:${CONTACT_INFO.phone}`}
+          href={`tel:${contactPhone}`}
           className="flex h-8 items-center justify-center gap-1.5 text-xs font-medium text-white/80 transition-colors active:text-accent"
         >
           <Phone className="h-3 w-3" />
-          {CONTACT_INFO.phone}
+          {contactPhone}
         </a>
       </div>
 

@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useQuery } from '@tanstack/react-query';
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
 import { NewsletterForm } from '@/components/shared/newsletter-form';
 import { SOCIAL_LINKS, CONTACT_INFO } from '@/lib/constants';
+import { settingsApi } from '@/lib/api/settings';
 
 const footerLinks = {
   federation: [
@@ -34,6 +38,14 @@ const socialIcons = {
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsApi.get(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const contactPhone = settingsData?.data.contactPhone || CONTACT_INFO.phone;
+  const contactEmail = settingsData?.data.contactEmail || CONTACT_INFO.email;
 
   return (
     <footer className="relative overflow-hidden bg-primary text-primary-foreground">
@@ -166,20 +178,20 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href={`tel:${CONTACT_INFO.phone}`}
+                  href={`tel:${contactPhone}`}
                   className="flex items-center gap-2.5 text-sm text-white/55 transition-colors hover:text-accent"
                 >
                   <Phone className="h-4 w-4 shrink-0 text-accent/50" />
-                  {CONTACT_INFO.phone}
+                  {contactPhone}
                 </a>
               </li>
               <li>
                 <a
-                  href={`mailto:${CONTACT_INFO.email}`}
+                  href={`mailto:${contactEmail}`}
                   className="flex items-center gap-2.5 text-sm text-white/55 transition-colors hover:text-accent"
                 >
                   <Mail className="h-4 w-4 shrink-0 text-accent/50" />
-                  {CONTACT_INFO.email}
+                  {contactEmail}
                 </a>
               </li>
             </ul>
