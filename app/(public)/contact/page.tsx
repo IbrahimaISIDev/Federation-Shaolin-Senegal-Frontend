@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { settingsApi } from '@/lib/api/settings';
+import { CONTACT_INFO, SOCIAL_LINKS } from '@/lib/constants';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -132,8 +133,7 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-medium text-foreground">Adresse</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          123 Avenue Cheikh Anta Diop<br />
-                          Dakar, Sénégal
+                          {CONTACT_INFO.address}
                         </p>
                       </div>
                     </div>
@@ -145,7 +145,6 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-medium text-foreground">Téléphone</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          +221 33 123 45 67<br />
                           {contactPhone}
                         </p>
                       </div>
@@ -158,8 +157,7 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-medium text-foreground">Email</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {contactEmail}<br />
-                          info@shaolin-senegal.sn
+                          {contactEmail}
                         </p>
                       </div>
                     </div>
@@ -171,8 +169,7 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-medium text-foreground">Horaires</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Lundi - Vendredi: 9h - 18h<br />
-                          Samedi: 9h - 13h
+                          {CONTACT_INFO.hours}
                         </p>
                       </div>
                     </div>
@@ -188,21 +185,27 @@ export default function ContactPage() {
                   </h2>
                   <div className="flex gap-4">
                     <a
-                      href="#"
+                      href={SOCIAL_LINKS.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-10 h-10 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors"
                       aria-label="Facebook"
                     >
                       <Facebook className="w-5 h-5 text-primary" />
                     </a>
                     <a
-                      href="#"
+                      href={SOCIAL_LINKS.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-10 h-10 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors"
                       aria-label="Instagram"
                     >
                       <Instagram className="w-5 h-5 text-primary" />
                     </a>
                     <a
-                      href="#"
+                      href={SOCIAL_LINKS.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-10 h-10 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors"
                       aria-label="YouTube"
                     >
@@ -366,7 +369,7 @@ export default function ContactPage() {
             <MapPin className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground">Carte interactive</p>
             <p className="text-sm text-muted-foreground/70">
-              123 Avenue Cheikh Anta Diop, Dakar
+              {CONTACT_INFO.address}
             </p>
           </div>
         </div>
