@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Settings, Shield, Bell, Globe, Database, Save, Loader2, ArrowRight } from 'lucide-react';
+import { Settings, Shield, Bell, Globe, Database, Save, Loader2, ArrowRight, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +39,8 @@ export default function AdminParametresPage() {
                 contactEmail: settings.contactEmail ?? '',
                 contactPhone: settings.contactPhone ?? '',
                 website: settings.website ?? '',
+                paymentWaveNumber: settings.paymentWaveNumber ?? '',
+                paymentOMNumber: settings.paymentOMNumber ?? '',
                 notifyNewMember: settings.notifyNewMember,
                 notifyNewAffiliation: settings.notifyNewAffiliation,
                 notifyCompetitions: settings.notifyCompetitions,
@@ -134,6 +136,36 @@ export default function AdminParametresPage() {
                                 <Input type="url" placeholder="https://shaolin-senegal.com" {...register('website')} />
                             </div>
                         </>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Paiement manuel */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Smartphone className="w-5 h-5 text-primary" />
+                        <CardTitle>Paiement</CardTitle>
+                    </div>
+                    <CardDescription>
+                        Numéros affichés aux candidats à l&apos;affiliation et aux membres qui renouvellent leur licence,
+                        pour le paiement manuel (Wave / Orange Money).
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {isLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Numéro Wave</Label>
+                                <Input type="tel" placeholder="+221 77 265 74 26" {...register('paymentWaveNumber')} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Numéro Orange Money</Label>
+                                <Input type="tel" placeholder="+221 77 265 74 26" {...register('paymentOMNumber')} />
+                            </div>
+                        </div>
                     )}
                 </CardContent>
             </Card>
