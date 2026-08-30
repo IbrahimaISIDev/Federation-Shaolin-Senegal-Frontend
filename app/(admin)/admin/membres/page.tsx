@@ -24,6 +24,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { ExportButton } from '@/components/shared/export-button';
+import { ImportButton } from '@/components/shared/import-button';
 import { membersApi, statsApi, type Member } from '@/lib/api';
 import { downloadBlob } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -164,6 +165,12 @@ export default function AdminMembersPage() {
         </div>
         <div className="flex gap-2">
           <ExportButton entity="membres" getData={getMembersForExport} />
+          <ImportButton
+            label="membres"
+            columnsHint="Prénom, Nom, Email, Téléphone, Sexe (M/F), Date de naissance, Nationalité, Ville, Club, Discipline, Grade"
+            importFn={(file) => membersApi.import(file)}
+            onImported={invalidate}
+          />
           <Button variant="outline" className="gap-2" onClick={handleExportPdf} disabled={isExportingPdf}>
             {isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
             <span className="hidden sm:inline">Exporter PDF</span>

@@ -24,6 +24,7 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { ExportButton } from '@/components/shared/export-button';
+import { ImportButton } from '@/components/shared/import-button';
 import { clubsApi, type Club } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -106,6 +107,12 @@ export default function AdminClubsPage() {
                 </div>
                 <div className="flex gap-2">
                     <ExportButton entity="clubs" getData={getClubsForExport} />
+                    <ImportButton
+                        label="clubs"
+                        columnsHint="Nom, Région, Ville, Téléphone, Email, Président"
+                        importFn={(file) => clubsApi.import(file)}
+                        onImported={invalidate}
+                    />
                     <Button className="bg-accent hover:bg-accent/90 gap-2" asChild>
                         <Link href="/admin/clubs/nouveau">
                             <PlusCircle className="w-4 h-4" />
