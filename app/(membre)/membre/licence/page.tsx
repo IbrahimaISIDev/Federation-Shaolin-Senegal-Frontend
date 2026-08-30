@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Download,
   Share2,
@@ -16,13 +16,17 @@ import {
   Clock,
   Loader2,
   MapPin,
+  Smartphone,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PaymentProofForm } from '@/components/shared/payment-proof-form';
 import { membersApi, licensesApi } from '@/lib/api';
+import { settingsApi } from '@/lib/api/settings';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { toast } from 'sonner';
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   ACTIVE:    { label: 'Active',      color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 },
@@ -33,6 +37,8 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 
 export default function LicensePage() {
   const [showQRCode, setShowQRCode] = useState(false);
+  const [renewProvider, setRenewProvider] = useState<'WAVE' | 'ORANGE_MONEY' | null>(null);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['member', 'profile'],
@@ -41,7 +47,39 @@ export default function LicensePage() {
   });
 
   const member = (data as any)?.data;
-  const activeLicense = member?.licenses?.[0];
+  const licenses: any[] = member?.licenses ?? [];
+  // La licence en vigueur (ACTIVE/EXPIRED) est distincte d'un éventuel
+  // renouvellement en cours (nouvelle licence PENDING avec un paiement associé).
+  const activeLicense = licenses.find((l) => l.status !== 'PENDING') ?? licenses[0];
+  const pendingRenewal = licenses.find((l) => l.status === 'PENDING' && l.payments?.[0]);
+  const renewalPayment = pendingRenewal?.payments?.[0];
+
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsApi.get(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const paymentNumbers = settingsData?.data;
+
+  const renewMutation = useMutation({
+    mutationFn: (provider: 'WAVE' | 'ORANGE_MONEY') => membersApi.renewLicense(provider),
+    onSuccess: (_res, provider) => {
+      setRenewProvider(provider);
+      queryClient.invalidateQueries({ queryKey: ['member', 'profile'] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Erreur lors du renouvellement'),
+  });
+
+  const submitProofMutation = useMutation({
+    mutationFn: (data: { reference: string; preuveUrl: string }) =>
+      membersApi.submitRenewalProof(pendingRenewal!.id, { transactionRef: data.reference, preuveUrl: data.preuveUrl }),
+    onSuccess: () => {
+      toast.success('Preuve envoyée — en attente de vérification par l\'association');
+      queryClient.invalidateQueries({ queryKey: ['member', 'profile'] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Erreur lors de l'envoi de la preuve"),
+  });
+
   const statusKey = activeLicense?.status ?? 'PENDING';
   const statusInfo = statusConfig[statusKey] ?? statusConfig['PENDING'];
   const numeroLicence = activeLicense
@@ -302,17 +340,59 @@ export default function LicensePage() {
           </Card>
 
           {/* Renouvellement */}
-          {activeLicense?.status === 'ACTIVE' && (
+          {(activeLicense?.status === 'ACTIVE' || activeLicense?.status === 'EXPIRED') && (
             <Card className="border-accent/50 bg-accent/5">
-              <CardContent className="p-6">
-                <h3 className="mb-2 font-semibold text-foreground">Renouveler ma licence</h3>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  Votre licence expire dans <strong>{getDaysUntilExpiry()} jours</strong>.
-                  Renouvelez-la avant la fin d&apos;année pour éviter toute interruption.
-                </p>
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled>
-                  Renouvellement non ouvert
-                </Button>
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <h3 className="mb-2 font-semibold text-foreground">Renouveler ma licence</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {activeLicense.status === 'ACTIVE'
+                      ? <>Votre licence expire dans <strong>{getDaysUntilExpiry()} jours</strong>. Renouvelez-la avant la fin d&apos;année pour éviter toute interruption.</>
+                      : <>Votre licence a expiré. Renouvelez-la pour continuer à participer aux activités de l&apos;association.</>}
+                  </p>
+                </div>
+
+                {renewalPayment ? (
+                  renewalPayment.transactionRef ? (
+                    <div className="flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+                      <Clock className="h-5 w-5 shrink-0" />
+                      Preuve envoyée — en attente de vérification par l&apos;association.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="rounded-lg border border-accent/30 bg-background p-3 text-sm text-muted-foreground">
+                        Envoyez <strong className="text-foreground">{Number(renewalPayment.montant ?? 0).toLocaleString('fr-FR')} FCFA</strong> via{' '}
+                        <strong className="text-foreground">{renewalPayment.provider === 'WAVE' ? 'Wave' : 'Orange Money'}</strong> au{' '}
+                        <strong className="text-foreground">
+                          {renewalPayment.provider === 'WAVE' ? paymentNumbers?.paymentWaveNumber : paymentNumbers?.paymentOMNumber}
+                        </strong>, puis renseignez la référence et une preuve ci-dessous.
+                      </div>
+                      <PaymentProofForm
+                        onSubmit={async (d) => { await submitProofMutation.mutateAsync(d); }}
+                        submitLabel="Envoyer ma preuve de paiement"
+                      />
+                    </>
+                  )
+                ) : (
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full h-12 bg-[#1BB5FF] hover:bg-[#1BB5FF]/90 text-white font-semibold gap-2"
+                      disabled={renewMutation.isPending}
+                      onClick={() => renewMutation.mutate('WAVE')}
+                    >
+                      {renewMutation.isPending && renewProvider === 'WAVE' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+                      Renouveler avec Wave
+                    </Button>
+                    <Button
+                      className="w-full h-12 bg-[#FF6600] hover:bg-[#FF6600]/90 text-white font-semibold gap-2"
+                      disabled={renewMutation.isPending}
+                      onClick={() => renewMutation.mutate('ORANGE_MONEY')}
+                    >
+                      {renewMutation.isPending && renewProvider === 'ORANGE_MONEY' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+                      Renouveler avec Orange Money
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

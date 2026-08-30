@@ -101,6 +101,18 @@ export const membersApi = {
     myPayments: () => api.get<{ data: any[] }>('/members/me/payments'),
 
     /**
+     * POST /api/members/me/license/renew
+     */
+    renewLicense: (provider: 'WAVE' | 'ORANGE_MONEY') =>
+        api.post<{ data: { license: any; payment: any }; message: string }>('/members/me/license/renew', { provider }),
+
+    /**
+     * PATCH /api/members/me/license/:licenseId/payment-proof
+     */
+    submitRenewalProof: (licenseId: number, data: { transactionRef: string; preuveUrl: string }) =>
+        api.patch<{ data: any; message: string }>(`/members/me/license/${licenseId}/payment-proof`, data),
+
+    /**
      * GET /api/members/me/inscriptions
      */
     myInscriptions: () => api.get<{ data: any[] }>('/members/me/inscriptions'),
