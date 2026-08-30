@@ -159,11 +159,11 @@ export default function AdminParametresPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Numéro Wave</Label>
-                                <Input type="tel" placeholder="+221 77 265 74 26" {...register('paymentWaveNumber')} />
+                                <Input type="tel" autoComplete="off" placeholder="Non renseigné — ex : 77 000 00 00" {...register('paymentWaveNumber')} />
                             </div>
                             <div className="space-y-2">
                                 <Label>Numéro Orange Money</Label>
-                                <Input type="tel" placeholder="+221 77 265 74 26" {...register('paymentOMNumber')} />
+                                <Input type="tel" autoComplete="off" placeholder="Non renseigné — ex : 77 000 00 00" {...register('paymentOMNumber')} />
                             </div>
                         </div>
                     )}
