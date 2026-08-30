@@ -1,7 +1,7 @@
 // ─── lib/api/members.ts ───────────────────────────────────────────────────────
 import { api } from './client';
 import apiClient from './client';
-import type { PaginatedResponse } from './clubs';
+import type { PaginatedResponse, ImportReport } from './clubs';
 
 export interface Member {
     id: number;
@@ -167,4 +167,16 @@ export const membersApi = {
         apiClient
             .get('/admin/members/export/pdf', { params, responseType: 'blob' })
             .then((res) => res.data as Blob),
+
+    /**
+     * POST /api/admin/members/import — import en masse depuis un fichier Excel
+     */
+    import: async (file: File): Promise<ImportReport> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const { data } = await apiClient.post<{ data: ImportReport }>('/admin/members/import', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return data.data;
+    },
 };

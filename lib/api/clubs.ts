@@ -1,5 +1,17 @@
 // ─── lib/api/clubs.ts ─────────────────────────────────────────────────────────
 import { api } from './client';
+import apiClient from './client';
+
+export interface ImportRowError {
+    row: number;
+    message: string;
+}
+
+export interface ImportReport {
+    total: number;
+    created: number;
+    errors: ImportRowError[];
+}
 
 export interface Club {
     id: number;
@@ -97,4 +109,16 @@ export const clubsApi = {
      */
     delete: (id: number) =>
         api.delete<{ message: string }>(`/admin/clubs/${id}`),
+
+    /**
+     * POST /api/admin/clubs/import — import en masse depuis un fichier Excel
+     */
+    import: async (file: File): Promise<ImportReport> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const { data } = await apiClient.post<{ data: ImportReport }>('/admin/clubs/import', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return data.data;
+    },
 };
