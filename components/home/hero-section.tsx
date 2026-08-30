@@ -87,7 +87,8 @@ export function HeroSection() {
             className="mx-auto mb-8 max-w-lg text-base leading-relaxed text-white/70 lg:mx-0 lg:text-lg"
           >
             Association nationale dédiée à la promotion du Shaolin authentique,
-            directement transmis par le Temple Shaolin de Chine au Sénégal depuis 1981.
+            directement transmis par le Temple Shaolin de Chine — active au Sénégal
+            depuis 2022, officiellement reconnue depuis 2024.
           </motion.p>
 
           {/* CTA Buttons */}

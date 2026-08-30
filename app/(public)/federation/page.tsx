@@ -278,7 +278,8 @@ export default function FederationPage() {
           </motion.div>
           <motion.p variants={FADE_IN_UP} className="mx-auto max-w-2xl text-base text-white/65 lg:text-lg">
             Association nationale dédiée à la promotion du Shaolin authentique, directement
-            transmis par le Temple Shaolin de Chine, active au Sénégal depuis 1981.
+            transmis par le Temple Shaolin de Chine — active au Sénégal depuis 2022,
+            officiellement reconnue depuis 2024.
           </motion.p>
 
           {/* Quick trust badges */}
