@@ -301,7 +301,7 @@ export default function FederationPage() {
       <div className="container mx-auto px-4 py-16 lg:py-20 space-y-20">
 
         {/* ── Histoire ─────────────────────────────────────────────────── */}
-        <section>
+        <section id="histoire" className="scroll-mt-24">
           <motion.div
             variants={STAGGER_CONTAINER}
             initial="hidden"
@@ -447,7 +447,7 @@ export default function FederationPage() {
         </section>
 
         {/* ── Bureau Présidence ─────────────────────────────────────────── */}
-        <section>
+        <section id="equipe" className="scroll-mt-24">
           <motion.div
             variants={STAGGER_CONTAINER}
             initial="hidden"

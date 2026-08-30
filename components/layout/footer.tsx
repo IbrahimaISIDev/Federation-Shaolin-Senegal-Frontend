@@ -10,9 +10,9 @@ import { settingsApi } from '@/lib/api/settings';
 
 const footerLinks = {
   federation: [
-    { label: 'À propos', href: '/a-propos' },
-    { label: 'Notre histoire', href: '/histoire' },
-    { label: 'Équipe dirigeante', href: '/equipe' },
+    { label: 'À propos', href: '/federation' },
+    { label: 'Notre histoire', href: '/federation#histoire' },
+    { label: 'Équipe dirigeante', href: '/federation#equipe' },
     { label: 'Règlements', href: '/reglements' },
   ],
   members: [
