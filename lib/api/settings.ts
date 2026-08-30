@@ -7,6 +7,8 @@ export interface Settings {
     contactEmail: string | null;
     contactPhone: string | null;
     website: string | null;
+    paymentWaveNumber: string | null;
+    paymentOMNumber: string | null;
     notifyNewMember: boolean;
     notifyNewAffiliation: boolean;
     notifyCompetitions: boolean;
@@ -19,6 +21,8 @@ export interface UpdateSettingsPayload {
     contactEmail?: string;
     contactPhone?: string;
     website?: string;
+    paymentWaveNumber?: string;
+    paymentOMNumber?: string;
     notifyNewMember?: boolean;
     notifyNewAffiliation?: boolean;
     notifyCompetitions?: boolean;

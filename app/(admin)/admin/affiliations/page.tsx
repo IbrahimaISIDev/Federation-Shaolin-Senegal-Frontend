@@ -121,6 +121,16 @@ export default function AdminAffiliationsPage() {
     onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Erreur lors du rejet'),
   });
 
+  const confirmPaymentMutation = useMutation({
+    mutationFn: (id: number) => affiliationApi.confirmPayment(id),
+    onSuccess: () => {
+      toast.success('Paiement confirmé — la demande passe en examen');
+      queryClient.invalidateQueries({ queryKey: ['admin-affiliations'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-affiliation', viewId] });
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Erreur lors de la confirmation du paiement'),
+  });
+
   const demandes: any[] = (data as any)?.data ?? [];
   const meta = (data as any)?.meta ?? { total: 0, totalPages: 1 };
   const detailDemande: any = (viewData as any)?.data;
@@ -338,6 +348,30 @@ export default function AdminAffiliationsPage() {
                 </div>
               )}
 
+              {(detailDemande.referenceManuelle || detailDemande.preuvePaiementUrl) && (
+                <div className="border rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Preuve de paiement manuel — {detailDemande.montant?.toLocaleString('fr-FR')} FCFA
+                  </p>
+                  {detailDemande.referenceManuelle && (
+                    <p><span className="text-muted-foreground text-xs">Référence : </span>{detailDemande.referenceManuelle}</p>
+                  )}
+                  {detailDemande.preuvePaiementUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={detailDemande.preuvePaiementUrl}
+                      alt="Preuve de paiement"
+                      className="max-h-64 rounded border object-contain"
+                    />
+                  )}
+                  {detailDemande.paymentConfirmedAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Confirmé le {formatDate(detailDemande.paymentConfirmedAt)}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {detailDemande.status === 'PENDING' && (
                 <div className="space-y-2 pt-2 border-t">
                   <Label htmlFor="adminNote">Note admin (optionnel)</Label>
@@ -352,6 +386,18 @@ export default function AdminAffiliationsPage() {
               )}
             </div>
           ) : null}
+          {detailDemande?.status === 'PENDING_PAYMENT' && (
+            <DialogFooter>
+              <Button
+                className="bg-accent hover:bg-accent/90"
+                disabled={confirmPaymentMutation.isPending || !detailDemande.referenceManuelle}
+                onClick={() => confirmPaymentMutation.mutate(detailDemande.id)}
+              >
+                {confirmPaymentMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                Confirmer le paiement
+              </Button>
+            </DialogFooter>
+          )}
           {detailDemande?.status === 'PENDING' && (
             <DialogFooter className="gap-2">
               <Button

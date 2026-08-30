@@ -49,4 +49,19 @@ export const uploadApi = {
         );
         return data.data;
     },
+
+    /**
+     * PUT /api/upload/payment-proof  — public
+     * Uploader une capture d'écran/photo de reçu de paiement manuel
+     */
+    uploadPaymentProof: async (file: File): Promise<UploadResult> => {
+        const formData = new FormData();
+        formData.append('proof', file);
+        const { data } = await apiClient.put<{ data: UploadResult }>(
+            '/upload/payment-proof',
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        return data.data;
+    },
 };

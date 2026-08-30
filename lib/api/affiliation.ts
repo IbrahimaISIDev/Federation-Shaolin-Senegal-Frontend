@@ -24,6 +24,12 @@ export const affiliationApi = {
   reject: (id: number, motifRejet: string) =>
     api.patch(`/affiliations/${id}/reject`, { motifRejet }),
 
+  submitPaymentProof: (id: number, data: { referenceManuelle: string; preuvePaiementUrl: string }) =>
+    api.patch(`/affiliations/${id}/payment-proof`, data),
+
+  confirmPayment: (id: number) =>
+    api.patch(`/affiliations/${id}/confirm-payment`),
+
   exportPdf: (params?: Record<string, any>) =>
     apiClient
       .get('/affiliations/export/pdf', { params, responseType: 'blob' })
