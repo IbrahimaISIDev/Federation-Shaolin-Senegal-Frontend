@@ -25,13 +25,14 @@ export interface PaymentStatusResponse {
   };
 }
 
+// token : jeton d'accès à la demande, remis à la soumission (accessToken)
 export const paymentApi = {
-  initiateWave: (demandeId: number) =>
-    api.post<WaveInitiateResponse>('/payments/wave/initiate', { demandeId }),
+  initiateWave: (demandeId: number, token: string) =>
+    api.post<WaveInitiateResponse>('/payments/wave/initiate', { demandeId, token }),
 
-  initiateOm: (demandeId: number) =>
-    api.post<OmInitiateResponse>('/payments/om/initiate', { demandeId }),
+  initiateOm: (demandeId: number, token: string) =>
+    api.post<OmInitiateResponse>('/payments/om/initiate', { demandeId, token }),
 
-  checkStatus: (demandeId: number) =>
-    api.get<PaymentStatusResponse>(`/payments/status/${demandeId}`),
+  checkStatus: (demandeId: number, token: string) =>
+    api.get<PaymentStatusResponse>(`/payments/status/${demandeId}`, { params: { t: token } }),
 };

@@ -17,6 +17,7 @@ function PaiementEchecContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const demandeId = searchParams.get('id') ?? '';
+  const token = searchParams.get('t') ?? '';
 
   return (
     <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
@@ -41,10 +42,10 @@ function PaiementEchecContent() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {demandeId && (
+          {demandeId && token && (
             <Button
               className="w-full gap-2"
-              onClick={() => router.push(`/affiliation/paiement?id=${demandeId}`)}
+              onClick={() => router.push(`/affiliation/paiement?id=${demandeId}&t=${encodeURIComponent(token)}`)}
             >
               <RefreshCw className="w-4 h-4" />
               Réessayer le paiement

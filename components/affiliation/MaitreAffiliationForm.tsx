@@ -54,8 +54,8 @@ export function MaitreAffiliationForm() {
     setServerError('');
     try {
       const res = await affiliationApi.submitMaitre(data);
-      const demandeId = (res as any)?.data?.id;
-      router.push(`/affiliation/paiement?id=${demandeId}`);
+      const { id: demandeId, accessToken } = (res as any)?.data ?? {};
+      router.push(`/affiliation/paiement?id=${demandeId}&t=${encodeURIComponent(accessToken)}`);
     } catch (err: any) {
       setServerError(err?.response?.data?.message ?? 'Une erreur est survenue. Veuillez réessayer.');
     }

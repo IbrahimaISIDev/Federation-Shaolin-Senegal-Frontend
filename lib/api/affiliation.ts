@@ -24,8 +24,9 @@ export const affiliationApi = {
   reject: (id: number, motifRejet: string) =>
     api.patch(`/affiliations/${id}/reject`, { motifRejet }),
 
-  submitPaymentProof: (id: number, data: { referenceManuelle: string; preuvePaiementUrl: string }) =>
-    api.patch(`/affiliations/${id}/payment-proof`, data),
+  // token : jeton d'accès remis à la soumission (accessToken)
+  submitPaymentProof: (id: number, token: string, data: { referenceManuelle: string; preuvePaiementUrl: string }) =>
+    api.patch(`/affiliations/${id}/payment-proof`, { ...data, token }),
 
   confirmPayment: (id: number) =>
     api.patch(`/affiliations/${id}/confirm-payment`),

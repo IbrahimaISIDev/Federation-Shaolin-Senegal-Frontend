@@ -26,6 +26,7 @@ function PaiementConfirmeFallback() {
 function PaiementConfirmeContent() {
   const searchParams = useSearchParams();
   const demandeId = Number(searchParams.get('id') ?? '0');
+  const token = searchParams.get('t') ?? '';
 
   const [info, setInfo] = useState<{
     prenom?: string; nom?: string; type?: string; montant?: number; status?: string;
@@ -33,15 +34,15 @@ function PaiementConfirmeContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!demandeId) { setLoading(false); return; }
-    paymentApi.checkStatus(demandeId)
+    if (!demandeId || !token) { setLoading(false); return; }
+    paymentApi.checkStatus(demandeId, token)
       .then((res) => {
         const d = (res as any)?.data;
         setInfo({ prenom: d?.prenom, nom: d?.nom, type: d?.type, montant: d?.montant, status: d?.status });
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [demandeId]);
+  }, [demandeId, token]);
 
   const typeLabel: Record<string, string> = {
     CLUB: 'Club', MAITRE: 'Maître', MEMBRE: 'Membre/Disciple',

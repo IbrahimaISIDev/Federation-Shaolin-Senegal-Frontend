@@ -35,32 +35,34 @@ function PaiementContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const demandeId = Number(searchParams.get('id') ?? '0');
+  // Jeton d'accès remis à la soumission — requis par l'API pour lire la
+  // demande et y joindre la preuve de paiement.
+  const token = searchParams.get('t') ?? '';
 
   const [loading, setLoading] = useState(true);
   const [info, setInfo] = useState<{ prenom?: string; nom?: string; type?: string; montant?: number; status?: string } | null>(null);
   const [numbers, setNumbers] = useState<{ wave?: string | null; om?: string | null }>({});
+  const [invalidLink, setInvalidLink] = useState(false);
 
   useEffect(() => {
-    if (!demandeId) { setLoading(false); return; }
+    if (!demandeId || !token) { setLoading(false); return; }
     Promise.all([
-      paymentApi.checkStatus(demandeId).then((res) => (res as any)?.data),
-      settingsApi.get().then((res) => res.data),
-    ])
-      .then(([status, settings]) => {
-        setInfo(status);
-        setNumbers({ wave: settings.paymentWaveNumber, om: settings.paymentOMNumber });
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [demandeId]);
+      paymentApi.checkStatus(demandeId, token)
+        .then((res) => setInfo((res as any)?.data))
+        .catch(() => setInvalidLink(true)),
+      settingsApi.get()
+        .then((res) => setNumbers({ wave: res.data.paymentWaveNumber, om: res.data.paymentOMNumber }))
+        .catch(() => {}),
+    ]).finally(() => setLoading(false));
+  }, [demandeId, token]);
 
   const handleSubmit = async (data: { reference: string; preuveUrl: string }) => {
     try {
-      await affiliationApi.submitPaymentProof(demandeId, {
+      await affiliationApi.submitPaymentProof(demandeId, token, {
         referenceManuelle: data.reference,
         preuvePaiementUrl: data.preuveUrl,
       });
-      router.push(`/affiliation/paiement-confirme?id=${demandeId}`);
+      router.push(`/affiliation/paiement-confirme?id=${demandeId}&t=${encodeURIComponent(token)}`);
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? "Erreur lors de l'envoi. Réessayez.");
     }
@@ -69,14 +71,17 @@ function PaiementContent() {
   // Déjà traité (preuve déjà confirmée par un admin) — on redirige vers la confirmation.
   useEffect(() => {
     if (!loading && info?.status && info.status !== 'PENDING_PAYMENT') {
-      router.replace(`/affiliation/paiement-confirme?id=${demandeId}`);
+      router.replace(`/affiliation/paiement-confirme?id=${demandeId}&t=${encodeURIComponent(token)}`);
     }
-  }, [loading, info?.status, demandeId, router]);
+  }, [loading, info?.status, demandeId, token, router]);
 
-  if (!demandeId) {
+  if (!demandeId || !token || invalidLink) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Lien de paiement invalide.</p>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <p className="text-center text-muted-foreground">
+          Lien de paiement invalide ou incomplet. Utilisez le lien obtenu à la fin du
+          formulaire d&apos;affiliation, ou contactez l&apos;association.
+        </p>
       </div>
     );
   }
