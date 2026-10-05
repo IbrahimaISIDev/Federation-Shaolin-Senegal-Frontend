@@ -3,9 +3,40 @@ name: Deploy Frontend
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
+  # Vérification avant tout déploiement : un code qui ne compile pas
+  # n'atteint jamais le serveur.
+  check:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_URL: https://api.shaolin-senegal.com/api
+      NEXT_PUBLIC_SITE_URL: https://shaolin-senegal.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - name: Vérification des types
+        run: pnpm exec tsc --noEmit
+      - name: Lint
+        run: pnpm lint
+      - name: Build Next.js
+        run: pnpm build
+
   deploy:
+    needs: check
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
