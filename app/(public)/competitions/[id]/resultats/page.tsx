@@ -1,162 +1,111 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Calendar, MapPin, ArrowLeft, Medal, Users } from 'lucide-react';
+import { Trophy, Calendar, MapPin, ArrowLeft, Users, Clock } from 'lucide-react';
 
-// Mock past competitions data
-const mockPastCompetitions = [
-    {
-        id: '4',
-        title: 'Tournoi Inter-Clubs Saint-Louis',
-        type: 'regional',
-        date: '2024-01-20',
-        location: 'Gymnase Municipal de Saint-Louis',
-        participants: 85,
-        results: [
-            {
-                category: 'Taolu Senior Masculin',
-                podium: [
-                    { rank: 1, name: 'Moussa Ndiaye', club: 'Wushu Academy Thiès' },
-                    { rank: 2, name: 'Amadou Ba', club: 'Temple Shaolin Dakar' },
-                    { rank: 3, name: 'Ibrahima Fall', club: 'Dragon de Feu Saint-Louis' },
-                ],
-            },
-            {
-                category: 'Sanda -70kg',
-                podium: [
-                    { rank: 1, name: 'Ousmane Sow', club: 'Shaolin Ziguinchor' },
-                    { rank: 2, name: 'Modou Diagne', club: 'Temple Shaolin Dakar' },
-                    { rank: 3, name: 'Alioune Badara', club: 'Dragon Rouge Thiès' },
-                ],
-            },
-        ],
-        generalWinner: 'Dragon de Feu Saint-Louis',
-    },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+
+interface Competition {
+    id: number;
+    titre: string;
+    lieu: string | null;
+    dateDebut: string;
+    dateFin: string | null;
+    region: { nom: string; code: string };
+    _count: { inscriptions: number };
+    resultats: unknown[];
+}
+
+async function getCompetition(id: string): Promise<Competition | null> {
+    try {
+        const res = await fetch(`${API_URL}/competitions/${id}`, { next: { revalidate: 60 } });
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json.data ?? null;
+    } catch {
+        return null;
+    }
+}
 
 interface PageProps {
-    params: Promise<{
-        id: string;
-    }>;
+    params: Promise<{ id: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { id } = await params;
-    const comp = mockPastCompetitions.find((c) => c.id === id);
+    const comp = await getCompetition(id);
     return {
-        title: comp ? `Résultats - ${comp.title}` : 'Résultats Compétition',
-        description: comp ? `Consultez les résultats du ${comp.title}.` : 'Résultats de la compétition',
+        title: comp ? `Résultats — ${comp.titre}` : 'Résultats de compétition',
+        description: comp ? `Résultats officiels : ${comp.titre}.` : 'Résultats de compétition',
     };
 }
 
+// Les résultats officiels ne sont pas encore saisissables depuis l'admin :
+// la page affiche la compétition réelle et un état « résultats à venir »,
+// au lieu des anciens podiums fictifs.
 export default async function CompetitionResultsPage({ params }: PageProps) {
     const { id } = await params;
-    const comp = mockPastCompetitions.find((c) => c.id === id);
+    const comp = await getCompetition(id);
+    if (!comp) notFound();
 
-    if (!comp) {
-        // If not found in past, could be upcoming (no results yet)
-        notFound();
-    }
+    const isPast = new Date(comp.dateFin ?? comp.dateDebut) < new Date();
 
     return (
         <main className="min-h-screen bg-background pb-20">
-            {/* Hero Header */}
             <div className="bg-muted/30 border-b">
                 <div className="container mx-auto px-4 py-12">
                     <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2 text-muted-foreground">
-                        <Link href="/competitions">
+                        <Link href={`/competitions/${comp.id}`}>
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            Retour aux compétitions
+                            Retour à la compétition
                         </Link>
                     </Button>
 
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div className="space-y-4">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Badge variant="outline">{isPast ? 'Terminée' : 'À venir'}</Badge>
+                            <Badge variant="secondary">{comp.region.nom}</Badge>
+                        </div>
+                        <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
+                            {comp.titre}
+                        </h1>
+                        <div className="flex flex-wrap gap-4 text-muted-foreground">
                             <div className="flex items-center gap-2">
-                                <Badge variant="outline">Terminé</Badge>
-                                <Badge variant="secondary">{comp.type.toUpperCase()}</Badge>
+                                <Calendar className="w-4 h-4" />
+                                {new Date(comp.dateDebut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </div>
-                            <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
-                                {comp.title}
-                            </h1>
-                            <div className="flex flex-wrap gap-4 text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4" />
-                                    {new Date(comp.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                </div>
+                            {comp.lieu && (
                                 <div className="flex items-center gap-2">
                                     <MapPin className="w-4 h-4" />
-                                    {comp.location}
+                                    {comp.lieu}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Users className="w-4 h-4" />
-                                    {comp.participants} participants
-                                </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4" />
+                                {comp._count.inscriptions} inscrit{comp._count.inscriptions > 1 ? 's' : ''}
                             </div>
                         </div>
-
-                        {comp.generalWinner && (
-                            <div className="bg-accent/10 border border-accent/20 p-4 rounded-2xl flex items-center gap-4">
-                                <Trophy className="w-10 h-10 text-accent" />
-                                <div>
-                                    <p className="text-xs font-semibold text-accent uppercase tracking-wider">Grand Vainqueur</p>
-                                    <p className="font-bold text-lg">{comp.generalWinner}</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Results Content */}
             <div className="container mx-auto px-4 py-12">
-                <h2 className="text-2xl font-bold mb-8">Podiums par catégorie</h2>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {comp.results.map((category, idx) => (
-                        <Card key={idx} className="overflow-hidden border shadow-sm">
-                            <CardHeader className="bg-muted/50 border-b">
-                                <CardTitle className="text-lg">{category.category}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                <div className="divide-y">
-                                    {category.podium.map((rank) => (
-                                        <div key={rank.rank} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${rank.rank === 1 ? 'bg-amber-100 text-amber-700' :
-                                                    rank.rank === 2 ? 'bg-slate-100 text-slate-700' :
-                                                        'bg-orange-100 text-orange-700'
-                                                    }`}>
-                                                    {rank.rank === 1 ? <Medal className="w-4 h-4" /> : rank.rank}
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold text-foreground">{rank.name}</p>
-                                                    <p className="text-sm text-muted-foreground">{rank.club}</p>
-                                                </div>
-                                            </div>
-                                            {rank.rank === 1 && <Badge className="bg-amber-100 text-amber-700 border-amber-200">OR</Badge>}
-                                            {rank.rank === 2 && <Badge className="bg-slate-100 text-slate-700 border-slate-200">ARGENT</Badge>}
-                                            {rank.rank === 3 && <Badge className="bg-orange-100 text-orange-700 border-orange-200">BRONZE</Badge>}
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-
-                <section className="mt-16 bg-muted/30 p-8 rounded-3xl text-center">
-                    <Trophy className="w-12 h-12 text-accent mx-auto mb-4" />
-                    <h3 className="text-xl font-bold mb-2">Félicitations à tous les participants !</h3>
-                    <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-                        L&apos;Association remercie tous les athlètes, entraîneurs et arbitres pour leur contribution
-                        à la réussite de cet événement sportif.
+                <section className="mx-auto max-w-2xl rounded-3xl bg-muted/30 p-10 text-center">
+                    {isPast ? (
+                        <Trophy className="w-12 h-12 text-accent mx-auto mb-4" />
+                    ) : (
+                        <Clock className="w-12 h-12 text-accent mx-auto mb-4" />
+                    )}
+                    <h2 className="text-xl font-bold mb-2">Résultats officiels bientôt disponibles</h2>
+                    <p className="text-muted-foreground">
+                        {isPast
+                            ? "Les résultats de cette compétition n'ont pas encore été publiés par l'association."
+                            : 'Les résultats seront publiés après la compétition.'}
                     </p>
-                    <Button variant="outline" asChild>
-                        <Link href="/galerie">Voir les photos de l&apos;événement</Link>
+                    <Button variant="outline" asChild className="mt-6">
+                        <Link href="/competitions">Voir toutes les compétitions</Link>
                     </Button>
                 </section>
             </div>
