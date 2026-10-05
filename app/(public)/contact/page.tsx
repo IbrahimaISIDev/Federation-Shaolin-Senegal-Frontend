@@ -63,8 +63,8 @@ export default function ContactPage() {
     queryFn: () => settingsApi.get(),
     staleTime: 5 * 60 * 1000,
   });
-  const contactPhone = settingsData?.data.contactPhone || '+221 77 265 74 26';
-  const contactEmail = settingsData?.data.contactEmail || 'contact@shaolin-senegal.sn';
+  const contactPhone = settingsData?.data.contactPhone || CONTACT_INFO.phone;
+  const contactEmail = settingsData?.data.contactEmail || CONTACT_INFO.email;
 
   const {
     register,

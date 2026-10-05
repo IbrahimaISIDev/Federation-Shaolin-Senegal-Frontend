@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
+import { SITE_URL } from '@/lib/constants'
 import { QueryProvider } from '@/lib/providers/query-provider'
 import { AuthInitializer } from '@/components/shared/AuthInitializer'
 import './globals.css'
@@ -21,6 +21,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Base des URL absolues (Open Graph, canonical)
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'ADSS — Disciples Shaolin Si Sénégal',
     template: '%s | ADSS Sénégal',
@@ -69,7 +71,6 @@ export default function RootLayout({
           <AuthInitializer />
           {children}
         </QueryProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )

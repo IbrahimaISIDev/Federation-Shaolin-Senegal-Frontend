@@ -9,7 +9,7 @@ export const SITE_NAME = 'Association Disciples Shaolin Si Sénégal';
 export const SITE_SHORT_NAME = 'ADSS';
 export const SITE_DESCRIPTION =
   "L'Association Disciples Shaolin Si Sénégal (ADSS) — association nationale officielle reconnue par le Ministère de l'Intérieur, dédiée à la promotion et au développement des arts martiaux Shaolin au Sénégal.";
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaolin-senegal.sn';
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shaolin-senegal.com';
 
 // --- API ---
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -127,7 +127,9 @@ export const SOCIAL_LINKS = {
 export const CONTACT_INFO = {
   address: 'Siège ADSS, Dakar, Sénégal',
   phone: '+221 77 265 74 26',
-  email: 'contact@shaolin-senegal.sn',
+  // Repli si les Paramètres (admin) ne sont pas chargés — même adresse que
+  // l'email de contact configuré en base. Le domaine .sn n'appartient pas à l'ADSS.
+  email: 'ousmanengom65@gmail.com',
   hours: 'Lundi - Vendredi: 9h00 - 18h00',
 } as const;
 

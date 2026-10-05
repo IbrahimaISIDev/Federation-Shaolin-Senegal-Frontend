@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
+import { SITE_URL as BASE_URL } from '@/lib/constants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shaolin-senegal.sn';
 
 const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL,                        changeFrequency: 'weekly',  priority: 1.0 },
