@@ -109,7 +109,7 @@ export default function AdminClubsPage() {
                     <ExportButton entity="clubs" getData={getClubsForExport} />
                     <ImportButton
                         label="clubs"
-                        columnsHint="Nom, Région, Ville, Téléphone, Email, Président"
+                        columnsHint="Nom, Région, Ville, Téléphone, Email, Président, Latitude, Longitude (position facultative)"
                         importFn={(file) => clubsApi.import(file)}
                         onImported={invalidate}
                     />

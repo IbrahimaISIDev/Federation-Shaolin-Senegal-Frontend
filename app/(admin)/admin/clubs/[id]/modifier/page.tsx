@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import {
     Select,
@@ -22,6 +22,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { MediaPicker } from '@/components/shared/media-picker';
+import { ClubLocationField, coordinatesRefinement, toApiCoordinates } from '@/components/shared/club-location-field';
 import { clubsApi } from '@/lib/api/clubs';
 import { regionsApi } from '@/lib/api/regions';
 import { toast } from 'sonner';
@@ -35,8 +36,10 @@ const clubSchema = z.object({
     nomMaitre: z.string().optional(),
     description: z.string().optional(),
     logoUrl: z.string().optional().or(z.literal('')),
+    latitude: z.string().optional(),
+    longitude: z.string().optional(),
     isActive: z.boolean(),
-});
+}).refine(coordinatesRefinement.check, coordinatesRefinement.message);
 
 type ClubFormData = z.infer<typeof clubSchema>;
 
@@ -75,6 +78,8 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
                 nomMaitre: club.nomMaitre ?? '',
                 description: club.description ?? '',
                 logoUrl: club.logoUrl ?? '',
+                latitude: club.latitude != null ? String(club.latitude) : '',
+                longitude: club.longitude != null ? String(club.longitude) : '',
                 isActive: club.isActive,
             });
         }
@@ -83,6 +88,8 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
     const regionId = watch('regionId');
     const isActive = watch('isActive');
     const logoUrl = watch('logoUrl');
+    const latitude = watch('latitude');
+    const longitude = watch('longitude');
 
     const updateMutation = useMutation({
         mutationFn: (data: ClubFormData) =>
@@ -95,6 +102,7 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
                 nomMaitre: data.nomMaitre || undefined,
                 description: data.description || undefined,
                 logoUrl: data.logoUrl || undefined,
+                ...toApiCoordinates(data.latitude, data.longitude),
                 isActive: data.isActive,
             } as any),
         onSuccess: () => {
@@ -103,7 +111,10 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
             queryClient.invalidateQueries({ queryKey: ['admin', 'clubs'] });
             router.push(`/admin/clubs/${id}`);
         },
-        onError: () => toast.error('Erreur lors de la mise à jour'),
+        onError: (err: any) => {
+            const details = err?.response?.data?.details;
+            toast.error(details?.[0]?.message ?? err?.response?.data?.error ?? 'Erreur lors de la mise à jour');
+        },
     });
 
     const onSubmit = (data: ClubFormData) => updateMutation.mutate(data);
@@ -182,6 +193,24 @@ export default function EditClubPage({ params: paramsPromise }: { params: Promis
                                 <Textarea id="description" rows={3} {...register('description')} />
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Localisation</CardTitle>
+                        <CardDescription>Position du club sur la carte publique des clubs.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ClubLocationField
+                            latitude={latitude ?? ''}
+                            longitude={longitude ?? ''}
+                            onChange={(la, ln) => {
+                                setValue('latitude', la, { shouldValidate: !!errors.latitude });
+                                setValue('longitude', ln, { shouldValidate: !!errors.latitude });
+                            }}
+                            error={errors.latitude?.message}
+                        />
                     </CardContent>
                 </Card>
 
