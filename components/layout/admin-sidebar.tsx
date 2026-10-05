@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/shared/logo';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 const adminNavItems = [
     { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -40,6 +41,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ open, setOpen }: AdminSidebarProps) {
     const pathname = usePathname();
+    const user = useAuthStore((s) => s.user);
 
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
         <div className="flex h-full flex-col">
@@ -102,7 +104,7 @@ export function AdminSidebar({ open, setOpen }: AdminSidebarProps) {
                                 Administrateur
                             </p>
                             <p className="text-xs text-primary-foreground/60 truncate">
-                                admin@shaolin-senegal.sn
+                                {user?.email}
                             </p>
                         </div>
                     </div>

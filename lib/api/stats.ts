@@ -38,7 +38,20 @@ export interface DashboardStats {
     membresParDiscipline: Array<{ discipline: string; total: number }>;
 }
 
+export interface AdminNotifications {
+    paymentProofs: number;        // preuves de paiement d'affiliation à vérifier
+    affiliationsToReview: number; // affiliations payées à approuver / rejeter
+    renewalsToVerify: number;     // renouvellements de licence à confirmer
+    total: number;
+}
+
 export const statsApi = {
+    /**
+     * GET /api/admin/notifications — éléments en attente d'action
+     */
+    notifications: () =>
+        api.get<{ data: AdminNotifications }>('/admin/notifications'),
+
     /**
      * GET /api/admin/stats
      * Retourne tous les KPIs du tableau de bord admin
