@@ -1,8 +1,8 @@
 // ─── lib/api/index.ts — Barrel export ─────────────────────────────────────────
 // Import everything from one place: import { membersApi, clubsApi, ... } from '@/lib/api'
 
-export { authApi } from './auth';
-export type { AuthUser, LoginPayload, RegisterPayload } from './auth';
+export { authApi, signOut } from './auth';
+export type { AuthUser, LoginPayload } from './auth';
 
 export { clubsApi } from './clubs';
 export type { Club, ClubListParams, PaginatedResponse } from './clubs';

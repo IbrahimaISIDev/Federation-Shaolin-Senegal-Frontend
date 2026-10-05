@@ -1,5 +1,6 @@
 // ─── lib/api/auth.ts ───────────────────────────────────────────────────────────
 import { api } from './client';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 // Correspond exactement à ce que retourne loginService / refreshService backend
 export interface AuthUser {
@@ -16,17 +17,6 @@ export interface LoginPayload {
     password: string;
 }
 
-export interface RegisterPayload {
-    email: string;
-    password: string;
-    prenom: string;
-    nom: string;
-    phone?: string;
-    clubId: number;
-    grade?: string;
-    discipline?: string;
-}
-
 export const authApi = {
     /**
      * POST /api/auth/login
@@ -34,13 +24,6 @@ export const authApi = {
      */
     login: (payload: LoginPayload) =>
         api.post<{ data: { accessToken: string; user: AuthUser } }>('/auth/login', payload),
-
-    /**
-     * POST /api/auth/register
-     * Returns { data: user }
-     */
-    register: (payload: RegisterPayload) =>
-        api.post<{ data: AuthUser }>('/auth/register', payload),
 
     /**
      * POST /api/auth/logout
@@ -73,3 +56,18 @@ export const authApi = {
     resetPassword: (payload: { token: string; password: string }) =>
         api.post<{ message: string }>('/auth/reset-password', payload),
 };
+
+/**
+ * Déconnexion complète : révoque le refresh token côté serveur (cookie
+ * httpOnly), vide l'état local puis recharge la page pour purger tout cache
+ * de données (important sur un poste partagé).
+ */
+export async function signOut(redirectTo = '/') {
+    try {
+        await authApi.logout();
+    } catch {
+        // Session déjà expirée côté serveur : on poursuit la déconnexion locale
+    }
+    useAuthStore.getState().logout();
+    if (typeof window !== 'undefined') window.location.href = redirectTo;
+}

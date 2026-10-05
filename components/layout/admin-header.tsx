@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Bell, ChevronDown, LogOut, Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { signOut } from '@/lib/api/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     DropdownMenu,
@@ -62,11 +63,9 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive" asChild>
-                        <Link href="/">
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Déconnexion
-                        </Link>
+                    <DropdownMenuItem className="text-destructive" onClick={() => signOut()}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Déconnexion
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

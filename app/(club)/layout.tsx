@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/shared/logo';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { signOut } from '@/lib/api/auth';
 
 const navItems = [
   { label: 'Tableau de bord', href: '/club',          icon: LayoutDashboard },
@@ -21,7 +22,7 @@ const navItems = [
 export default function ClubLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router   = useRouter();
-  const { user, isAuthenticated, isLoading, logout } = useAuthStore();
+  const { user, isAuthenticated, isLoading } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function ClubLayout({ children }: { children: React.ReactNode }) 
     if (!isLoading && isAuthenticated && user?.role === 'MEMBRE') router.push('/membre');
   }, [isAuthenticated, isLoading, user, router]);
 
-  const handleLogout = () => { logout(); router.push('/'); };
+  const handleLogout = () => signOut();
 
   if (isLoading) {
     return (

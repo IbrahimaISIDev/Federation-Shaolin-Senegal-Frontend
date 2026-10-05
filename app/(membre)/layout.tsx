@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/shared/logo';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { signOut } from '@/lib/api/auth';
 import { useState } from 'react';
 
 const memberNavItems = [
@@ -56,7 +57,7 @@ export default function MemberLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, logout } = useAuthStore();
+  const { user, isAuthenticated, isLoading } = useAuthStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -65,10 +66,7 @@ export default function MemberLayout({
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
+  const handleLogout = () => signOut();
 
   if (isLoading) {
     return (

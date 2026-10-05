@@ -21,6 +21,7 @@ const topBarSocialIcons = {
   youtube: Youtube,
 } as const;
 import { useAuthStore } from '@/lib/store/auth-store';
+import { signOut } from '@/lib/api/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +33,7 @@ import {
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
 
   const { data: settingsData } = useQuery({
     queryKey: ['settings'],
@@ -182,7 +183,7 @@ export function Header() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => logout()}
+                    onClick={() => signOut()}
                     className="flex items-center gap-2 text-destructive focus:text-destructive"
                   >
                     <LogOut className="h-4 w-4" />
@@ -262,8 +263,8 @@ export function Header() {
                       variant="ghost"
                       className="w-full justify-start text-destructive hover:text-destructive"
                       onClick={() => {
-                        logout();
                         setIsMobileMenuOpen(false);
+                        signOut();
                       }}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
