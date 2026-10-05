@@ -17,6 +17,7 @@ import {
   Loader2,
   MapPin,
   Smartphone,
+  XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,10 +50,22 @@ export default function LicensePage() {
   const member = (data as any)?.data;
   const licenses: any[] = member?.licenses ?? [];
   // La licence en vigueur (ACTIVE/EXPIRED) est distincte d'un éventuel
-  // renouvellement en cours (nouvelle licence PENDING avec un paiement associé).
-  const activeLicense = licenses.find((l) => l.status !== 'PENDING') ?? licenses[0];
+  // renouvellement en cours (nouvelle licence PENDING avec un paiement associé)
+  // et d'une licence déjà renouvelée pour l'année suivante (ACTIVE, pas encore commencée).
+  const now = Date.now();
+  const hasStarted = (l: any) => !l.dateDebut || new Date(l.dateDebut).getTime() <= now;
+  const activeLicense =
+    licenses.find((l) => l.status !== 'PENDING' && hasStarted(l)) ??
+    licenses.find((l) => l.status !== 'PENDING') ??
+    licenses[0];
+  const renewedLicense = licenses.find(
+    (l) => l.status === 'ACTIVE' && activeLicense && l.annee > activeLicense.annee
+  );
   const pendingRenewal = licenses.find((l) => l.status === 'PENDING' && l.payments?.[0]);
-  const renewalPayment = pendingRenewal?.payments?.[0];
+  const lastRenewalPayment = pendingRenewal?.payments?.[0];
+  // Paiement rejeté : on repropose le renouvellement (même licence, nouveau paiement)
+  const renewalRejected = lastRenewalPayment?.status === 'FAILED';
+  const renewalPayment = renewalRejected ? undefined : lastRenewalPayment;
 
   const { data: settingsData } = useQuery({
     queryKey: ['settings'],
@@ -67,7 +80,8 @@ export default function LicensePage() {
       setRenewProvider(provider);
       queryClient.invalidateQueries({ queryKey: ['member', 'profile'] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Erreur lors du renouvellement'),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.error ?? err?.response?.data?.message ?? 'Erreur lors du renouvellement'),
   });
 
   const submitProofMutation = useMutation({
@@ -77,7 +91,8 @@ export default function LicensePage() {
       toast.success('Preuve envoyée — en attente de vérification par l\'association');
       queryClient.invalidateQueries({ queryKey: ['member', 'profile'] });
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Erreur lors de l'envoi de la preuve"),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.error ?? err?.response?.data?.message ?? "Erreur lors de l'envoi de la preuve"),
   });
 
   const statusKey = activeLicense?.status ?? 'PENDING';
@@ -340,7 +355,16 @@ export default function LicensePage() {
           </Card>
 
           {/* Renouvellement */}
-          {(activeLicense?.status === 'ACTIVE' || activeLicense?.status === 'EXPIRED') && (
+          {renewedLicense && !pendingRenewal && (
+            <Card className="border-green-200 bg-green-50 dark:bg-green-900/10">
+              <CardContent className="flex items-center gap-3 p-6 text-sm text-green-800 dark:text-green-400">
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
+                Licence {renewedLicense.annee} déjà renouvelée — elle prendra le relais le 1er janvier {renewedLicense.annee}.
+              </CardContent>
+            </Card>
+          )}
+
+          {(activeLicense?.status === 'ACTIVE' || activeLicense?.status === 'EXPIRED') && !renewedLicense && (
             <Card className="border-accent/50 bg-accent/5">
               <CardContent className="p-6 space-y-4">
                 <div>
@@ -351,6 +375,13 @@ export default function LicensePage() {
                       : <>Votre licence a expiré. Renouvelez-la pour continuer à participer aux activités de l&apos;association.</>}
                   </p>
                 </div>
+
+                {renewalRejected && (
+                  <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+                    <XCircle className="h-5 w-5 shrink-0" />
+                    Votre précédent paiement n&apos;a pas pu être validé par l&apos;association. Vous pouvez relancer le renouvellement ci-dessous ou nous contacter.
+                  </div>
+                )}
 
                 {renewalPayment ? (
                   renewalPayment.transactionRef ? (
