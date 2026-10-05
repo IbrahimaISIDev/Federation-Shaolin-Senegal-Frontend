@@ -180,7 +180,11 @@ export default function EditMemberPage({ params: paramsPromise }: { params: Prom
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Club *</Label>
-                            <Select value={clubId} onValueChange={(v) => setValue('clubId', v, { shouldValidate: true })}>
+                            <Select value={clubId} onValueChange={(v) => {
+                                    // Radix Select renvoie '' quand la valeur arrive avant la liste des options
+                                    // (chargée depuis l'API) : on l'ignore pour ne pas effacer la valeur du formulaire.
+                                    if (v) setValue('clubId', v, { shouldValidate: true });
+                                }}>
                                 <SelectTrigger className={errors.clubId ? 'border-destructive' : ''}>
                                     <SelectValue placeholder="Sélectionner un club" />
                                 </SelectTrigger>

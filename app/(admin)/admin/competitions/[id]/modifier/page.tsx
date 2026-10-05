@@ -181,7 +181,11 @@ export default function EditCompetitionPage({ params: paramsPromise }: { params:
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label>Région *</Label>
-                                        <Select value={regionId} onValueChange={(v) => setValue('regionId', v, { shouldValidate: true })}>
+                                        <Select value={regionId} onValueChange={(v) => {
+                                                // Radix Select renvoie '' quand la valeur arrive avant la liste des options
+                                                // (chargée depuis l'API) : on l'ignore pour ne pas effacer la valeur du formulaire.
+                                                if (v) setValue('regionId', v, { shouldValidate: true });
+                                            }}>
                                             <SelectTrigger className={errors.regionId ? 'border-destructive' : ''}>
                                                 <SelectValue placeholder="Sélectionner" />
                                             </SelectTrigger>
