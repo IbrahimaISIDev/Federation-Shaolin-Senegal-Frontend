@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
-import { NewsletterForm } from '@/components/shared/newsletter-form';
 import { SOCIAL_LINKS, CONTACT_INFO } from '@/lib/constants';
 import { settingsApi } from '@/lib/api/settings';
 
@@ -61,7 +60,8 @@ export function Footer() {
         }}
       />
 
-      {/* Newsletter Band */}
+      {/* Bandeau « Restez informé » — liens réels (pas de newsletter tant
+          qu'aucun envoi n'existe côté serveur) */}
       <div className="relative border-b border-white/10">
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
@@ -70,10 +70,24 @@ export function Footer() {
                 Restez informé des actualités
               </h3>
               <p className="text-sm text-white/60">
-                Compétitions, événements, nouvelles de l&apos;association — directement dans votre boîte mail.
+                Compétitions, événements, nouvelles de l&apos;association.
               </p>
             </div>
-            <NewsletterForm />
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/actualites"
+                className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent/90"
+              >
+                Voir les actualités
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/competitions"
+                className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              >
+                Compétitions
+              </Link>
+            </div>
           </div>
         </div>
       </div>
