@@ -11,6 +11,9 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# URL publique du site (sitemap, liens absolus) — défaut = domaine de production
+ARG NEXT_PUBLIC_SITE_URL=https://shaolin-senegal.com
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 COPY . .
 RUN pnpm build
