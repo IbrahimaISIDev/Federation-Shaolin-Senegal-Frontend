@@ -2,8 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { Search, X, MapPin, Users, Building2, Phone, Mail, ChevronRight, RotateCcw } from 'lucide-react';
-import { SENEGAL_REGIONS, SENEGAL_CENTER, type RegionData } from '@/lib/data/senegal-regions';
+import { SENEGAL_CENTER } from '@/lib/data/senegal-regions';
+import { useClubsMapData, searchMapClubs, type MapClub, type RegionWithStats } from '@/lib/data/clubs-map';
 
 // Mapping GADM NAME_1 → our internal region id
 const GADM_NAME_TO_ID: Record<string, string> = {
@@ -13,7 +15,6 @@ const GADM_NAME_TO_ID: Record<string, string> = {
   'Saint-Louis': 'saint-louis', 'Sédhiou': 'sedhiou', 'Tambacounda': 'tambacounda',
   'Thiès': 'thies', 'Ziguinchor': 'ziguinchor',
 };
-import { MOCK_CLUBS, searchClubs, getClubsByRegion, type Club } from '@/lib/data/mock-clubs';
 import type { Map as LeafletMap } from 'leaflet';
 
 // ─── Dynamic imports (no SSR) ─────────────────────────────────────────────────
@@ -56,7 +57,7 @@ function StatsOverlay({ total }: { total: { clubs: number; members: number } }) 
 
 // ─── Club modal ───────────────────────────────────────────────────────────────
 
-function ClubModal({ club, onClose }: { club: Club; onClose: () => void }) {
+function ClubModal({ club, onClose }: { club: MapClub; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -68,6 +69,7 @@ function ClubModal({ club, onClose }: { club: Club; onClose: () => void }) {
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent" />
           <button
             onClick={onClose}
+            aria-label="Fermer"
             className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
           >
             <X className="h-4 w-4" />
@@ -88,43 +90,45 @@ function ClubModal({ club, onClose }: { club: Club; onClose: () => void }) {
         <div className="space-y-4 p-6">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-muted/50 p-4 text-center">
-              <div className="text-2xl font-bold text-primary">{club.students}</div>
-              <div className="text-xs text-muted-foreground">élèves</div>
+              <div className="text-2xl font-bold text-primary">{club.members}</div>
+              <div className="text-xs text-muted-foreground">membre{club.members > 1 ? 's' : ''} inscrit{club.members > 1 ? 's' : ''}</div>
             </div>
             <div className="rounded-xl bg-accent/8 p-4 text-center">
-              <div className="truncate text-sm font-semibold text-foreground">{club.master}</div>
+              <div className="truncate text-sm font-semibold text-foreground">{club.master ?? '—'}</div>
               <div className="text-xs text-muted-foreground">Maître</div>
             </div>
           </div>
 
-          <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Disciplines</div>
-            <div className="flex flex-wrap gap-1.5">
-              {club.disciplines.map((d) => (
-                <span key={d} className="rounded-full border border-accent/25 bg-accent/8 px-3 py-0.5 text-xs font-medium text-accent">{d}</span>
-              ))}
+          {(club.city || club.phone || club.email) && (
+            <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-4">
+              {club.city && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-foreground">{club.city}</span>
+                </div>
+              )}
+              {club.phone && (
+                <a href={`tel:${club.phone}`} className="flex items-center gap-2 text-sm transition-colors hover:text-accent">
+                  <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span>{club.phone}</span>
+                </a>
+              )}
+              {club.email && (
+                <a href={`mailto:${club.email}`} className="flex items-center gap-2 text-sm transition-colors hover:text-accent">
+                  <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{club.email}</span>
+                </a>
+              )}
             </div>
-          </div>
+          )}
 
-          <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-4">
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-foreground">{club.address}</span>
-            </div>
-            <a href={`tel:${club.phone}`} className="flex items-center gap-2 text-sm transition-colors hover:text-accent">
-              <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span>{club.phone}</span>
-            </a>
-            <a href={`mailto:${club.email}`} className="flex items-center gap-2 text-sm transition-colors hover:text-accent">
-              <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="truncate">{club.email}</span>
-            </a>
-          </div>
-
-          <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-            Voir les membres
+          <Link
+            href={`/clubs/${club.id}`}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Voir la fiche du club
             <ChevronRight className="h-4 w-4" />
-          </button>
+          </Link>
         </div>
       </div>
     </div>
@@ -136,16 +140,12 @@ function ClubModal({ club, onClose }: { club: Club; onClose: () => void }) {
 function RegionPanel({
   region,
   clubs,
-  filterType,
-  onFilterType,
   onClubClick,
   onClose,
 }: {
-  region: RegionData | null;
-  clubs: Club[];
-  filterType: 'clubs' | 'membres' | 'tous';
-  onFilterType: (t: 'clubs' | 'membres' | 'tous') => void;
-  onClubClick: (c: Club) => void;
+  region: RegionWithStats | null;
+  clubs: MapClub[];
+  onClubClick: (c: MapClub) => void;
   onClose: () => void;
 }) {
   if (!region) {
@@ -182,18 +182,6 @@ function RegionPanel({
         </div>
       </div>
 
-      <div className="flex shrink-0 gap-1.5 border-b border-border/60 px-4 py-3">
-        {(['tous', 'clubs', 'membres'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => onFilterType(t)}
-            className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition-all ${filterType === t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {clubs.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Aucun club dans cette région.</p>
@@ -207,18 +195,14 @@ function RegionPanel({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary">{club.name}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">Maître {club.master}</p>
+                  {club.master && <p className="mt-0.5 text-xs text-muted-foreground">Maître {club.master}</p>}
+                  {club.city && <p className="mt-0.5 text-xs text-muted-foreground">{club.city}</p>}
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
               </div>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {club.disciplines.map((d) => (
-                  <span key={d} className="rounded-full bg-accent/8 px-2 py-0.5 text-[10px] font-medium text-accent">{d}</span>
-                ))}
-              </div>
               <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                 <Users className="h-3 w-3" />
-                <span>{club.students} élèves</span>
+                <span>{club.members} membre{club.members > 1 ? 's' : ''}</span>
               </div>
             </button>
           ))
@@ -230,9 +214,9 @@ function RegionPanel({
 
 // ─── Search bar ───────────────────────────────────────────────────────────────
 
-function SearchBar({ onResult }: { onResult: (club: Club) => void }) {
+function SearchBar({ clubs, onResult }: { clubs: MapClub[]; onResult: (club: MapClub) => void }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Club[]>([]);
+  const [results, setResults] = useState<MapClub[]>([]);
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -241,13 +225,13 @@ function SearchBar({ onResult }: { onResult: (club: Club) => void }) {
     if (timer.current) clearTimeout(timer.current);
     if (v.length < 2) { setResults([]); setOpen(false); return; }
     timer.current = setTimeout(() => {
-      const r = searchClubs(v);
+      const r = searchMapClubs(clubs, v);
       setResults(r.slice(0, 6));
       setOpen(r.length > 0);
     }, 300);
   };
 
-  const pick = (club: Club) => {
+  const pick = (club: MapClub) => {
     setQuery(club.name);
     setOpen(false);
     onResult(club);
@@ -296,6 +280,7 @@ function MapInner({
   hoveredRegion,
   selectedRegion,
   visibleClubs,
+  regions,
   geoJson,
   onRegionHover,
   onRegionClick,
@@ -303,12 +288,13 @@ function MapInner({
   mapRef,
 }: {
   hoveredRegion: string | null;
-  selectedRegion: RegionData | null;
-  visibleClubs: Club[];
+  selectedRegion: RegionWithStats | null;
+  visibleClubs: MapClub[];
+  regions: RegionWithStats[];
   geoJson: GeoJSON.FeatureCollection | null;
   onRegionHover: (id: string | null) => void;
   onRegionClick: (id: string) => void;
-  onClubClick: (c: Club) => void;
+  onClubClick: (c: MapClub) => void;
   mapRef: React.MutableRefObject<LeafletMap | null>;
 }) {
   const { useMap } = require('react-leaflet') as typeof import('react-leaflet');
@@ -356,7 +342,7 @@ function MapInner({
 
   const onEachFeature = useCallback((feature: GeoJSON.Feature, layer: import('leaflet').Layer) => {
     const id = resolveId(feature);
-    const region = SENEGAL_REGIONS.find((r) => r.id === id);
+    const region = regions.find((r) => r.id === id);
     if (!region) return;
 
     (layer as import('leaflet').Path).bindTooltip(
@@ -369,7 +355,7 @@ function MapInner({
       mouseout:  () => onRegionHover(null),
       click:     () => onRegionClick(id),
     });
-  }, [onRegionHover, onRegionClick]);
+  }, [regions, onRegionHover, onRegionClick]);
 
   return (
     <>
@@ -379,22 +365,22 @@ function MapInner({
       />
       {geoJson && (
         <GeoJSONLayer
-          key={`${hoveredRegion ?? ''}-${selectedRegion?.id ?? ''}`}
+          key={`${hoveredRegion ?? ''}-${selectedRegion?.id ?? ''}-${regions.reduce((n, r) => n + r.clubCount, 0)}`}
           data={geoJson}
           style={(f) => styleFeature(f)}
           onEachFeature={onEachFeature}
         />
       )}
-      {clubIcon && visibleClubs.map((club) => (
+      {clubIcon && visibleClubs.filter((c) => c.coordinates).map((club) => (
         <Marker
           key={club.id}
-          position={club.coordinates}
+          position={club.coordinates!}
           icon={clubIcon}
           eventHandlers={{ click: () => onClubClick(club) }}
         >
           <Tooltip direction="top" offset={[0, -28]} opacity={0.95}>
             <div style={{ fontWeight: 600, fontSize: 12 }}>{club.name}</div>
-            <div style={{ fontSize: 11, color: '#888' }}>{club.students} élèves</div>
+            <div style={{ fontSize: 11, color: '#888' }}>{club.members} membre{club.members > 1 ? 's' : ''}</div>
           </Tooltip>
         </Marker>
       ))}
@@ -410,10 +396,10 @@ interface SenegalMapProps {
 }
 
 export function SenegalMap({ className }: SenegalMapProps) {
-  const [selectedRegion, setSelectedRegion] = useState<RegionData | null>(null);
+  const { clubs, regions, totals } = useClubsMapData();
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [hoveredRegion, setHoveredRegion]   = useState<string | null>(null);
-  const [selectedClub, setSelectedClub]     = useState<Club | null>(null);
-  const [filterType, setFilterType]         = useState<'clubs' | 'membres' | 'tous'>('tous');
+  const [selectedClub, setSelectedClub]     = useState<MapClub | null>(null);
   const [isMounted, setIsMounted]           = useState(false);
   const [geoJson, setGeoJson]               = useState<GeoJSON.FeatureCollection | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -425,44 +411,44 @@ export function SenegalMap({ className }: SenegalMapProps) {
       .then((data) => setGeoJson(data as GeoJSON.FeatureCollection));
   }, []);
 
-  const totals = useMemo(() => ({
-    clubs:   MOCK_CLUBS.length,
-    members: SENEGAL_REGIONS.reduce((a, r) => a + r.memberCount, 0),
-  }), []);
+  const selectedRegion = useMemo(
+    () => regions.find((r) => r.id === selectedRegionId) ?? null,
+    [regions, selectedRegionId]
+  );
 
+  // Vue nationale : tous les clubs ; région sélectionnée : ses clubs uniquement
   const visibleClubs = useMemo(
-    () => selectedRegion ? getClubsByRegion(selectedRegion.id) : [],
-    [selectedRegion]
+    () => selectedRegionId ? clubs.filter((c) => c.regionId === selectedRegionId) : clubs,
+    [clubs, selectedRegionId]
   );
 
   const handleRegionClick = useCallback((id: string) => {
-    const region = SENEGAL_REGIONS.find((r) => r.id === id);
+    const region = regions.find((r) => r.id === id);
     if (!region) return;
-    const deselect = selectedRegion?.id === id;
-    setSelectedRegion(deselect ? null : region);
+    const deselect = selectedRegionId === id;
+    setSelectedRegionId(deselect ? null : id);
     if (!deselect) {
       import('leaflet').then((L) => {
-        const clubs = getClubsByRegion(id);
-        if (clubs.length > 0) {
-          const bounds = L.latLngBounds(clubs.map((c) => c.coordinates));
-          mapRef.current?.fitBounds(bounds.pad(0.35), { animate: true, duration: 0.8 });
+        const points = clubs
+          .filter((c) => c.regionId === id && c.coordinates)
+          .map((c) => c.coordinates!);
+        if (points.length > 0) {
+          mapRef.current?.fitBounds(L.latLngBounds(points).pad(0.35), { animate: true, duration: 0.8 });
         } else {
           mapRef.current?.setView(region.coordinates, 9, { animate: true, duration: 0.8 });
         }
       });
     }
-  }, [selectedRegion]);
+  }, [regions, clubs, selectedRegionId]);
 
-  const handleSearchResult = useCallback((club: Club) => {
-    const region = SENEGAL_REGIONS.find((r) => r.id === club.region);
-    if (region) setSelectedRegion(region);
+  const handleSearchResult = useCallback((club: MapClub) => {
+    if (club.regionId) setSelectedRegionId(club.regionId);
     setSelectedClub(club);
-    mapRef.current?.setView(club.coordinates, 11, { animate: true, duration: 0.8 });
+    if (club.coordinates) mapRef.current?.setView(club.coordinates, 11, { animate: true, duration: 0.8 });
   }, []);
 
   const resetFilters = () => {
-    setSelectedRegion(null);
-    setFilterType('tous');
+    setSelectedRegionId(null);
     mapRef.current?.setView(SENEGAL_CENTER, 7, { animate: true, duration: 0.8 });
   };
 
@@ -492,7 +478,7 @@ export function SenegalMap({ className }: SenegalMapProps) {
         <div className="relative min-h-0">
           {/* Search bar */}
           <div className="absolute left-1/2 top-3 z-[1000] w-full max-w-sm -translate-x-1/2 px-3">
-            <SearchBar onResult={handleSearchResult} />
+            <SearchBar clubs={clubs} onResult={handleSearchResult} />
           </div>
 
           {/* Stats */}
@@ -522,6 +508,7 @@ export function SenegalMap({ className }: SenegalMapProps) {
                 hoveredRegion={hoveredRegion}
                 selectedRegion={selectedRegion}
                 visibleClubs={visibleClubs}
+                regions={regions}
                 geoJson={geoJson}
                 onRegionHover={setHoveredRegion}
                 onRegionClick={handleRegionClick}
@@ -538,11 +525,9 @@ export function SenegalMap({ className }: SenegalMapProps) {
         <div className="hidden overflow-hidden border-l border-border/60 lg:flex lg:flex-col">
           <RegionPanel
             region={selectedRegion}
-            clubs={visibleClubs}
-            filterType={filterType}
-            onFilterType={setFilterType}
+            clubs={selectedRegion ? visibleClubs : []}
             onClubClick={setSelectedClub}
-            onClose={() => setSelectedRegion(null)}
+            onClose={() => setSelectedRegionId(null)}
           />
         </div>
       </div>

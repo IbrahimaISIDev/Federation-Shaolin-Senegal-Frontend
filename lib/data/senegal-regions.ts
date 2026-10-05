@@ -5,26 +5,24 @@ export interface RegionData {
   id: string;
   name: string;
   code: string;
-  clubCount: number;
-  memberCount: number;
   coordinates: [number, number]; // [lat, lng] center point
 }
 
 export const SENEGAL_REGIONS: RegionData[] = [
-  { id: 'dakar', name: 'Dakar', code: 'DK', clubCount: 45, memberCount: 1250, coordinates: [14.7167, -17.4677] },
-  { id: 'thies', name: 'Thiès', code: 'TH', clubCount: 18, memberCount: 420, coordinates: [14.7910, -16.9359] },
-  { id: 'diourbel', name: 'Diourbel', code: 'DL', clubCount: 8, memberCount: 180, coordinates: [14.6553, -16.2314] },
-  { id: 'fatick', name: 'Fatick', code: 'FK', clubCount: 6, memberCount: 140, coordinates: [14.3390, -16.4111] },
-  { id: 'kaolack', name: 'Kaolack', code: 'KL', clubCount: 12, memberCount: 280, coordinates: [14.1652, -16.0726] },
-  { id: 'kaffrine', name: 'Kaffrine', code: 'KF', clubCount: 4, memberCount: 90, coordinates: [14.1059, -15.5508] },
-  { id: 'kolda', name: 'Kolda', code: 'KD', clubCount: 5, memberCount: 110, coordinates: [12.8983, -14.9508] },
-  { id: 'kedougou', name: 'Kédougou', code: 'KG', clubCount: 3, memberCount: 65, coordinates: [12.5605, -12.1747] },
-  { id: 'louga', name: 'Louga', code: 'LG', clubCount: 7, memberCount: 160, coordinates: [15.6144, -16.2281] },
-  { id: 'matam', name: 'Matam', code: 'MT', clubCount: 4, memberCount: 85, coordinates: [15.6559, -13.2555] },
-  { id: 'saint-louis', name: 'Saint-Louis', code: 'SL', clubCount: 10, memberCount: 230, coordinates: [16.0326, -16.4818] },
-  { id: 'sedhiou', name: 'Sédhiou', code: 'SD', clubCount: 3, memberCount: 70, coordinates: [12.7081, -15.5569] },
-  { id: 'tambacounda', name: 'Tambacounda', code: 'TC', clubCount: 6, memberCount: 130, coordinates: [13.7707, -13.6673] },
-  { id: 'ziguinchor', name: 'Ziguinchor', code: 'ZG', clubCount: 9, memberCount: 200, coordinates: [12.5681, -16.2719] },
+  { id: 'dakar', name: 'Dakar', code: 'DK', coordinates: [14.7167, -17.4677] },
+  { id: 'thies', name: 'Thiès', code: 'TH', coordinates: [14.7910, -16.9359] },
+  { id: 'diourbel', name: 'Diourbel', code: 'DL', coordinates: [14.6553, -16.2314] },
+  { id: 'fatick', name: 'Fatick', code: 'FK', coordinates: [14.3390, -16.4111] },
+  { id: 'kaolack', name: 'Kaolack', code: 'KL', coordinates: [14.1652, -16.0726] },
+  { id: 'kaffrine', name: 'Kaffrine', code: 'KF', coordinates: [14.1059, -15.5508] },
+  { id: 'kolda', name: 'Kolda', code: 'KD', coordinates: [12.8983, -14.9508] },
+  { id: 'kedougou', name: 'Kédougou', code: 'KG', coordinates: [12.5605, -12.1747] },
+  { id: 'louga', name: 'Louga', code: 'LG', coordinates: [15.6144, -16.2281] },
+  { id: 'matam', name: 'Matam', code: 'MT', coordinates: [15.6559, -13.2555] },
+  { id: 'saint-louis', name: 'Saint-Louis', code: 'SL', coordinates: [16.0326, -16.4818] },
+  { id: 'sedhiou', name: 'Sédhiou', code: 'SD', coordinates: [12.7081, -15.5569] },
+  { id: 'tambacounda', name: 'Tambacounda', code: 'TC', coordinates: [13.7707, -13.6673] },
+  { id: 'ziguinchor', name: 'Ziguinchor', code: 'ZG', coordinates: [12.5681, -16.2719] },
 ];
 
 // Simplified GeoJSON boundaries for Senegal regions

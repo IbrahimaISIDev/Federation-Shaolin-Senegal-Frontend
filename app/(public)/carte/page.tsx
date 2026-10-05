@@ -6,6 +6,7 @@ export const metadata: Metadata = {
 };
 
 import SenegalMap from '@/components/map/senegal-map';
+import { RegionsGrid } from '@/components/map/regions-grid';
 
 export default function CartePage() {
   return (
@@ -40,56 +41,5 @@ export default function CartePage() {
         </div>
       </section>
     </main>
-  );
-}
-
-import { SENEGAL_REGIONS } from '@/lib/data/senegal-regions';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Building2, Users } from 'lucide-react';
-
-function RegionsGrid() {
-  // Sort regions by member count (descending)
-  const sortedRegions = [...SENEGAL_REGIONS].sort((a, b) => b.memberCount - a.memberCount);
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {sortedRegions.map((region, index) => (
-        <Card
-          key={region.id}
-          className="group relative overflow-hidden transition-all hover:shadow-lg hover:border-accent/30"
-        >
-          {index < 3 && (
-            <div className="absolute right-3 top-3">
-              <Badge variant="default" className="bg-accent text-accent-foreground">
-                Top {index + 1}
-              </Badge>
-            </div>
-          )}
-          <CardContent className="p-5">
-            <div className="mb-3 flex items-center gap-2">
-              <Badge variant="outline" className="font-mono text-xs">
-                {region.code}
-              </Badge>
-              <h3 className="font-semibold">{region.name}</h3>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Building2 className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">
-                  <strong className="text-foreground">{region.clubCount}</strong> clubs
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-accent" />
-                <span className="text-muted-foreground">
-                  <strong className="text-foreground">{region.memberCount}</strong> membres
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
   );
 }
