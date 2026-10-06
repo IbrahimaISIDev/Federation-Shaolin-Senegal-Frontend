@@ -33,7 +33,7 @@ export default function AdminRenouvellementsPage() {
     });
 
     const rejectMutation = useMutation({
-        mutationFn: (paymentId: number) => renewalsApi.reject(paymentId),
+        mutationFn: ({ paymentId, motif }: { paymentId: number; motif?: string }) => renewalsApi.reject(paymentId, motif),
         onSuccess: () => {
             toast.success('Renouvellement rejeté');
             queryClient.invalidateQueries({ queryKey: ['admin-renewals'] });
@@ -120,7 +120,12 @@ export default function AdminRenouvellementsPage() {
                                                         variant="outline"
                                                         className="border-rose-200 text-rose-600 hover:bg-rose-50"
                                                         disabled={rejectMutation.isPending}
-                                                        onClick={() => { if (confirm('Rejeter ce paiement de renouvellement ?')) rejectMutation.mutate(r.id); }}
+                                                        onClick={() => {
+                                                            // Motif facultatif, transmis au membre par email
+                                                            const motif = window.prompt('Rejeter ce paiement ?\nMotif (facultatif, envoyé au membre) :');
+                                                            if (motif === null) return; // annulé
+                                                            rejectMutation.mutate({ paymentId: r.id, motif: motif.trim() || undefined });
+                                                        }}
                                                     >
                                                         <XCircle className="w-3.5 h-3.5" />
                                                     </Button>

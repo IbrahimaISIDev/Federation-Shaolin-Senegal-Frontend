@@ -38,6 +38,6 @@ export const renewalsApi = {
     /**
      * PATCH /api/admin/renewals/:paymentId/reject
      */
-    reject: (paymentId: number) =>
-        api.patch<{ data: any; message: string }>(`/admin/renewals/${paymentId}/reject`),
+    reject: (paymentId: number, motif?: string) =>
+        api.patch<{ data: any; message: string }>(`/admin/renewals/${paymentId}/reject`, { motif }),
 };

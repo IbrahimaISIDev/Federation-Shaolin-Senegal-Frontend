@@ -183,10 +183,10 @@ export default function AdminParametresPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {[
-                        { key: 'notifyNewMember' as const, value: notifyNewMember, label: 'Nouveau membre inscrit', desc: 'Recevoir un email pour chaque nouvel adhérent.' },
-                        { key: 'notifyNewAffiliation' as const, value: notifyNewAffiliation, label: 'Nouvelle demande d\'affiliation', desc: 'Notification lors d\'un dépôt de dossier.' },
-                        { key: 'notifyCompetitions' as const, value: notifyCompetitions, label: 'Inscriptions compétitions', desc: 'Alerte lors d\'une inscription à une compétition.' },
-                        { key: 'notifyNewsletter' as const, value: notifyNewsletter, label: 'Rapport hebdomadaire', desc: 'Résumé d\'activité chaque semaine.' },
+                        { key: 'notifyNewMember' as const, value: notifyNewMember, label: 'Renouvellements de licence', desc: 'Email quand un membre envoie une preuve de paiement de renouvellement.' },
+                        { key: 'notifyNewAffiliation' as const, value: notifyNewAffiliation, label: 'Nouvelle demande d\'affiliation', desc: 'Email quand un candidat envoie sa preuve de paiement (dossier à vérifier).' },
+                        { key: 'notifyCompetitions' as const, value: notifyCompetitions, label: 'Inscriptions compétitions', desc: 'Email à chaque inscription d\'un membre à une compétition.' },
+                        { key: 'notifyNewsletter' as const, value: notifyNewsletter, label: 'Rapport hebdomadaire', desc: 'Résumé d\'activité chaque lundi à 8 h (demandes, renouvellements, éléments en attente).' },
                     ].map((item, idx, arr) => (
                         <div key={item.key}>
                             <div className="flex items-center justify-between">
