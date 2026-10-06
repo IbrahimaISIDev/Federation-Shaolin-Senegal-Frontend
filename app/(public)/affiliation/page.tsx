@@ -6,7 +6,7 @@ import { MaitreAffiliationForm } from '@/components/affiliation/MaitreAffiliatio
 import { MembreAffiliationForm } from '@/components/affiliation/MembreAffiliationForm';
 
 export const metadata: Metadata = {
-  title: 'Affiliation — ADSS Sénégal',
+  title: 'Affiliation',
   description: 'Affiliez votre club ou rejoignez l\'ADSS en tant que Maître ou Membre/Disciple.',
 };
 

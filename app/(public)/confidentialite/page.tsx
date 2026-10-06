@@ -1,6 +1,6 @@
 import { CONTACT_INFO } from '@/lib/constants';
 
-export const metadata = { title: 'Politique de confidentialité — ADSS Sénégal' };
+export const metadata = { title: 'Politique de confidentialité' };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (

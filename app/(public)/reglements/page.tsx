@@ -1,6 +1,6 @@
 import { ComingSoonPage } from '@/components/shared/coming-soon-page';
 
-export const metadata = { title: 'Règlements — ADSS Sénégal' };
+export const metadata = { title: 'Règlements' };
 
 export default function ReglementsPage() {
     return (

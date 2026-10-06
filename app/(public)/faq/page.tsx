@@ -1,6 +1,6 @@
 import { ComingSoonPage } from '@/components/shared/coming-soon-page';
 
-export const metadata = { title: 'FAQ — ADSS Sénégal' };
+export const metadata = { title: 'FAQ' };
 
 export default function FaqPage() {
     return (

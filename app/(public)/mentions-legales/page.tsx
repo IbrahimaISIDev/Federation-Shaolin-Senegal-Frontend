@@ -1,6 +1,6 @@
 import { CONTACT_INFO } from '@/lib/constants';
 
-export const metadata = { title: 'Mentions légales — ADSS Sénégal' };
+export const metadata = { title: 'Mentions légales' };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
