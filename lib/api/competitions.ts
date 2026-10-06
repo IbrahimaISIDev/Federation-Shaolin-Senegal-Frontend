@@ -39,6 +39,37 @@ export interface CreateCompetitionPayload {
     isPublished?: boolean;
 }
 
+// ── Résultats ─────────────────────────────────────────────────────────────────
+
+export type Medaille = 'OR' | 'ARGENT' | 'BRONZE' | null;
+
+export interface ResultsAdminData {
+    id: number;
+    titre: string;
+    dateDebut: string;
+    categories: string[] | null;
+    resultatsPublies: boolean;
+    inscriptions: Array<{
+        categorie: string | null;
+        member: { id: number; prenom: string; nom: string; club: { nom: string } };
+    }>;
+    resultats: Array<{
+        id: number;
+        memberId: number;
+        categorie: string;
+        classement: number;
+        points: number | null;
+        medaille: Medaille;
+    }>;
+}
+
+export interface ResultRowPayload {
+    memberId: number;
+    categorie?: string;
+    classement: number;
+    points?: number | null;
+}
+
 export const competitionsApi = {
     // ── Public ──────────────────────────────────────────────────────────────────
     /**
@@ -89,4 +120,18 @@ export const competitionsApi = {
      */
     delete: (id: number) =>
         api.delete<{ message: string }>(`/admin/competitions/${id}`),
+
+    /** GET /api/admin/competitions/:id/resultats — inscrits + résultats saisis */
+    adminResults: (id: number) =>
+        api.get<{ data: ResultsAdminData }>(`/admin/competitions/${id}/resultats`),
+
+    /** PUT /api/admin/competitions/:id/resultats — remplace le classement complet */
+    saveResults: (id: number, resultats: ResultRowPayload[]) =>
+        api.put<{ data: ResultsAdminData; message: string }>(`/admin/competitions/${id}/resultats`, { resultats }),
+
+    /** PATCH /api/admin/competitions/:id/resultats/publication */
+    publishResults: (id: number, publie: boolean) =>
+        api.patch<{ data: { id: number; resultatsPublies: boolean }; message: string }>(
+            `/admin/competitions/${id}/resultats/publication`, { publie }
+        ),
 };

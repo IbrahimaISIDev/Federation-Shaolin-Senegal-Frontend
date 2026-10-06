@@ -159,21 +159,24 @@ export default function CompetitionDetailPage({ params }: { params: Promise<{ id
                         </CardContent>
                     </Card>
 
-                    {competition.resultats && competition.resultats.length > 0 && (
-                        <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-2"><Medal className="w-5 h-5" /> Résultats</CardTitle></CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    {competition.resultats.map((r: any) => (
-                                        <div key={r.id} className="flex items-center justify-between p-2 rounded-lg border text-sm">
-                                            <span>{r.classement ? `#${r.classement}` : '—'} {r.categorie ?? ''}</span>
-                                            {r.medaille && <Badge className="bg-accent">{r.medaille}</Badge>}
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Medal className="w-5 h-5" /> Résultats</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm text-muted-foreground">
+                                {competition.resultats?.length
+                                    ? `${competition.resultats.length} classement${competition.resultats.length > 1 ? 's' : ''} saisi${competition.resultats.length > 1 ? 's' : ''} — ${(competition as any).resultatsPublies ? 'publiés sur le site' : 'non publiés'}.`
+                                    : 'Aucun résultat saisi.'}
+                            </p>
+                            <Button asChild variant="outline" className="gap-2">
+                                <Link href={`/admin/competitions/${competitionId}/resultats`}>
+                                    <Trophy className="w-4 h-4" />
+                                    {competition.resultats?.length ? 'Gérer les résultats' : 'Saisir les résultats'}
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <div className="space-y-6">
