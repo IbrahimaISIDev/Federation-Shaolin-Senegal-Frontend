@@ -77,6 +77,36 @@ export interface UpdateMemberPayload {
     bio?: string;
 }
 
+export interface MemberJourney {
+    id: number;
+    prenom: string;
+    nom: string;
+    grade: string | null;
+    discipline: string | null;
+    photoUrl: string | null;
+    createdAt: string;
+    club: { id: number; nom: string; region: { nom: string } };
+    gradeHistory: { id: number; ancienGrade: string | null; nouveauGrade: string; notes: string | null; createdAt: string }[];
+    licenses: { id: number; annee: number; status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'SUSPENDED'; dateDebut: string | null; dateFin: string | null }[];
+    competitions: {
+        id: number;
+        categorie: string | null;
+        aVenir: boolean;
+        competition: {
+            id: number; titre: string; lieu: string | null; dateDebut: string; dateFin: string | null;
+            resultatsPublies: boolean; region: { nom: string };
+        };
+        resultats: { categorie: string; classement: number; medaille: 'OR' | 'ARGENT' | 'BRONZE' | null; points: number | null }[];
+    }[];
+    bilan: {
+        competitionsDisputees: number;
+        competitionsAVenir: number;
+        medailles: { or: number; argent: number; bronze: number };
+        saisonsLicenciees: number;
+        passagesDeGrade: number;
+    };
+}
+
 export const membersApi = {
     // ── Membre connecté ──────────────────────────────────────────────────────────
     /**
@@ -116,6 +146,9 @@ export const membersApi = {
      * GET /api/members/me/inscriptions
      */
     myInscriptions: () => api.get<{ data: any[] }>('/members/me/inscriptions'),
+
+    /** GET /api/members/me/parcours — grades, licences, compétitions, résultats */
+    journey: () => api.get<{ data: MemberJourney }>('/members/me/parcours'),
 
     // ── Admin ────────────────────────────────────────────────────────────────────
     /**

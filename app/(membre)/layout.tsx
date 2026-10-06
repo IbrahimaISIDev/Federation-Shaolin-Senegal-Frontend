@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Route,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,8 @@ import { Logo } from '@/components/shared/logo';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { signOut } from '@/lib/api/auth';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { membersApi } from '@/lib/api/members';
 
 const memberNavItems = [
   {
@@ -37,6 +40,11 @@ const memberNavItems = [
     label: 'Mon Profil',
     href: '/membre/profil',
     icon: User,
+  },
+  {
+    label: 'Mon parcours',
+    href: '/membre/parcours',
+    icon: Route,
   },
   {
     label: 'Compétitions',
@@ -59,6 +67,26 @@ export default function MemberLayout({
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Statut réel de la licence en vigueur (même requête que la page « Ma licence »)
+  const { data: profile } = useQuery({
+    queryKey: ['member', 'profile'],
+    queryFn: () => membersApi.me(),
+    enabled: isAuthenticated,
+  });
+  const licenses: { annee: number; status: string; dateDebut?: string | null }[] = (profile as any)?.data?.licenses ?? [];
+  const current =
+    licenses.find((l) => l.status === 'ACTIVE' && (!l.dateDebut || new Date(l.dateDebut) <= new Date())) ??
+    licenses.find((l) => l.status !== 'PENDING') ??
+    licenses[0];
+  const licenseLabel = !profile
+    ? ''
+    : !current
+      ? 'Aucune licence'
+      : current.status === 'ACTIVE' ? `Licence ${current.annee} active`
+      : current.status === 'EXPIRED' ? `Licence ${current.annee} expirée`
+      : current.status === 'SUSPENDED' ? 'Licence suspendue'
+      : 'Licence en attente';
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -119,7 +147,7 @@ export default function MemberLayout({
                 {user?.firstName} {user?.lastName}
               </div>
               <div className="truncate text-xs text-muted-foreground">
-                {user?.licenseNumber || 'Licence en attente'}
+                {licenseLabel}
               </div>
             </div>
           </div>
