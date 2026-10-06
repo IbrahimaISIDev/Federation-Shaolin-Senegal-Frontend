@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ShareButtons } from '@/components/shared/share-buttons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Calendar, MapPin, ArrowLeft, Users, Clock, Medal } from 'lucide-react';
 
@@ -151,6 +152,11 @@ export default async function CompetitionResultsPage({ params }: PageProps) {
                                 </Card>
                             ))}
                         </div>
+                        <ShareButtons
+                            path={`/competitions/${comp.id}/resultats`}
+                            title={`Résultats — ${comp.titre}`}
+                            className="mt-10 border-t pt-6"
+                        />
                     </>
                 ) : (
                     <section className="mx-auto max-w-2xl rounded-3xl bg-muted/30 p-10 text-center">

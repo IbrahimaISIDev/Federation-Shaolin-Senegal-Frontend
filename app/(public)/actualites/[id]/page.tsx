@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, ArrowLeft, User, Share2 } from 'lucide-react';
+import { ShareButtons } from '@/components/shared/share-buttons';
+import { Calendar, ArrowLeft, User } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
@@ -53,9 +54,28 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { id } = await params;
     const article = await getArticle(id);
+    if (!article) return { title: 'Actualité' };
+    const description = article.contenu.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+    // Aperçu au partage (WhatsApp, Facebook…) : image de l'article si elle existe,
+    // sinon l'image générique du site
     return {
-        title: article ? article.titre : 'Actualité',
-        description: article ? article.contenu.replace(/<[^>]*>/g, '').slice(0, 160) : '',
+        title: article.titre,
+        description,
+        openGraph: {
+            siteName: 'ADSS — Disciples Shaolin Si Sénégal',
+            locale: 'fr_SN',
+            type: 'article',
+            title: article.titre,
+            description,
+            publishedTime: article.publishedAt ?? undefined,
+            ...(article.imageUrl ? { images: [{ url: article.imageUrl, alt: article.titre }] } : {}),
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: article.titre,
+            description,
+            ...(article.imageUrl ? { images: [article.imageUrl] } : {}),
+        },
     };
 }
 
@@ -97,10 +117,6 @@ export default async function NewsDetailPage({ params }: PageProps) {
                                     <p className="text-xs text-muted-foreground">Association Disciples Shaolin Si Sénégal</p>
                                 </div>
                             </div>
-                            <Button variant="outline" size="sm" className="gap-2">
-                                <Share2 className="w-4 h-4" />
-                                Partager
-                            </Button>
                         </div>
                     </div>
                 </div>
@@ -134,6 +150,8 @@ export default async function NewsDetailPage({ params }: PageProps) {
                                     </p>
                                 ))}
                         </div>
+
+                        <ShareButtons path={`/actualites/${article.slug}`} title={article.titre} className="mt-10 border-t pt-6" />
                     </div>
 
                     {/* Sidebar */}

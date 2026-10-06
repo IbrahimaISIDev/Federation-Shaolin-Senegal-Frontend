@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ShareButtons } from '@/components/shared/share-buttons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, Users, ArrowLeft, ArrowRight, Trophy } from 'lucide-react';
 
@@ -53,11 +54,24 @@ function getStatus(comp: Competition) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { id } = await params;
     const comp = await getCompetition(id);
+    if (!comp) return { title: 'Compétition' };
+    const description = comp.description?.slice(0, 160) ?? `Compétition à ${comp.lieu ?? comp.region.nom}`;
     return {
-        title: comp ? comp.titre : 'Compétition',
-        description: comp
-            ? (comp.description?.slice(0, 160) ?? `Compétition à ${comp.lieu ?? comp.region.nom}`)
-            : '',
+        title: comp.titre,
+        description,
+        openGraph: {
+            siteName: 'ADSS — Disciples Shaolin Si Sénégal',
+            locale: 'fr_SN',
+            title: comp.titre,
+            description,
+            ...(comp.imageUrl ? { images: [{ url: comp.imageUrl, alt: comp.titre }] } : {}),
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: comp.titre,
+            description,
+            ...(comp.imageUrl ? { images: [comp.imageUrl] } : {}),
+        },
     };
 }
 
@@ -144,6 +158,8 @@ export default async function CompetitionDetailPage({ params }: PageProps) {
                                 </Button>
                             </section>
                         )}
+
+                        <ShareButtons path={`/competitions/${comp.id}`} title={comp.titre} className="border-t pt-6" />
                     </div>
 
                     {/* Sidebar */}
