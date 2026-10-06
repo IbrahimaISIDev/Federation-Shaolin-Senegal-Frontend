@@ -1,64 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useQuery } from '@tanstack/react-query';
+import { mediaApi } from '@/lib/api/media';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Images } from 'lucide-react';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-type Album = { id: string; label: string; count: number };
-
-type Photo = {
-  src: string;
-  alt: string;
-  album: string;
-  title: string;
-};
-
-const albums: Album[] = [
-  { id: 'tous', label: 'Tous', count: 0 },
-  { id: 'stages', label: 'Stages & Duanwei', count: 8 },
-  { id: 'delegation', label: 'Délégation Temple', count: 9 },
-  { id: 'ceremonies', label: 'Cérémonies', count: 5 },
-];
-
-const photos: Photo[] = [
-  // Stages & Duanwei
-  { src: '/images/stages/remise-diplomes-groupe.jpeg', alt: 'Remise des diplômes — groupe', title: 'Remise de diplômes', album: 'stages' },
-  { src: '/images/stages/pratiquants-certificats.jpeg', alt: 'Pratiquants avec leurs certificats', title: 'Certificats Duanwei', album: 'stages' },
-  { src: '/images/stages/groupe-combat-duanwei.jpeg', alt: 'Groupe — combat et Duanwei', title: 'Combat & Duanwei', album: 'stages' },
-  { src: '/images/stages/cloture-salut-maitres.jpeg', alt: 'Clôture du stage — salut aux maîtres', title: 'Clôture de stage', album: 'stages' },
-  { src: '/images/stages/moine-pratiquants-exterieur.jpeg', alt: 'Moine et pratiquants à l\'extérieur', title: 'Stage extérieur', album: 'stages' },
-  { src: '/images/stages/moine-pratiquants-salle.jpeg', alt: 'Moine et pratiquants en salle', title: 'Stage en salle', album: 'stages' },
-  { src: '/images/stages/pratiquants-tenue-grise.jpeg', alt: 'Pratiquants en tenue grise', title: 'Pratiquants', album: 'stages' },
-  { src: '/images/stages/moine-pratiquants-stade.jpeg', alt: 'Moine et pratiquants au stade', title: 'Stage au stade', album: 'stages' },
-  // Délégation Temple Shaolin
-  { src: '/images/delegation/delegation-banniere-temple.jpeg', alt: 'Délégation ADSS devant le Temple Shaolin', title: 'Temple Shaolin', album: 'delegation' },
-  { src: '/images/delegation/aeroport-drapeaux-chine-senegal.jpeg', alt: 'Accueil à l\'aéroport — drapeaux Chine & Sénégal', title: 'Accueil officiel', album: 'delegation' },
-  { src: '/images/delegation/aeroport-moines-banniere.jpeg', alt: 'Moines à l\'aéroport — bannière', title: 'Moines à l\'aéroport', album: 'delegation' },
-  { src: '/images/delegation/aeroport-moines-noir-banniere.jpeg', alt: 'Moines à l\'aéroport — tenue noire', title: 'Moines — tenue noire', album: 'delegation' },
-  { src: '/images/delegation/aeroport-moines-gros-plan.jpeg', alt: 'Moines à l\'aéroport — gros plan', title: 'Moines — gros plan', album: 'delegation' },
-  { src: '/images/delegation/arrivee-aeroport-moines.jpeg', alt: 'Arrivée des moines à l\'aéroport', title: 'Arrivée des moines', album: 'delegation' },
-  { src: '/images/delegation/maitre-ngom-aeroport.jpeg', alt: 'Maître Ngom à l\'aéroport', title: 'Maître Ngom', album: 'delegation' },
-  { src: '/images/delegation/delegation-drapeaux.jpeg', alt: 'Délégation avec les drapeaux', title: 'Délégation officielle', album: 'delegation' },
-  { src: '/images/delegation/moines-interieur.jpeg', alt: 'Moines à l\'intérieur', title: 'Moines — intérieur', album: 'delegation' },
-  // Cérémonies & Officiel
-  { src: '/images/ceremonies/maitre-ngom-decoration-trio.jpeg', alt: 'Maître Ngom — décoration officielle (trio)', title: 'Décoration officielle', album: 'ceremonies' },
-  { src: '/images/ceremonies/foule-pratiquants.jpeg', alt: 'Foule de pratiquants', title: 'Rassemblement', album: 'ceremonies' },
-  { src: '/images/ceremonies/partenariat-tecno-cheque.jpeg', alt: 'Remise du chèque — partenariat Tecno', title: 'Partenariat Tecno', album: 'ceremonies' },
-  { src: '/images/ceremonies/remise-trophee.jpeg', alt: 'Remise d\'un trophée', title: 'Remise de trophée', album: 'ceremonies' },
-  { src: '/images/ceremonies/maitre-ngom-decoration-duo.jpeg', alt: 'Maître Ngom — décoration officielle (duo)', title: 'Cérémonie officielle', album: 'ceremonies' },
-  { src: '/images/ceremonies/maitre-ngom-moine-shaolin.jpeg', alt: 'Maître Ngom aux côtés d\'un moine Shaolin', title: 'Maître Ngom & Moine Shaolin', album: 'ceremonies' },
-];
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function GalleryPage() {
+  // Photos publiées depuis l'admin (Galerie & médias), plus récentes d'abord
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['gallery', 'public', 'all'],
+    queryFn: () => mediaApi.publicGallery({ limit: 200 }),
+  });
+  const allPhotos = useMemo(
+    () => (data?.data ?? []).map((p) => ({
+      id: p.id,
+      src: p.url,
+      alt: p.title ?? 'Photo ADSS',
+      title: p.title ?? '',
+      album: p.album ?? '',
+    })),
+    [data]
+  );
+
   const [activeAlbum, setActiveAlbum] = useState('tous');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+  const photos = allPhotos;
   const filtered = activeAlbum === 'tous' ? photos : photos.filter((p) => p.album === activeAlbum);
 
   const openLightbox = (i: number) => setLightboxIndex(i);
@@ -66,9 +38,10 @@ export default function GalleryPage() {
   const prev = () => setLightboxIndex((i) => (i === null ? 0 : (i - 1 + filtered.length) % filtered.length));
   const next = () => setLightboxIndex((i) => (i === null ? 0 : (i + 1) % filtered.length));
 
-  const albumsWithCount = albums.map((a) =>
-    a.id === 'tous' ? { ...a, count: photos.length } : a
-  );
+  const albumsWithCount = [
+    { id: 'tous', label: 'Tous', count: data?.total ?? photos.length },
+    ...(data?.albums ?? []).map((a) => ({ id: a.album, label: a.album, count: a.count })),
+  ];
 
   return (
     <main className="min-h-screen bg-background">
@@ -93,7 +66,7 @@ export default function GalleryPage() {
             className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent"
           >
             <Images className="h-3.5 w-3.5" />
-            {photos.length} photos
+            {data?.total ?? photos.length} photos
           </motion.span>
           <motion.h1 variants={FADE_IN_UP} className="font-serif text-4xl font-bold text-white md:text-5xl">
             Galerie
@@ -131,6 +104,18 @@ export default function GalleryPage() {
 
       {/* Grid */}
       <section className="container mx-auto px-4 py-10">
+        {isLoading && (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-square animate-pulse rounded-xl bg-muted" />
+            ))}
+          </div>
+        )}
+        {!isLoading && filtered.length === 0 && (
+          <p className="py-16 text-center text-muted-foreground">
+            {isError ? 'La galerie est momentanément indisponible.' : 'Aucune photo pour le moment.'}
+          </p>
+        )}
         <motion.div
           layout
           className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4"
@@ -138,7 +123,7 @@ export default function GalleryPage() {
           <AnimatePresence mode="popLayout">
             {filtered.map((photo, i) => (
               <motion.div
-                key={photo.src}
+                key={photo.id}
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -166,7 +151,7 @@ export default function GalleryPage() {
 
       {/* Lightbox */}
       <AnimatePresence>
-        {lightboxIndex !== null && (
+        {lightboxIndex !== null && filtered[lightboxIndex] && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

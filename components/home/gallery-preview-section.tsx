@@ -4,42 +4,26 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Images } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
-
-const photos = [
-  {
-    src: '/images/delegation/delegation-banniere-temple.jpeg',
-    alt: 'Délégation ADSS devant le Temple Shaolin',
-    label: 'Temple Shaolin',
-    span: 'col-span-2 row-span-2',
-  },
-  {
-    src: '/images/stages/remise-diplomes-groupe.jpeg',
-    alt: 'Remise de diplômes — groupe',
-    label: 'Remise de diplômes',
-    span: '',
-  },
-  {
-    src: '/images/ceremonies/maitre-ngom-decoration-trio.jpeg',
-    alt: 'Maître Ngom — décoration officielle',
-    label: 'Cérémonie officielle',
-    span: '',
-  },
-  {
-    src: '/images/stages/moine-pratiquants-salle.jpeg',
-    alt: 'Moine et pratiquants en salle',
-    label: 'Stage avec les moines',
-    span: '',
-  },
-  {
-    src: '/images/delegation/aeroport-drapeaux-chine-senegal.jpeg',
-    alt: "Accueil à l'aéroport — drapeaux Chine et Sénégal",
-    label: 'Accueil officiel',
-    span: '',
-  },
-];
+import { mediaApi } from '@/lib/api/media';
 
 export function GalleryPreviewSection() {
+  // 5 dernières photos publiées depuis l'admin (la 1re en grand format)
+  const { data } = useQuery({
+    queryKey: ['gallery', 'public', 'preview'],
+    queryFn: () => mediaApi.publicGallery({ limit: 5 }),
+  });
+  const photos = (data?.data ?? []).map((p, i) => ({
+    id: p.id,
+    src: p.url,
+    alt: p.title ?? 'Photo ADSS',
+    label: p.title ?? '',
+    span: i === 0 ? 'col-span-2 row-span-2' : '',
+  }));
+
+  if (data && photos.length === 0) return null; // galerie vide : section masquée
+
   return (
     <section className="py-16 lg:py-20">
       <motion.div
@@ -70,9 +54,12 @@ export function GalleryPreviewSection() {
           className="grid grid-cols-2 grid-rows-2 gap-3 md:grid-cols-3 md:grid-rows-2"
           style={{ height: 'clamp(340px, 50vw, 560px)' }}
         >
-          {photos.map((photo, i) => (
+          {photos.length === 0 && Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className={`animate-pulse rounded-xl bg-muted ${i === 0 ? 'col-span-2 row-span-2' : ''}`} />
+          ))}
+          {photos.map((photo) => (
             <div
-              key={i}
+              key={photo.id}
               className={`group relative overflow-hidden rounded-xl ${photo.span}`}
             >
               <Image
