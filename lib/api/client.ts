@@ -49,8 +49,15 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // Un 401 sur les routes d'authentification est une réponse normale
+    // (mauvais mot de passe, session expirée…) : il doit remonter tel quel au
+    // formulaire. Tenter un refresh puis recharger /connexion effaçait le
+    // message d'erreur — l'utilisateur voyait la page se recharger sans rien.
+    const isAuthRoute = /\/auth\/(login|refresh|logout|forgot-password|reset-password|change-password)/
+      .test(originalRequest?.url ?? '');
+
     // If 401 and not already retrying
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRoute) {
       if (isRefreshing) {
         // Wait for refresh to complete
         return new Promise((resolve, reject) => {
