@@ -32,6 +32,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         { label: 'Preuves de paiement à vérifier', count: counts?.paymentProofs ?? 0, href: '/admin/affiliations' },
         { label: 'Affiliations à valider', count: counts?.affiliationsToReview ?? 0, href: '/admin/affiliations' },
         { label: 'Renouvellements à confirmer', count: counts?.renewalsToVerify ?? 0, href: '/admin/renouvellements' },
+        { label: 'Messages non lus', count: counts?.unreadMessages ?? 0, href: '/admin/messages' },
     ];
 
     return (

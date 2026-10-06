@@ -42,6 +42,7 @@ export interface AdminNotifications {
     paymentProofs: number;        // preuves de paiement d'affiliation à vérifier
     affiliationsToReview: number; // affiliations payées à approuver / rejeter
     renewalsToVerify: number;     // renouvellements de licence à confirmer
+    unreadMessages: number;       // messages de contact non lus
     total: number;
 }
 
