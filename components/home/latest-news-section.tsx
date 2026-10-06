@@ -7,49 +7,19 @@ import { Calendar, ArrowRight, Clock, Play, Volume2, VolumeX } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import { useQuery } from '@tanstack/react-query';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { actualitesApi } from '@/lib/api/actualites';
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const latestNews = [
-  {
-    id: '2',
-    title: 'Stage de perfectionnement avec les moines Shaolin',
-    excerpt: 'Un stage exceptionnel de 3 jours animé par les grands Maîtres directement venus du Temple Shaolin de Chine.',
-    category: 'EVENEMENT',
-    publishedAt: '2026-04-10',
-    readTime: '3 min',
-  },
-  {
-    id: '3',
-    title: 'Médailles au Championnat d\'Afrique 2023',
-    excerpt: 'L\'ADSS décroche 5 médailles au Championnat d\'Afrique, confirmant sa place parmi les meilleures délégations du continent.',
-    category: 'COMPETITION',
-    publishedAt: '2023-11-20',
-    readTime: '5 min',
-  },
-  {
-    id: '4',
-    title: 'Ouverture d\'un nouveau club à Ziguinchor',
-    excerpt: 'L\'ADSS annonce l\'ouverture d\'un nouveau club affilié dans la région de Ziguinchor, renforçant sa présence au Sénégal.',
-    category: 'ACTUALITE',
-    publishedAt: '2026-03-05',
-    readTime: '2 min',
-  },
-];
+// Texte brut d'un contenu d'article (HTML possible) pour l'extrait
+const toPlainText = (html: string) => html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
 
-const categoryColors: Record<string, string> = {
-  COMPETITION:  'bg-accent text-accent-foreground',
-  EVENEMENT:    'bg-primary text-primary-foreground',
-  ACTUALITE:    'bg-secondary text-secondary-foreground border border-border',
-  INAUGURATION: 'bg-accent text-accent-foreground',
-};
-
-const categoryLabels: Record<string, string> = {
-  COMPETITION:  'Compétition',
-  EVENEMENT:    'Événement',
-  ACTUALITE:    'Actualité',
-  INAUGURATION: 'Inauguration',
+const readTime = (html: string) => {
+  const words = toPlainText(html).split(' ').filter(Boolean).length;
+  return `${Math.max(1, Math.round(words / 200))} min`;
 };
 
 function formatDate(dateString: string) {
@@ -178,6 +148,13 @@ function FeaturedVideoCard() {
 // ─── Section ──────────────────────────────────────────────────────────────────
 
 export function LatestNewsSection() {
+  // 3 derniers articles publiés depuis l'admin
+  const { data, isLoading } = useQuery({
+    queryKey: ['actualites', 'latest'],
+    queryFn: () => actualitesApi.list({ page: 1, limit: 3 }),
+  });
+  const latestNews = data?.data ?? [];
+
   return (
     <section className="bg-muted/40 py-20 lg:py-28">
       <div className="container mx-auto px-4">
@@ -226,34 +203,48 @@ export function LatestNewsSection() {
 
           {/* News cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {isLoading && Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-72 animate-pulse rounded-xl bg-muted" />
+            ))}
+            {!isLoading && latestNews.length === 0 && (
+              <p className="col-span-full py-8 text-center text-muted-foreground">Aucune actualité publiée pour le moment.</p>
+            )}
             {latestNews.map((article) => (
               <motion.div key={article.id} variants={FADE_IN_UP}>
-                <Link href={`/actualites/${article.id}`}>
+                <Link href={`/actualites/${article.slug}`}>
                   <Card className="group h-full overflow-hidden transition-shadow hover:shadow-lg">
                     <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-primary/20 to-accent/10">
-                      <div className="flex h-full items-center justify-center">
-                        <span className="font-serif text-5xl text-primary/20">少林</span>
-                      </div>
-                      <Badge className={`absolute left-4 top-4 ${categoryColors[article.category] ?? 'bg-secondary'}`}>
-                        {categoryLabels[article.category] ?? article.category}
-                      </Badge>
+                      {article.imageUrl ? (
+                        <Image
+                          src={article.imageUrl}
+                          alt={article.titre}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <span className="font-serif text-5xl text-primary/20">少林</span>
+                        </div>
+                      )}
+                      <Badge className="absolute left-4 top-4 bg-primary text-primary-foreground">Actualité</Badge>
                     </div>
                     <CardContent className="p-6">
                       <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
-                          {formatDate(article.publishedAt)}
+                          {formatDate(article.publishedAt ?? article.createdAt)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
-                          {article.readTime}
+                          {readTime(article.contenu)}
                         </span>
                       </div>
                       <h3 className="mb-2 line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-primary">
-                        {article.title}
+                        {article.titre}
                       </h3>
                       <p className="line-clamp-2 text-sm text-muted-foreground">
-                        {article.excerpt}
+                        {toPlainText(article.contenu)}
                       </p>
                     </CardContent>
                   </Card>
