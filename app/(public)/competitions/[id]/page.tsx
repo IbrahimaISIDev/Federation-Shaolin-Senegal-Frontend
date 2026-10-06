@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShareButtons } from '@/components/shared/share-buttons';
+import { AddToCalendar } from '@/components/shared/add-to-calendar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, Users, ArrowLeft, ArrowRight, Trophy } from 'lucide-react';
 
@@ -46,8 +47,9 @@ function getStatus(comp: Competition) {
     const now = new Date();
     const debut = new Date(comp.dateDebut);
     const fin = comp.dateFin ? new Date(comp.dateFin) : debut;
-    if (now < debut) return { label: 'À venir', cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' };
-    if (now <= fin)  return { label: 'Inscriptions ouvertes', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' };
+    // Les inscriptions ferment au début de la compétition (règle de l'API)
+    if (now < debut) return { label: 'Inscriptions ouvertes', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' };
+    if (now <= fin)  return { label: 'En cours', cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' };
     return { label: 'Terminée', cls: 'bg-muted text-muted-foreground' };
 }
 
@@ -83,6 +85,7 @@ export default async function CompetitionDetailPage({ params }: PageProps) {
     const status = getStatus(comp);
     const now = new Date();
     const isPast = now > new Date(comp.dateFin ?? comp.dateDebut);
+    const registrationOpen = now < new Date(comp.dateDebut);
     const categories: string[] = Array.isArray(comp.categories) ? comp.categories : [];
 
     return (
@@ -196,6 +199,13 @@ export default async function CompetitionDetailPage({ params }: PageProps) {
                         </Card>
 
                         {!isPast && (
+                            <AddToCalendar
+                                event={{ id: comp.id, titre: comp.titre, dateDebut: comp.dateDebut, dateFin: comp.dateFin, lieu: comp.lieu, description: comp.description }}
+                                className="w-full"
+                            />
+                        )}
+
+                        {registrationOpen && (
                             <Card className="bg-primary text-primary-foreground border-none">
                                 <CardContent className="p-6">
                                     <h3 className="font-bold text-lg mb-2">Participer</h3>

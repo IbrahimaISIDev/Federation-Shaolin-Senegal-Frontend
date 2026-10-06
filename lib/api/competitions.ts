@@ -23,6 +23,8 @@ export interface CompetitionListParams {
     search?: string;
     region?: string;
     status?: 'upcoming' | 'open' | 'completed';
+    from?: string; // ISO — période du calendrier (compétitions qui la chevauchent)
+    to?: string;
     page?: number;
     limit?: number;
 }

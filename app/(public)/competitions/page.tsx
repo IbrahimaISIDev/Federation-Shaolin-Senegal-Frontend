@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, MapPin, Users, Trophy, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { competitionsApi, type Competition } from '@/lib/api';
+import { CompetitionsCalendar } from '@/components/competitions/competitions-calendar';
 
+// Les inscriptions ferment au début de la compétition (règle de l'API)
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  inscriptions_ouvertes: { label: 'Inscriptions ouvertes', variant: 'default' },
-  a_venir: { label: 'À venir', variant: 'secondary' },
+  a_venir: { label: 'Inscriptions ouvertes', variant: 'default' },
+  en_cours: { label: 'En cours', variant: 'secondary' },
   complet: { label: 'Complet', variant: 'destructive' },
   termine: { label: 'Terminé', variant: 'outline' },
 };
@@ -23,7 +25,7 @@ function getCompetitionStatus(c: Competition) {
   fin.setHours(23, 59, 59, 999);
 
   if (now < debut) return 'a_venir';
-  if (now >= debut && now <= fin) return 'inscriptions_ouvertes';
+  if (now >= debut && now <= fin) return 'en_cours';
   return 'termine';
 }
 
@@ -49,16 +51,17 @@ function formatDateRange(startDate: string, endDate?: string | null): string {
 export default function CompetitionsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['public', 'competitions'],
-    queryFn: () => competitionsApi.list({ limit: 100 }), // Fetching all for now
+    queryFn: () => competitionsApi.list({ limit: 50 }),
   });
 
   const competitions: Competition[] = data?.data ?? [];
 
   const upcoming = competitions.filter(c => {
     const s = getCompetitionStatus(c);
-    return s === 'a_venir' || s === 'inscriptions_ouvertes';
+    return s === 'a_venir' || s === 'en_cours';
   });
-  const past = competitions.filter(c => getCompetitionStatus(c) === 'termine');
+  // Les plus récentes d'abord
+  const past = competitions.filter(c => getCompetitionStatus(c) === 'termine').reverse();
 
   return (
     <main className="min-h-screen bg-background pb-20">
@@ -82,10 +85,14 @@ export default function CompetitionsPage() {
         <section className="py-12">
           <div className="container mx-auto px-4">
             <Tabs defaultValue="upcoming" className="space-y-8">
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+              <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3">
                 <TabsTrigger value="upcoming" className="gap-2">
-                  <Calendar className="w-4 h-4" />
+                  <Clock className="w-4 h-4" />
                   À venir ({upcoming.length})
+                </TabsTrigger>
+                <TabsTrigger value="calendar" className="gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Calendrier
                 </TabsTrigger>
                 <TabsTrigger value="past" className="gap-2">
                   <Trophy className="w-4 h-4" />
@@ -127,7 +134,7 @@ export default function CompetitionsPage() {
                                 {comp.titre}
                               </h3>
                             </div>
-                            {(comp.dateFin && new Date() <= new Date(comp.dateFin)) && (
+                            {new Date() < new Date(comp.dateDebut) && (
                               <Button className="bg-accent hover:bg-accent/90 gap-2 w-full md:w-auto" asChild>
                                 <Link href={`/competitions/${comp.id}/inscription`}>
                                   S&apos;inscrire
@@ -167,6 +174,10 @@ export default function CompetitionsPage() {
                     </Card>
                   )
                 })}
+              </TabsContent>
+
+              <TabsContent value="calendar">
+                <CompetitionsCalendar />
               </TabsContent>
 
               <TabsContent value="past" className="space-y-6">
