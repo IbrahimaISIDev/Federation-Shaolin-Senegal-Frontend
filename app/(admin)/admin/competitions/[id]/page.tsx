@@ -49,7 +49,18 @@ export default function CompetitionDetailPage({ params }: { params: Promise<{ id
             queryClient.invalidateQueries({ queryKey: ['admin', 'competitions'] });
             router.push('/admin/competitions');
         },
-        onError: () => toast.error('Erreur lors de la suppression'),
+        onError: (err: any) => toast.error(err?.response?.data?.error ?? 'Erreur lors de la suppression'),
+    });
+
+    // Publication en un clic (visible / masquée sur le site public)
+    const publishMutation = useMutation({
+        mutationFn: (isPublished: boolean) => competitionsApi.update(competitionId, { isPublished }),
+        onSuccess: (_res, isPublished) => {
+            toast.success(isPublished ? 'Compétition publiée sur le site' : 'Compétition retirée du site');
+            queryClient.invalidateQueries({ queryKey: ['admin', 'competition', competitionId] });
+            queryClient.invalidateQueries({ queryKey: ['admin', 'competitions'] });
+        },
+        onError: (err: any) => toast.error(err?.response?.data?.error ?? 'Erreur lors de la publication'),
     });
 
     if (isLoading) {
@@ -91,10 +102,21 @@ export default function CompetitionDetailPage({ params }: { params: Promise<{ id
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={competition.isPublished ? 'default' : 'secondary'} className="gap-1">
-                        {competition.isPublished ? <><Globe className="w-3 h-3" /> Publiée</> : <><EyeOff className="w-3 h-3" /> Brouillon</>}
+                        {competition.isPublished ? <><Globe className="w-3 h-3" /> Publiée</> : <><EyeOff className="w-3 h-3" /> Brouillon — invisible sur le site</>}
                     </Badge>
+                    <Button
+                        variant="outline"
+                        className="gap-2"
+                        disabled={publishMutation.isPending}
+                        onClick={() => publishMutation.mutate(!competition.isPublished)}
+                    >
+                        {publishMutation.isPending
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : competition.isPublished ? <EyeOff className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                        {competition.isPublished ? 'Dépublier' : 'Publier'}
+                    </Button>
                     <Button
                         variant="outline"
                         className="gap-2 text-destructive hover:text-destructive"

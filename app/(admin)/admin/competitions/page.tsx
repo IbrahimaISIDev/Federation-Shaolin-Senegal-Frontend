@@ -1,6 +1,7 @@
 'use client';
 
-import { Trophy, Plus, Search, Calendar, MapPin, Users, MoreHorizontal, Eye, Pencil, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Trophy, Plus, Search, Calendar, MapPin, Users, MoreHorizontal, Eye, Pencil, Trash2, Loader2, AlertCircle, EyeOff
+} from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
@@ -182,6 +183,11 @@ export default function AdminCompetitionsPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 shrink-0">
+                                        {!competition.isPublished && (
+                                            <Badge variant="outline" className="gap-1 border-amber-300 text-amber-700">
+                                                <EyeOff className="h-3 w-3" /> Brouillon
+                                            </Badge>
+                                        )}
                                         <Badge variant={statusInfo.variant} className="hidden sm:flex">{statusInfo.label}</Badge>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
