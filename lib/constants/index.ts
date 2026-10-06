@@ -238,6 +238,7 @@ export interface BureauMember {
   role: string;
   commission?: string;
   tier: 'presidency' | 'executive' | 'commission';
+  photoUrl?: string; // facultatif — initiales affichées sinon
 }
 
 export const BUREAU_MEMBERS: BureauMember[] = [

@@ -6,6 +6,10 @@ import { motion } from 'framer-motion';
 import { ArrowRight, MapPin, Users, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { useSiteContent } from '@/lib/content/use-site-content';
+
+// Icônes des chiffres du bandeau, dans l'ordre
+const STAT_ICONS = [Users, Trophy, MapPin];
 
 const floatingChars = [
   { char: '武', x: '10%', y: '15%', size: '5rem', delay: 0 },
@@ -17,6 +21,10 @@ const floatingChars = [
 ];
 
 export function HeroSection() {
+  // Textes, photo et chiffres modifiables dans Admin → Contenu du site
+  const { content } = useSiteContent('home');
+  const hero = content.hero;
+
   return (
     <section className="relative min-h-[92vh] overflow-hidden bg-primary">
       {/* Animated floating Chinese characters */}
@@ -61,7 +69,7 @@ export function HeroSection() {
           <motion.div variants={FADE_IN_UP} className="mb-5">
             <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Reconnue par le Ministère de l&apos;Intérieur · NINEA · 少林寺
+              {hero.badge}
             </span>
           </motion.div>
 
@@ -86,9 +94,7 @@ export function HeroSection() {
             variants={FADE_IN_UP}
             className="mx-auto mb-8 max-w-lg text-base leading-relaxed text-white/70 lg:mx-0 lg:text-lg"
           >
-            Association nationale dédiée à la promotion du Shaolin authentique,
-            directement transmis par le Temple Shaolin de Chine — active au Sénégal
-            depuis 2022, officiellement reconnue depuis 2024.
+            {hero.description}
           </motion.p>
 
           {/* CTA Buttons */}
@@ -124,11 +130,7 @@ export function HeroSection() {
             variants={FADE_IN_UP}
             className="mt-12 flex items-center justify-center gap-8 border-t border-white/10 pt-8 lg:justify-start"
           >
-            {[
-              { icon: Users, value: '1 000+', label: 'Adhérents' },
-              { icon: Trophy, value: '5', label: 'Médailles internationales' },
-              { icon: MapPin, value: '1981', label: 'Pratique au Sénégal' },
-            ].map((stat) => (
+            {hero.stats.map((s, i) => ({ ...s, icon: STAT_ICONS[i % STAT_ICONS.length] })).map((stat) => (
               <div key={stat.label} className="flex flex-col items-center gap-1 lg:items-start">
                 <div className="flex items-baseline gap-1">
                   <stat.icon className="h-3.5 w-3.5 text-accent/70" />
@@ -185,8 +187,8 @@ export function HeroSection() {
             >
               {/* Photo */}
               <Image
-                src="/images/president/maitre-ngom.png"
-                alt="Maître Ousmane Ngom, Président ADSS"
+                src={hero.photoUrl || '/images/president/maitre-ngom.png'}
+                alt={hero.photoCaption || 'Photo ADSS'}
                 fill
                 className="object-contain object-bottom"
                 priority
@@ -207,7 +209,7 @@ export function HeroSection() {
                 className="absolute inset-x-0 bottom-0 p-4"
               >
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-white/70">Maître Ousmane Ngom — ADSS</span>
+                  <span className="font-medium text-white/70">{hero.photoCaption}</span>
                   <span className="font-semibold text-accent">Sénégal · 少林寺</span>
                 </div>
               </motion.div>

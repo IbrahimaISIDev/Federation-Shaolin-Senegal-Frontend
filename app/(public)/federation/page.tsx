@@ -6,7 +6,8 @@ import {
   Star, Shield, Users, Settings, Medal, CalendarDays, CheckCircle2, Building,
   GraduationCap, Trophy, Globe, MapPin, Sparkles, Target,
 } from 'lucide-react';
-import { BUREAU_MEMBERS, ADSS_HISTORY, FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { ADSS_HISTORY, FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { useSiteContent } from '@/lib/content/use-site-content';
 import type { BureauMember, HistoryEvent } from '@/lib/constants';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -24,10 +25,10 @@ function PresidencyCard({ member }: { member: BureauMember }) {
         <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent" />
         <div className="pointer-events-none absolute -top-10 left-1/2 h-36 w-36 -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
         <div className="relative mx-auto mb-5 h-40 w-32 overflow-hidden">
-          {member.id === 'president' ? (
+          {member.photoUrl || member.id === 'president' ? (
             <Image
-              src="/images/president/maitre-ngom.png"
-              alt="Maître Ousmane Ngom, Président ADSS"
+              src={member.photoUrl || '/images/president/maitre-ngom.png'}
+              alt={member.name}
               fill
               className="object-contain object-bottom drop-shadow-lg"
               priority
@@ -61,6 +62,10 @@ function ExecutiveCard({ member }: { member: BureauMember }) {
     <motion.div variants={FADE_IN_UP}>
       <div className="flex items-center gap-4 rounded-xl border border-border/70 bg-card p-5 transition-all hover:border-primary/20 hover:shadow-md">
         <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/8 ring-1 ring-primary/10">
+          {member.photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={member.photoUrl} alt={member.name} className="absolute inset-0 z-20 h-full w-full rounded-[inherit] object-cover" />
+          )}
           <span className="font-serif text-xl font-bold text-primary">{getInitials(member.name)}</span>
         </div>
         <div className="min-w-0">
@@ -78,6 +83,10 @@ function CommissionCard({ member }: { member: BureauMember }) {
     <motion.div variants={FADE_IN_UP}>
       <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-card p-5 transition-all hover:border-accent/20 hover:shadow-sm">
         <div className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors ${isPresident ? 'bg-accent/10 ring-1 ring-accent/20' : 'bg-muted'}`}>
+          {member.photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={member.photoUrl} alt={member.name} className="absolute inset-0 z-20 h-full w-full rounded-[inherit] object-cover" />
+          )}
           <span className={`font-serif text-base font-bold ${isPresident ? 'text-accent' : 'text-muted-foreground'}`}>{getInitials(member.name)}</span>
         </div>
         <div className="min-w-0 flex-1">
@@ -227,10 +236,21 @@ const ZONES = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FederationPage() {
-  const presidency = BUREAU_MEMBERS.filter((m) => m.tier === 'presidency');
-  const executive = BUREAU_MEMBERS.filter((m) => m.tier === 'executive');
-  const orgMembers = BUREAU_MEMBERS.filter((m) => m.commission?.includes('Organisation'));
-  const commMembers = BUREAU_MEMBERS.filter((m) => m.commission?.includes('Communication'));
+  // Composition du bureau modifiable dans Admin → Contenu du site
+  const { content: bureau } = useSiteContent('bureau');
+  const presidency = bureau.filter((m) => m.tier === 'presidency');
+  const executive = bureau.filter((m) => m.tier === 'executive');
+  // Commissions regroupées par nom, dans l'ordre d'apparition (toute
+  // commission ajoutée depuis l'admin s'affiche automatiquement)
+  const commissions = bureau
+    .filter((m) => m.tier === 'commission')
+    .reduce<{ name: string; members: typeof bureau }[]>((groups, m) => {
+      const name = m.commission?.trim() || 'Commission';
+      const group = groups.find((g) => g.name === name);
+      if (group) group.members.push(m);
+      else groups.push({ name, members: [m] });
+      return groups;
+    }, []);
 
   return (
     <div className="min-h-screen">
@@ -499,22 +519,16 @@ export default function FederationPage() {
               subtitle="Équipes spécialisées au service de l'ADSS"
             />
             <div className="grid gap-10 lg:grid-cols-2">
-              <div>
-                <p className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                  Commission Organisation
-                </p>
-                <div className="space-y-3">
-                  {orgMembers.map((m) => <CommissionCard key={m.id} member={m} />)}
+              {commissions.map((c) => (
+                <div key={c.name}>
+                  <p className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                    {c.name}
+                  </p>
+                  <div className="space-y-3">
+                    {c.members.map((m) => <CommissionCard key={m.id} member={m} />)}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                  Commission Communication · Sponsoring · Marketing
-                </p>
-                <div className="space-y-3">
-                  {commMembers.map((m) => <CommissionCard key={m.id} member={m} />)}
-                </div>
-              </div>
+              ))}
             </div>
           </motion.div>
         </section>

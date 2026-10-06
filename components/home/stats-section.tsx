@@ -3,39 +3,21 @@
 import { motion } from 'framer-motion';
 import { Users, Building2, Trophy, Award } from 'lucide-react';
 import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { useSiteContent } from '@/lib/content/use-site-content';
 
-const stats = [
-  {
-    icon: Users,
-    value: '1 000+',
-    label: 'Adhérents',
-    description: 'Membres à travers le pays',
-    chineseChar: '人',
-  },
-  {
-    icon: Building2,
-    value: '3 000+',
-    label: 'Participants aux stages',
-    description: 'Dans toutes les régions et en Gambie',
-    chineseChar: '功',
-  },
-  {
-    icon: Trophy,
-    value: '5',
-    label: 'Médailles internationales',
-    description: 'Monde 2021 & Afrique 2023',
-    chineseChar: '賽',
-  },
-  {
-    icon: Award,
-    value: '3e Duan',
-    label: 'Grade Shaolin',
-    description: 'Obtenu au Temple Shaolin en Zambie',
-    chineseChar: '金',
-  },
+// Icône et caractère décoratif de chaque carte, dans l'ordre
+const DECOR = [
+  { icon: Users, chineseChar: '人' },
+  { icon: Building2, chineseChar: '功' },
+  { icon: Trophy, chineseChar: '賽' },
+  { icon: Award, chineseChar: '金' },
 ];
 
 export function StatsSection() {
+  // Chiffres clés modifiables dans Admin → Contenu du site
+  const { content } = useSiteContent('home');
+  const stats = content.keyFigures.map((f, i) => ({ ...f, ...DECOR[i % DECOR.length] }));
+
   return (
     <section className="relative -mt-14 z-10 px-4">
       <motion.div

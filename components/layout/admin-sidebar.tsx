@@ -17,6 +17,7 @@ import {
     ClipboardList,
     RefreshCw,
     Mail,
+    FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/shared/logo';
@@ -32,6 +33,7 @@ const adminNavItems = [
     { href: '/admin/actualites', label: 'Actualités', icon: Newspaper },
     { href: '/admin/competitions', label: 'Compétitions', icon: Trophy },
     { href: '/admin/galerie', label: 'Galerie', icon: Image },
+    { href: '/admin/contenu', label: 'Contenu du site', icon: FileText },
     { href: '/admin/rapports', label: 'Rapports', icon: BarChart3 },
     { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
 ];

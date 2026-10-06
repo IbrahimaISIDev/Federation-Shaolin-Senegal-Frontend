@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Star, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FADE_IN_UP, STAGGER_CONTAINER, BUREAU_MEMBERS } from '@/lib/constants';
+import { FADE_IN_UP, STAGGER_CONTAINER } from '@/lib/constants';
+import { useSiteContent } from '@/lib/content/use-site-content';
 
 function getInitials(name: string) {
   return name
@@ -15,9 +16,12 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
-const topMembers = BUREAU_MEMBERS.filter((m) => m.tier !== 'commission');
 
 export function BureauSection() {
+  // Composition du bureau modifiable dans Admin → Contenu du site
+  const { content: bureau } = useSiteContent('bureau');
+  const topMembers = bureau.filter((m) => m.tier !== 'commission');
+
   return (
     <section className="relative py-20 lg:py-28">
       {/* Subtle gradient background */}
@@ -80,6 +84,10 @@ export function BureauSection() {
                     <div className="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center">
                       <div className="absolute inset-0 rounded-full border-2 border-accent/40 bg-accent/10" />
                       <div className="absolute inset-1 rounded-full border border-accent/20" />
+                      {member.photoUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={member.photoUrl} alt={member.name} className="absolute inset-0 z-20 h-full w-full rounded-[inherit] object-cover" />
+                      )}
                       <span className="relative z-10 font-serif text-2xl font-bold text-accent">
                         {getInitials(member.name)}
                       </span>
@@ -117,6 +125,10 @@ export function BureauSection() {
                     {/* Avatar */}
                     <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/8">
                       <div className="absolute inset-0 rounded-xl border border-primary/10" />
+                      {member.photoUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={member.photoUrl} alt={member.name} className="absolute inset-0 z-20 h-full w-full rounded-[inherit] object-cover" />
+                      )}
                       <span className="relative font-serif text-lg font-bold text-primary">
                         {getInitials(member.name)}
                       </span>
