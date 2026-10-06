@@ -37,7 +37,6 @@ export default function NewsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['public', 'actualites', { page }],
     queryFn: () => actualitesApi.list({ page, limit: PAGE_SIZE }),
-    staleTime: 60 * 1000,
   });
 
   const newsList: Actualite[] = data?.data ?? [];

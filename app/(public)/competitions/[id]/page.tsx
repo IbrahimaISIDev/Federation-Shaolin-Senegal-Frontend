@@ -23,7 +23,7 @@ interface Competition {
 
 async function getCompetition(id: string): Promise<Competition | null> {
     try {
-        const res = await fetch(`${API_URL}/competitions/${id}`, { next: { revalidate: 60 } });
+        const res = await fetch(`${API_URL}/competitions/${id}`, { cache: 'no-store' });
         if (!res.ok) return null;
         const json = await res.json();
         return json.data ?? null;

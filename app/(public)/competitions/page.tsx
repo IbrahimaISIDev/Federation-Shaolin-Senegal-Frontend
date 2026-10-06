@@ -50,7 +50,6 @@ export default function CompetitionsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['public', 'competitions'],
     queryFn: () => competitionsApi.list({ limit: 100 }), // Fetching all for now
-    staleTime: 60 * 1000,
   });
 
   const competitions: Competition[] = data?.data ?? [];

@@ -24,7 +24,7 @@ interface Club {
 
 async function getClub(id: string): Promise<Club | null> {
     try {
-        const res = await fetch(`${API_URL}/clubs/${id}`, { next: { revalidate: 60 } });
+        const res = await fetch(`${API_URL}/clubs/${id}`, { cache: 'no-store' });
         if (!res.ok) return null;
         const json = await res.json();
         return json.data ?? null;

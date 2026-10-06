@@ -13,10 +13,13 @@ export function QueryProvider({ children }: QueryProviderProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
+            // Données toujours revérifiées à l'affichage et au retour sur l'onglet :
+            // ce que l'admin publie apparaît sans recharger la page (le cache sert
+            // seulement à afficher instantanément la version précédente).
+            staleTime: 0,
             gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
             retry: 1,
-            refetchOnWindowFocus: false,
+            refetchOnWindowFocus: true,
           },
           mutations: {
             retry: 0,

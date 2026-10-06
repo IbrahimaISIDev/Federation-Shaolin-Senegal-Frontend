@@ -19,7 +19,7 @@ interface Actualite {
 
 async function getArticle(slug: string): Promise<Actualite | null> {
     try {
-        const res = await fetch(`${API_URL}/actualites/${slug}`, { next: { revalidate: 60 } });
+        const res = await fetch(`${API_URL}/actualites/${slug}`, { cache: 'no-store' });
         if (!res.ok) return null;
         const json = await res.json();
         return json.data ?? null;
@@ -30,7 +30,7 @@ async function getArticle(slug: string): Promise<Actualite | null> {
 
 async function getRecentArticles(excludeSlug: string): Promise<Actualite[]> {
     try {
-        const res = await fetch(`${API_URL}/actualites?page=1&limit=4`, { next: { revalidate: 60 } });
+        const res = await fetch(`${API_URL}/actualites?page=1&limit=4`, { cache: 'no-store' });
         if (!res.ok) return [];
         const json = await res.json();
         return (json.data ?? []).filter((a: Actualite) => a.slug !== excludeSlug).slice(0, 3);
