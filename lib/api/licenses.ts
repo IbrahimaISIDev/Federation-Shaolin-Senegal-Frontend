@@ -60,8 +60,9 @@ export const licensesApi = {
     /**
      * GET /api/upload/licenses/:id/pdf  — redirige vers le PDF Cloudinary
      */
+    /** Génère (si besoin) la carte PDF et renvoie son URL — requête authentifiée */
     getPdfUrl: (id: number) =>
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/upload/licenses/${id}/pdf`,
+        api.get<{ data: { url: string } }>(`/upload/licenses/${id}/pdf`).then((res) => res.data.url),
 
     /**
      * POST /api/licenses  — admin uniquement

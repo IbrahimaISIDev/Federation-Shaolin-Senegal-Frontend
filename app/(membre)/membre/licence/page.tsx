@@ -110,9 +110,42 @@ export default function LicensePage() {
 
   const qrDataUrl = (qrData as any)?.data?.qrDataUrl;
 
-  const handleDownloadPDF = () => {
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const handleDownloadPDF = async () => {
     if (!activeLicense?.id) return;
-    window.open(licensesApi.getPdfUrl(activeLicense.id), '_blank');
+    // Onglet ouvert immédiatement (sinon bloqué comme pop-up après l'attente),
+    // puis dirigé vers le PDF une fois généré
+    const tab = window.open('', '_blank');
+    setPdfLoading(true);
+    try {
+      const url = await licensesApi.getPdfUrl(activeLicense.id);
+      if (tab) tab.location.href = url;
+      else window.location.href = url;
+    } catch (err: any) {
+      tab?.close();
+      toast.error(err?.response?.data?.error ?? 'Impossible de générer la carte PDF pour le moment');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  // Partage du lien public de vérification de la licence (ex. à un organisateur)
+  const handleShareLicense = async () => {
+    if (!activeLicense?.id) return;
+    try {
+      const res: any = await licensesApi.getQrCode(activeLicense.id);
+      const token = res?.data?.license?.qrToken;
+      if (!token) throw new Error();
+      const url = `${window.location.origin}/verify?token=${encodeURIComponent(token)}`;
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ title: 'Ma licence ADSS', text: 'Vérifiez ma licence ADSS :', url }).catch(() => {});
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success('Lien de vérification copié', { description: 'Collez-le pour prouver la validité de votre licence.' });
+      }
+    } catch {
+      toast.error('Impossible de préparer le lien de vérification');
+    }
   };
 
   const formatDate = (d: string | Date | undefined | null) => {
@@ -149,12 +182,17 @@ export default function LicensePage() {
             variant="outline"
             size="sm"
             onClick={handleDownloadPDF}
-            disabled={!activeLicense || activeLicense.status !== 'ACTIVE'}
+            disabled={!activeLicense || activeLicense.status !== 'ACTIVE' || pdfLoading}
           >
-            <Download className="mr-2 h-4 w-4" />
+            {pdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
             Télécharger PDF
           </Button>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShareLicense}
+            disabled={!activeLicense || activeLicense.status !== 'ACTIVE'}
+          >
             <Share2 className="mr-2 h-4 w-4" />
             Partager
           </Button>
